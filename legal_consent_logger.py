@@ -1,0 +1,565 @@
+"""
+legal_consent_logger.py
+
+Automatic legal consent logging for Streamlit click-wrap acceptance.
+Stores append-only records in SQLite by default, with optional PostgreSQL
+support when DATABASE_URL is configured and psycopg is available.
+"""
+
+from __future__ import annotations
+
+import ipaddress
+import hashlib
+import os
+import sqlite3
+import uuid
+from functools import lru_cache
+from datetime import datetime, timezone
+from pathlib import Path
+from urllib.parse import unquote
+from zoneinfo import ZoneInfo
+
+import requests
+from vpn_detection import detect_vpn_proxy
+
+_SQLITE_PATH = Path(__file__).resolve().parent / "legal_consents.db"
+_POSTGRES_URL = os.getenv("DATABASE_URL", "").strip()
+_DEFAULT_TIMEZONE = os.getenv("CONSENT_DEFAULT_TIMEZONE", "America/Chicago").strip()
+
+
+def ensure_timezone_cookie(st_module) -> None:
+    """
+    Installs a tiny client-side bridge that stores browser timezone and privacy
+    signals in cookies. This gives server-side Streamlit code best-effort access
+    to end-user timezone and opt-out signals (e.g., GPC/DNT).
+    """
+    marker_key = "_tz_cookie_bridge_installed"
+    if st_module.session_state.get(marker_key):
+        return
+    st_module.components.v1.html(
+        """
+        <script>
+        (function () {
+          try {
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+            if (!tz) return;
+            const tzOffset = -new Date().getTimezoneOffset();
+            document.cookie =
+              "scoop_tz=" + encodeURIComponent(tz) + "; path=/; max-age=31536000; samesite=lax";
+            document.cookie =
+              "scoop_tz_offset=" + encodeURIComponent(String(tzOffset)) + "; path=/; max-age=31536000; samesite=lax";
+
+            // Best-effort privacy signals (may be absent depending on browser).
+            // GPC: https://globalprivacycontrol.org/
+            const gpc = (typeof navigator.globalPrivacyControl === "boolean" && navigator.globalPrivacyControl) ? "1" : "0";
+            document.cookie =
+              "scoop_gpc=" + encodeURIComponent(gpc) + "; path=/; max-age=31536000; samesite=lax";
+
+            // DNT: legacy signal; often "1" for enabled.
+            const dntRaw = (navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack || "");
+            const dnt = (String(dntRaw) === "1" || String(dntRaw).toLowerCase() === "yes") ? "1" : "0";
+            document.cookie =
+              "scoop_dnt=" + encodeURIComponent(dnt) + "; path=/; max-age=31536000; samesite=lax";
+          } catch (e) {}
+        })();
+        </script>
+        """,
+        height=0,
+    )
+    st_module.session_state[marker_key] = True
+
+
+def _normalized_headers(st_module) -> dict[str, str]:
+    headers = {}
+    try:
+        raw_headers = getattr(getattr(st_module, "context", None), "headers", None)
+        if raw_headers:
+            for key, value in raw_headers.items():
+                headers[str(key).lower()] = str(value)
+    except Exception:
+        return {}
+    return headers
+
+
+def _get_ip(headers: dict[str, str]) -> str:
+    def _clean_candidate(value: str) -> str:
+        candidate = (value or "").strip().strip('"').strip("'")
+        if not candidate:
+            return ""
+        # RFC 7239 Forwarded header can include "for=<ip>:<port>" or "[ipv6]:port"
+        if candidate.startswith("for="):
+            candidate = candidate[4:].strip()
+        # Remove brackets around IPv6
+        if candidate.startswith("[") and "]" in candidate:
+            candidate = candidate[1:candidate.index("]")]
+        # Remove :port from IPv4 values
+        if candidate.count(":") == 1 and "." in candidate:
+            host_part, port_part = candidate.rsplit(":", 1)
+            if port_part.isdigit():
+                candidate = host_part
+        return candidate
+
+    def _valid_ip(value: str) -> str:
+        cleaned = _clean_candidate(value)
+        if not cleaned:
+            return ""
+        try:
+            return str(ipaddress.ip_address(cleaned))
+        except Exception:
+            return ""
+
+    forwarded = headers.get("forwarded", "")
+    if forwarded:
+        # Example: for=203.0.113.60;proto=https;by=203.0.113.43
+        first_part = forwarded.split(",")[0]
+        for token in first_part.split(";"):
+            token = token.strip()
+            if token.lower().startswith("for="):
+                ip_val = _valid_ip(token)
+                if ip_val:
+                    return ip_val
+
+    xff = headers.get("x-forwarded-for", "")
+    if xff:
+        first_hop = xff.split(",")[0].strip()
+        ip_val = _valid_ip(first_hop)
+        if ip_val:
+            return ip_val
+
+    for key in (
+        "x-real-ip",
+        "cf-connecting-ip",
+        "true-client-ip",
+        "x-client-ip",
+        "x-original-forwarded-for",
+        "x-envoy-external-address",
+        "fly-client-ip",
+        "x-appengine-user-ip",
+    ):
+        ip_val = _valid_ip(headers.get(key, ""))
+        if ip_val:
+            return ip_val
+
+    # Local development fallback for localhost runs.
+    host = headers.get("host", "").lower()
+    if "localhost" in host or host.startswith("127.0.0.1"):
+        return "127.0.0.1"
+    return "unknown"
+
+
+def _ensure_sqlite_schema(conn: sqlite3.Connection) -> None:
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS legal_consents (
+            id TEXT PRIMARY KEY,
+            timestamp_utc TEXT NOT NULL,
+            timestamp_local TEXT,
+            timezone_name TEXT,
+            timezone_offset INTEGER,
+            ip_address TEXT NOT NULL,
+            user_agent TEXT NOT NULL,
+            tos_version TEXT NOT NULL,
+            fingerprint_hash TEXT NOT NULL,
+            consent_action TEXT NOT NULL,
+            is_vpn INTEGER,
+            vpn_service_provider TEXT,
+            gpc_signal INTEGER,
+            manual_opt_out INTEGER,
+            opt_out_effective INTEGER,
+            opt_out_source TEXT,
+            tracking_mode TEXT
+        )
+        """
+    )
+    # Backward-compatible upgrades for existing DB files.
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(legal_consents)").fetchall()}
+    if "timestamp_local" not in cols:
+        conn.execute("ALTER TABLE legal_consents ADD COLUMN timestamp_local TEXT")
+    if "timezone_name" not in cols:
+        conn.execute("ALTER TABLE legal_consents ADD COLUMN timezone_name TEXT")
+    if "timezone_offset" not in cols:
+        conn.execute("ALTER TABLE legal_consents ADD COLUMN timezone_offset INTEGER")
+    if "is_vpn" not in cols:
+        conn.execute("ALTER TABLE legal_consents ADD COLUMN is_vpn INTEGER")
+    if "vpn_service_provider" not in cols:
+        conn.execute("ALTER TABLE legal_consents ADD COLUMN vpn_service_provider TEXT")
+    if "gpc_signal" not in cols:
+        conn.execute("ALTER TABLE legal_consents ADD COLUMN gpc_signal INTEGER")
+    if "manual_opt_out" not in cols:
+        conn.execute("ALTER TABLE legal_consents ADD COLUMN manual_opt_out INTEGER")
+    if "opt_out_effective" not in cols:
+        conn.execute("ALTER TABLE legal_consents ADD COLUMN opt_out_effective INTEGER")
+    if "opt_out_source" not in cols:
+        conn.execute("ALTER TABLE legal_consents ADD COLUMN opt_out_source TEXT")
+    if "tracking_mode" not in cols:
+        conn.execute("ALTER TABLE legal_consents ADD COLUMN tracking_mode TEXT")
+    conn.execute(
+        """
+        CREATE TRIGGER IF NOT EXISTS legal_consents_no_update
+        BEFORE UPDATE ON legal_consents
+        BEGIN
+            SELECT RAISE(ABORT, 'legal_consents is append-only');
+        END;
+        """
+    )
+    conn.execute(
+        """
+        CREATE TRIGGER IF NOT EXISTS legal_consents_no_delete
+        BEFORE DELETE ON legal_consents
+        BEGIN
+            SELECT RAISE(ABORT, 'legal_consents is append-only');
+        END;
+        """
+    )
+    conn.commit()
+
+
+def _insert_sqlite(record: dict[str, str]) -> None:
+    with sqlite3.connect(_SQLITE_PATH) as conn:
+        _ensure_sqlite_schema(conn)
+        conn.execute(
+            """
+            INSERT INTO legal_consents (
+                id, timestamp_utc, timestamp_local, timezone_name, timezone_offset, ip_address, user_agent,
+                tos_version, fingerprint_hash, consent_action, is_vpn, vpn_service_provider,
+                gpc_signal, manual_opt_out, opt_out_effective, opt_out_source, tracking_mode
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                record["id"],
+                record["timestamp_utc"],
+                record["timestamp_local"],
+                record["timezone_name"],
+                record["timezone_offset"],
+                record["ip_address"],
+                record["user_agent"],
+                record["tos_version"],
+                record["fingerprint_hash"],
+                record["consent_action"],
+                None if record["is_vpn"] is None else (1 if record["is_vpn"] else 0),
+                record["vpn_service_provider"],
+                None if record.get("gpc_signal") is None else (1 if record["gpc_signal"] else 0),
+                None if record.get("manual_opt_out") is None else (1 if record["manual_opt_out"] else 0),
+                None if record.get("opt_out_effective") is None else (1 if record["opt_out_effective"] else 0),
+                record.get("opt_out_source"),
+                record.get("tracking_mode"),
+            ),
+        )
+        conn.commit()
+
+
+def _insert_postgres(record: dict[str, str]) -> bool:
+    if not _POSTGRES_URL:
+        return False
+    try:
+        import psycopg
+    except Exception:
+        return False
+
+    sql_with_vpn = """
+        INSERT INTO legal_consents (
+            id, timestamp_utc, timestamp_local, timezone_name, timezone_offset, ip_address, user_agent,
+            tos_version, fingerprint_hash, consent_action, is_vpn, vpn_service_provider,
+            gpc_signal, manual_opt_out, opt_out_effective, opt_out_source, tracking_mode
+        )
+        VALUES (%s::uuid, %s::timestamptz, %s::timestamptz, %s, %s, %s::inet, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """
+    sql_with_timezone = """
+        INSERT INTO legal_consents (
+            id, timestamp_utc, timestamp_local, timezone_name, ip_address, user_agent,
+            tos_version, fingerprint_hash, consent_action,
+            gpc_signal, manual_opt_out, opt_out_effective, opt_out_source, tracking_mode
+        )
+        VALUES (%s::uuid, %s::timestamptz, %s::timestamptz, %s, %s::inet, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """
+    sql_legacy = """
+        INSERT INTO legal_consents (
+            id, timestamp_utc, ip_address, user_agent,
+            tos_version, fingerprint_hash, consent_action,
+            gpc_signal, manual_opt_out, opt_out_effective, opt_out_source, tracking_mode
+        )
+        VALUES (%s::uuid, %s::timestamptz, %s::inet, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+    """
+    ip_for_db = record["ip_address"] if record["ip_address"] != "unknown" else "0.0.0.0"
+    with psycopg.connect(_POSTGRES_URL) as conn:
+        with conn.cursor() as cur:
+            try:
+                cur.execute(
+                    sql_with_vpn,
+                    (
+                        record["id"],
+                        record["timestamp_utc"],
+                        record["timestamp_local"],
+                        record["timezone_name"],
+                        record["timezone_offset"],
+                        ip_for_db,
+                        record["user_agent"],
+                        record["tos_version"],
+                        record["fingerprint_hash"],
+                        record["consent_action"],
+                        record["is_vpn"],
+                        record["vpn_service_provider"],
+                        record.get("gpc_signal"),
+                        record.get("manual_opt_out"),
+                        record.get("opt_out_effective"),
+                        record.get("opt_out_source"),
+                        record.get("tracking_mode"),
+                    ),
+                )
+            except Exception:
+                try:
+                    cur.execute(
+                        sql_with_timezone,
+                        (
+                            record["id"],
+                            record["timestamp_utc"],
+                            record["timestamp_local"],
+                            record["timezone_name"],
+                            ip_for_db,
+                            record["user_agent"],
+                            record["tos_version"],
+                            record["fingerprint_hash"],
+                            record["consent_action"],
+                            record.get("gpc_signal"),
+                            record.get("manual_opt_out"),
+                            record.get("opt_out_effective"),
+                            record.get("opt_out_source"),
+                            record.get("tracking_mode"),
+                        ),
+                    )
+                except Exception:
+                    cur.execute(
+                        sql_legacy,
+                        (
+                            record["id"],
+                            record["timestamp_utc"],
+                            ip_for_db,
+                            record["user_agent"],
+                            record["tos_version"],
+                            record["fingerprint_hash"],
+                            record["consent_action"],
+                            record.get("gpc_signal"),
+                            record.get("manual_opt_out"),
+                            record.get("opt_out_effective"),
+                            record.get("opt_out_source"),
+                            record.get("tracking_mode"),
+                        ),
+                    )
+        conn.commit()
+    return True
+
+
+def _cookie_value(headers: dict[str, str], cookie_name: str) -> str:
+    cookie_header = headers.get("cookie", "")
+    if not cookie_header:
+        return ""
+    for part in cookie_header.split(";"):
+        item = part.strip()
+        if item.startswith(f"{cookie_name}="):
+            return unquote(item.split("=", 1)[1]).strip()
+    return ""
+
+
+def _best_effort_bool(value: str) -> bool | None:
+    if value is None:
+        return None
+    lowered = str(value).strip().lower()
+    if lowered in ("1", "true", "t", "yes", "y", "on"):
+        return True
+    if lowered in ("0", "false", "f", "no", "n", "off", ""):
+        return False
+    return None
+
+
+def _resolve_opt_out_signals(st_module, headers: dict[str, str]) -> tuple[bool | None, bool | None, bool, str, str]:
+    """
+    Returns (gpc_signal, manual_opt_out, opt_out_effective, opt_out_source, tracking_mode).
+    - gpc_signal: derived from Sec-GPC header and/or `scoop_gpc` cookie (best-effort)
+    - manual_opt_out: derived from session state and/or `scoop_manual_opt_out` cookie (best-effort)
+    - opt_out_effective: True if any opt-out signal is present/enabled (GPC/DNT/manual)
+    - tracking_mode: "essential_only" when opted-out else "standard"
+    """
+    # Browser GPC can come via request header or our JS-set cookie.
+    gpc_header = headers.get("sec-gpc", "").strip()
+    gpc_cookie = _cookie_value(headers, "scoop_gpc")
+    gpc_signal = None
+    if gpc_header:
+        gpc_signal = True if gpc_header == "1" else False
+    else:
+        gpc_signal = _best_effort_bool(gpc_cookie)
+
+    # Legacy DNT: header or our JS-set cookie.
+    dnt_header = headers.get("dnt", "").strip()
+    dnt_cookie = _cookie_value(headers, "scoop_dnt")
+    dnt_signal = None
+    if dnt_header:
+        dnt_signal = True if dnt_header == "1" else False
+    else:
+        dnt_signal = _best_effort_bool(dnt_cookie)
+
+    # Manual opt-out: allow Streamlit code to set session_state["manual_opt_out"]
+    # or via cookie set by a future UI control.
+    manual_cookie = _cookie_value(headers, "scoop_manual_opt_out")
+    manual_from_state = st_module.session_state.get("manual_opt_out")
+    manual_opt_out = _best_effort_bool(manual_from_state) if manual_from_state is not None else _best_effort_bool(manual_cookie)
+
+    sources: list[str] = []
+    if gpc_signal is True:
+        sources.append("gpc")
+    if dnt_signal is True:
+        sources.append("dnt")
+    if manual_opt_out is True:
+        sources.append("manual")
+    opt_out_effective = bool(sources)
+    opt_out_source = ",".join(sources) if sources else "none"
+    tracking_mode = "essential_only" if opt_out_effective else "standard"
+    return gpc_signal, manual_opt_out, opt_out_effective, opt_out_source, tracking_mode
+
+
+@lru_cache(maxsize=2048)
+def _timezone_from_public_ip(ip_value: str) -> str:
+    fallback_tz = _DEFAULT_TIMEZONE if _DEFAULT_TIMEZONE else "UTC"
+    try:
+        ip_obj = ipaddress.ip_address(ip_value)
+        if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved:
+            return fallback_tz
+    except Exception:
+        return fallback_tz
+
+    try:
+        resp = requests.get(
+            f"https://ip-api.com/json/{ip_value}?fields=status,timezone",
+            timeout=2.0,
+        )
+        if resp.ok:
+            payload = resp.json()
+            tz_name = payload.get("timezone", "")
+            if payload.get("status") == "success" and tz_name:
+                ZoneInfo(tz_name)  # validate
+                return tz_name
+    except Exception:
+        pass
+    return fallback_tz
+
+
+def _resolve_timezone(headers: dict[str, str], ip_address: str) -> str:
+    cookie_header = headers.get("cookie", "")
+    if cookie_header:
+        for part in cookie_header.split(";"):
+            item = part.strip()
+            if item.startswith("scoop_tz="):
+                tz_name = unquote(item.split("=", 1)[1]).strip()
+                try:
+                    ZoneInfo(tz_name)
+                    return tz_name
+                except Exception:
+                    pass
+
+    for key in ("x-timezone", "timezone", "x-time-zone"):
+        tz_name = headers.get(key, "").strip()
+        if tz_name:
+            try:
+                ZoneInfo(tz_name)
+                return tz_name
+            except Exception:
+                continue
+    return _timezone_from_public_ip(ip_address)
+
+
+def _resolve_timezone_offset(headers: dict[str, str], tz_name: str) -> int:
+    cookie_header = headers.get("cookie", "")
+    if cookie_header:
+        for part in cookie_header.split(";"):
+            item = part.strip()
+            if item.startswith("scoop_tz_offset="):
+                raw_val = unquote(item.split("=", 1)[1]).strip()
+                try:
+                    return int(raw_val)
+                except Exception:
+                    pass
+    try:
+        now_utc = datetime.now(timezone.utc)
+        offset = now_utc.astimezone(ZoneInfo(tz_name)).utcoffset()
+        if offset is not None:
+            return int(offset.total_seconds() // 60)
+    except Exception:
+        pass
+    return 0
+
+
+def _to_local_iso(utc_iso: str, tz_name: str) -> str:
+    dt_utc = datetime.fromisoformat(utc_iso)
+    try:
+        return dt_utc.astimezone(ZoneInfo(tz_name)).isoformat()
+    except Exception:
+        return dt_utc.isoformat()
+
+
+def log_terms_acceptance(
+    st_module,
+    consent_key: str,
+    tos_version: str = "2026-03-16",
+    consent_action: str = "click_wrap_accept",
+) -> None:
+    """
+    Logs one acceptance event per Streamlit session for a given consent_key.
+    """
+    marker_key = f"_legal_consent_logged::{consent_key}"
+    if st_module.session_state.get(marker_key):
+        return
+
+    headers = _normalized_headers(st_module)
+    ip_address = _get_ip(headers)
+    user_agent = headers.get("user-agent", "unknown")
+    accept_language = headers.get("accept-language", "unknown")
+    platform_hint = headers.get("sec-ch-ua-platform", "unknown")
+    timezone_name = _resolve_timezone(headers, ip_address)
+    timezone_offset = _resolve_timezone_offset(headers, timezone_name)
+    gpc_signal, manual_opt_out, opt_out_effective, opt_out_source, tracking_mode = _resolve_opt_out_signals(
+        st_module,
+        headers,
+    )
+
+    # Stable fingerprint hash (server-side approximation without login):
+    # intentionally excludes per-session/page-specific values so repeat users
+    # correlate across visits.
+    raw_fp = "|".join(
+        (
+            user_agent,
+            accept_language,
+            platform_hint,
+        )
+    )
+    fingerprint_hash = hashlib.sha256(raw_fp.encode("utf-8")).hexdigest()
+    is_vpn, vpn_service_provider = detect_vpn_proxy(ip_address)
+
+    record = {
+        "id": str(uuid.uuid4()),
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "timezone_name": timezone_name,
+        "timezone_offset": timezone_offset,
+        "ip_address": ip_address,
+        "user_agent": user_agent,
+        "tos_version": tos_version,
+        "fingerprint_hash": fingerprint_hash,
+        "consent_action": consent_action,
+        "is_vpn": is_vpn,
+        "vpn_service_provider": vpn_service_provider,
+        "gpc_signal": gpc_signal,
+        "manual_opt_out": manual_opt_out,
+        "opt_out_effective": opt_out_effective,
+        "opt_out_source": opt_out_source,
+        "tracking_mode": tracking_mode,
+    }
+    record["timestamp_local"] = _to_local_iso(record["timestamp_utc"], timezone_name)
+
+    try:
+        inserted_pg = _insert_postgres(record)
+        if not inserted_pg:
+            _insert_sqlite(record)
+        st_module.session_state[marker_key] = True
+    except Exception:
+        # Never block user flow on logging failures.
+        pass
+

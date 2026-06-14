@@ -1,0 +1,25 @@
+# Environment / secrets (never commit real credentials)
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Data and Models (Keep the code, ignore the heavy weights)
+*.csv
+*.joblib
+
+# Local consent log from legal_consent_logger.py (may contain PII)
+legal_consents.db
+
+# OS files
+.DS_Store
+Thumbs.db

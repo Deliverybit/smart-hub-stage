@@ -1,0 +1,1231 @@
+"""
+New Crypto
+Screens newer / emerging cryptocurrencies (available on Coinbase) for
+those trading at or near their 52-week low **and** whose recent
+headlines do NOT contain signals of fraud, scams, or rug-pulls.
+"""
+
+import streamlit as st
+import pandas as pd
+from datetime import datetime
+from textblob import TextBlob
+from legal_consent_logger import ensure_timezone_cookie, log_terms_acceptance
+from branding import logo_path_str
+from market_data import MarketData
+from app_config import get_screener_symbol_limit
+import html
+
+# ── Page config ───────────────────────────────────────────────────────
+st.set_page_config(
+    page_title="New Crypto",
+    page_icon=logo_path_str(),
+    layout="wide",
+)
+
+
+@st.cache_resource
+def get_market_data():
+    return MarketData()
+
+# ── Global responsive styling (shared with app.py) ────────────────────
+st.markdown(
+    """
+    <style>
+    /* ===== DESKTOP / HIGH-RES ===== */
+    html, body, [class*="css"] {
+        font-size: 30px !important;
+        line-height: 1.7 !important;
+    }
+    h1 { font-size: 5rem !important; font-weight: 800 !important; }
+    h2 { font-size: 3.2rem !important; }
+    h3 { font-size: 2.6rem !important; }
+    h4 { font-size: 2.1rem !important; }
+    p, li, span, div { font-size: 1.6rem !important; line-height: 1.75 !important; }
+    .stMarkdown p { font-size: 1.6rem !important; }
+    /* Metrics */
+    [data-testid="stMetricValue"] > div { font-size: 4rem !important; font-weight: 700 !important; }
+    [data-testid="stMetricLabel"] > div > div > p,
+    [data-testid="stMetricLabel"] label { font-size: 1.7rem !important; }
+    [data-testid="stMetricDelta"] > div { font-size: 1.5rem !important; }
+    /* Alerts */
+    .stAlert p, [data-testid="stAlert"] p { font-size: 1.6rem !important; }
+    .stSuccess p, .stWarning p, .stInfo p { font-size: 1.6rem !important; }
+    /* Slider */
+    .stSlider label { font-size: 1.6rem !important; margin-bottom: 1rem !important; }
+    .stSlider p { font-size: 1.5rem !important; }
+    .stSlider [data-testid="stThumbValue"] { margin-bottom: 0.5rem !important; }
+    /* Buttons */
+    .stButton button, button[kind="primary"] {
+        font-size: 1.7rem !important;
+        padding: 1.1rem 2.2rem !important;
+        min-height: 4rem !important;
+    }
+    /* Primary button — light blue */
+    .stMainBlockContainer > div > div > .stButton button[kind="primary"],
+    button[kind="primary"] {
+        background-color: #60a5fa !important;
+        border-color: #60a5fa !important;
+        color: #fff !important;
+    }
+    button[kind="primary"]:hover {
+        background-color: #93c5fd !important;
+        border-color: #93c5fd !important;
+    }
+    /* Captions */
+    .stCaption p, [data-testid="stCaptionContainer"] p { font-size: 1.4rem !important; }
+    /* Subheaders inside columns */
+    [data-testid="stHorizontalBlock"] h2,
+    [data-testid="stHorizontalBlock"] h3 { font-size: 2.2rem !important; }
+    /* st.table (HTML) */
+    [data-testid="stTable"] table { width: 100% !important; }
+    [data-testid="stTable"] th {
+        font-size: 1.6rem !important; font-weight: 700 !important; padding: 14px 18px !important;
+    }
+    [data-testid="stTable"] td {
+        font-size: 1.6rem !important; padding: 12px 18px !important;
+    }
+    /* Custom HTML results table & markdown tables */
+    .stMarkdown table { width: 100% !important; border-collapse: collapse !important; }
+    .stMarkdown table th {
+        font-size: 1.6rem !important; font-weight: 700 !important;
+        padding: 14px 18px !important; text-align: left !important;
+        border-bottom: 2px solid #444 !important;
+    }
+    .stMarkdown table td {
+        font-size: 1.6rem !important; padding: 12px 18px !important;
+        border-bottom: 1px solid #333 !important;
+    }
+    .stMarkdown table tr:hover { background: rgba(255,255,255,0.04) !important; }
+
+    /* Custom tooltip — appears ABOVE the element, interactive */
+    .tip-wrap {
+        position: relative !important;
+        cursor: help !important;
+        border-bottom: 1px dashed #888 !important;
+    }
+    .tip-wrap .tip-text {
+        visibility: hidden !important;
+        opacity: 0 !important;
+        position: absolute !important;
+        bottom: calc(100% + 12px) !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        min-width: 360px !important;
+        max-width: 700px !important;
+        background: #1e1e2f !important;
+        color: #e2e8f0 !important;
+        border: 1px solid #555 !important;
+        border-radius: 8px !important;
+        padding: 16px 20px !important;
+        font-size: 0.95rem !important;
+        line-height: 1.5 !important;
+        font-weight: 400 !important;
+        white-space: normal !important;
+        z-index: 9999 !important;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.45) !important;
+        pointer-events: auto !important;
+        transition: opacity 0.15s ease-in-out, visibility 0.15s ease-in-out !important;
+        overflow-y: visible !important;
+        max-height: none !important;
+    }
+    .tip-wrap .tip-text::before {
+        content: "" !important;
+        position: absolute !important;
+        bottom: -14px !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 14px !important;
+    }
+    .tip-wrap .tip-text::after {
+        content: "" !important;
+        position: absolute !important;
+        top: 100% !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        border-width: 8px !important;
+        border-style: solid !important;
+        border-color: #1e1e2f transparent transparent transparent !important;
+    }
+    .tip-wrap:hover .tip-text,
+    .tip-wrap .tip-text:hover {
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    .tip-wrap .tip-text a {
+        color: #60a5fa !important;
+        text-decoration: underline !important;
+        font-weight: 500 !important;
+    }
+    .tip-wrap .tip-text a:hover {
+        color: #93c5fd !important;
+    }
+
+    @media (min-width: 769px) {
+        /* Full Results: keep header tooltips above the hovered heading so rows stay readable */
+        .full-results-table thead .tip-wrap .tip-text {
+            bottom: calc(100% + 12px) !important;
+            top: auto !important;
+        }
+        .full-results-table thead .tip-wrap .tip-text::before {
+            bottom: -14px !important;
+            top: auto !important;
+        }
+        .full-results-table thead .tip-wrap .tip-text::after {
+            top: 100% !important;
+            bottom: auto !important;
+            border-color: #1e1e2f transparent transparent transparent !important;
+        }
+        @supports (position-anchor: auto) {
+            .full-results-table thead .tip-wrap .tip-text {
+                position: fixed !important;
+                left: anchor(center) !important;
+                top: anchor(top) !important;
+                bottom: auto !important;
+                transform: translate(-50%, calc(-100% - 12px)) !important;
+                max-width: min(700px, calc(100vw - 2rem)) !important;
+            }
+        }
+    }
+
+    /* Desktop/webview only: Headlines — narrow wrap + beside trigger (anchor) / right-edge fallback; mobile unchanged */
+    @media (min-width: 769px) {
+        .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip {
+            display: inline-block !important;
+            padding: 0.2rem 0.45rem !important;
+            margin: -0.1rem -0.25rem !important;
+        }
+        .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text {
+            display: block !important;
+            position: fixed !important;
+            left: auto !important;
+            right: max(0.75rem, env(safe-area-inset-right, 0px)) !important;
+            top: max(0.75rem, env(safe-area-inset-top, 0px)) !important;
+            bottom: auto !important;
+            transform: none !important;
+            /* Same top-down panel every row so scroll position does not move it */
+            --hl-pop-w: min(17rem, 32vw);
+            --hl-pop-h: min(calc(100vh - 1.5rem), 42rem);
+            width: var(--hl-pop-w) !important;
+            min-width: var(--hl-pop-w) !important;
+            max-width: var(--hl-pop-w) !important;
+            height: var(--hl-pop-h) !important;
+            min-height: var(--hl-pop-h) !important;
+            max-height: var(--hl-pop-h) !important;
+            overflow-x: hidden !important;
+            overflow-y: scroll !important;
+            scrollbar-gutter: stable !important;
+            scrollbar-width: thin !important;
+            scrollbar-color: #94a3b8 #111827 !important;
+            -webkit-overflow-scrolling: touch !important;
+            white-space: normal !important;
+            text-align: left !important;
+            word-break: break-word !important;
+            overflow-wrap: anywhere !important;
+            z-index: 100020 !important;
+            padding: 0.85rem 1rem !important;
+            box-sizing: border-box !important;
+        }
+        .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text::-webkit-scrollbar {
+            width: 10px !important;
+        }
+        .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text::-webkit-scrollbar-track {
+            background: #111827 !important;
+            border-radius: 999px !important;
+        }
+        .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text::-webkit-scrollbar-thumb {
+            background: #94a3b8 !important;
+            border: 2px solid #111827 !important;
+            border-radius: 999px !important;
+        }
+        .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .hl-tip-heading {
+            display: block !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 1 !important;
+            margin: 0 0 0.55rem 0 !important;
+            padding: 0 !important;
+            background: #1e1e2f !important;
+            color: #ffffff !important;
+            font-weight: 400 !important;
+            font-size: 1rem !important;
+            line-height: 1.2 !important;
+        }
+        .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text::before,
+        .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text::after {
+            display: none !important;
+        }
+        .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .headlines-tip-list {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.45rem !important;
+            min-width: 0 !important;
+        }
+        .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .hl-tip-line {
+            display: block !important;
+            padding: 0.45rem 0.25rem !important;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.35) !important;
+            line-height: 1.45 !important;
+            font-size: 0.88rem !important;
+            min-width: 0 !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+        .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .hl-tip-line:last-child {
+            border-bottom: none !important;
+        }
+        .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .hl-tip-line a {
+            word-break: break-word !important;
+            overflow-wrap: anywhere !important;
+        }
+        @supports (position-anchor: auto) {
+            .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text {
+                left: auto !important;
+                right: max(0.75rem, env(safe-area-inset-right, 0px)) !important;
+                top: max(0.75rem, env(safe-area-inset-top, 0px)) !important;
+                transform: none !important;
+            }
+        }
+    }
+
+    /* Sidebar — larger text & inputs */
+    [data-testid="stSidebar"] { min-width: 380px !important; }
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] div { font-size: 1.5rem !important; }
+    [data-testid="stSidebar"] h1 { font-size: 2.8rem !important; }
+    .sidebar-brand {
+        font-size: 60px !important;
+        font-weight: 400 !important;
+        color: #000000 !important;
+        line-height: 1.05 !important;
+        background: #ffffff !important;
+        display: block !important;
+        width: calc(100% + 2rem) !important;
+        margin: 0.15rem -1rem 140px -1rem !important;
+        padding: 0.7rem 1rem !important;
+        box-sizing: border-box !important;
+        white-space: nowrap !important;
+    }
+    .sidebar-brand-row {
+        display: inline-flex !important;
+        align-items: flex-end !important;
+        gap: 10px !important;
+    }
+    .sidebar-brand-text {
+        font-size: 60px !important;
+        font-weight: 400 !important;
+        color: #000000 !important;
+        text-decoration: underline !important;
+        text-underline-offset: 6px !important;
+    }
+    [data-testid="stSidebar"] .stButton button {
+        font-size: 1.6rem !important;
+        padding: 1.1rem 1.8rem !important;
+        min-height: 3.8rem !important;
+    }
+    [data-testid="stSidebar"] input {
+        font-size: 1.5rem !important;
+        padding: 0.9rem 1.1rem !important;
+        min-height: 3.4rem !important;
+    }
+    [data-testid="stSidebar"] .stSlider label { font-size: 1.5rem !important; }
+    [data-testid="stSidebar"] .stSlider p { font-size: 1.4rem !important; }
+    [data-testid="stSidebar"] .stCaption p { font-size: 1.3rem !important; }
+    [data-testid="stSidebar"] a { font-size: 1.5rem !important; }
+    /* Hide auto-generated multipage nav so we can use custom labels */
+    [data-testid="stSidebarNav"] { display: none !important; }
+    div[data-testid="stCheckbox"] {
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        padding: 0.5rem 0.8rem;
+        margin-top: 0.35rem;
+    }
+    div[data-testid="stCheckbox"] label p {
+        color: #e2e8f0 !important;
+        font-weight: 700 !important;
+    }
+
+    /* Full Results (custom HTML table): wide content scrolls inside wrapper */
+    .full-results-wrap {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        margin: 0.25rem 0 0.75rem 0 !important;
+        max-width: 100% !important;
+    }
+    .full-results-wrap .full-results-table {
+        display: table !important;
+        width: max(100%, max-content) !important;
+        border-collapse: collapse !important;
+        table-layout: auto !important;
+    }
+    /* Mobile card layout adds a left-hand label; hide it on desktop tables */
+    .full-results-wrap .full-results-table .fr-label {
+        display: none !important;
+    }
+    .full-results-mobile-legend {
+        display: none !important;
+    }
+
+    /* ===== MOBILE ===== */
+    @media (max-width: 768px) {
+        /* Mobile-friendly type scale (desktop unaffected) */
+        html, body, [class*="css"] { font-size: 18px !important; line-height: 1.55 !important; }
+        h1 { font-size: clamp(1.85rem, 6.3vw, 2.55rem) !important; line-height: 1.12 !important; }
+        h2 { font-size: clamp(1.48rem, 5.2vw, 2.05rem) !important; line-height: 1.18 !important; }
+        h3 { font-size: clamp(1.32rem, 4.7vw, 1.78rem) !important; line-height: 1.22 !important; }
+        h4 { font-size: clamp(1.2rem, 4.1vw, 1.55rem) !important; line-height: 1.28 !important; }
+
+        [data-testid="stMarkdownContainer"] p,
+        [data-testid="stMarkdownContainer"] li,
+        [data-testid="stMarkdownContainer"] span,
+        [data-testid="stMarkdownContainer"] div { font-size: clamp(1.08rem, 3.75vw, 1.28rem) !important; line-height: 1.68 !important; }
+
+        .stAlert p, [data-testid="stAlert"] p,
+        .stSuccess p, .stWarning p, .stInfo p, .stError p { font-size: clamp(1.08rem, 3.75vw, 1.28rem) !important; line-height: 1.68 !important; }
+
+        [data-testid="stMetricValue"] > div { font-size: clamp(1.95rem, 7.2vw, 2.8rem) !important; }
+        [data-testid="stMetricLabel"] > div > div > p { font-size: clamp(1.08rem, 3.75vw, 1.28rem) !important; }
+        [data-testid="stMetricDelta"] > div { font-size: clamp(1.04rem, 3.6vw, 1.22rem) !important; }
+
+        .stButton button { font-size: clamp(1.08rem, 3.75vw, 1.24rem) !important; padding: 0.8rem 1.15rem !important; }
+        .stCaption p { font-size: clamp(0.98rem, 3.4vw, 1.12rem) !important; }
+
+        /* Sticky disclaimer: keep readable but not overwhelming */
+        .disclaimer-footer {
+            font-size: clamp(0.76rem, 2.9vw, 0.92rem) !important;
+            line-height: 1.4 !important;
+        }
+        .disclaimer-footer strong {
+            font-size: clamp(0.78rem, 3vw, 0.94rem) !important;
+        }
+
+        /* Mobile: center hover tooltips so no horizontal scrolling is needed */
+        .tip-wrap .tip-text {
+            position: fixed !important;
+            left: 50% !important;
+            right: auto !important;
+            top: 20vh !important;
+            bottom: auto !important;
+            transform: translateX(-50%) !important;
+            width: 92vw !important;
+            max-width: 92vw !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+        }
+
+        /* Tables: scale vertically on mobile (more row height) */
+        [data-testid="stMarkdownContainer"] table th,
+        [data-testid="stMarkdownContainer"] table td,
+        [data-testid="stTable"] th,
+        [data-testid="stTable"] td {
+            padding-top: clamp(0.6rem, 2.6vw, 0.9rem) !important;
+            padding-bottom: clamp(0.6rem, 2.6vw, 0.9rem) !important;
+            line-height: 1.5 !important;
+            vertical-align: top !important;
+        }
+        [data-testid="stMarkdownContainer"] table td,
+        [data-testid="stMarkdownContainer"] table th {
+            font-size: clamp(0.95rem, 3.25vw, 1.08rem) !important;
+        }
+
+        /* Full Results (mobile cards): show the per-cell heading/label on mobile only */
+        .stMarkdown .full-results-wrap .full-results-table .fr-label {
+            display: inline-block !important;
+            font-weight: 800 !important;
+            color: #334155 !important;
+        }
+
+        /* Top Picks (mobile only): make each pick read as a single card. */
+        .stApp div[data-testid="metric-container"] {
+            margin: 0 !important;
+            padding: 0.75rem 0.85rem 0.65rem 0.85rem !important;
+            border: 1px solid #e2e8f0 !important;
+            border-bottom: none !important;
+            border-radius: 14px 14px 0 0 !important;
+            background: #ffffff !important;
+        }
+        .stApp div[data-testid="metric-container"] [data-testid="stMetricLabel"] p {
+            font-size: 1.15rem !important;
+        }
+        .stApp div[data-testid="metric-container"] [data-testid="stMetricValue"] > div {
+            font-size: 1.9rem !important;
+            line-height: 1.1 !important;
+        }
+        .stApp div[data-testid="metric-container"] [data-testid="stMetricDelta"] > div {
+            font-size: 1.1rem !important;
+        }
+        .stApp div[data-testid="metric-container"] + div[data-testid="stMarkdownContainer"] {
+            margin: 0 0 1.15rem 0 !important;
+            padding: 0.6rem 0.85rem 0.85rem 0.85rem !important;
+            border: 1px solid #e2e8f0 !important;
+            border-top: none !important;
+            border-radius: 0 0 14px 14px !important;
+            background: #ffffff !important;
+        }
+        .stApp div[data-testid="metric-container"] + div[data-testid="stMarkdownContainer"] div {
+            font-size: 1.15rem !important;
+            line-height: 1.55 !important;
+        }
+
+        /* Full Results — column tips panel (optional) */
+        .stMarkdown .full-results-mobile-legend {
+            display: block !important;
+            margin: 0 0 1rem 0 !important;
+            padding: 0.65rem 0.75rem !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 10px !important;
+            background: #f8fafc !important;
+            font-size: clamp(0.9rem, 0.5rem + 2.2vw, 1rem) !important;
+        }
+        .stMarkdown .full-results-mobile-legend .fr-mobile-tip-row {
+            margin-bottom: 0.65rem !important;
+            padding-bottom: 0.65rem !important;
+            border-bottom: 1px solid #e5e7eb !important;
+        }
+        .stMarkdown .full-results-mobile-legend .fr-mobile-tip-row:last-child {
+            border-bottom: none !important;
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        .stMarkdown .full-results-mobile-legend p {
+            margin: 0.35rem 0 0 0 !important;
+            color: #334155 !important;
+            line-height: 1.45 !important;
+        }
+        .stMarkdown .full-results-mobile-legend strong {
+            color: #1e293b !important;
+        }
+
+        /* Full Results — mobile: one vertical card per row (desktop: unchanged table) */
+        .stMarkdown .full-results-wrap {
+            margin-left: -0.5rem !important;
+            margin-right: -0.5rem !important;
+            width: calc(100% + 1rem) !important;
+            max-width: 100vw !important;
+            box-sizing: border-box !important;
+            padding: 0 0.2rem max(1rem, env(safe-area-inset-bottom)) !important;
+            overflow-x: visible !important;
+            overflow-y: visible !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table thead {
+            display: none !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody tr {
+            display: block !important;
+            width: 100% !important;
+            margin: 0 0 1rem 0 !important;
+            padding: 0.5rem 0.65rem !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+            background: #fafafa !important;
+            box-sizing: border-box !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td {
+            display: grid !important;
+            grid-template-columns: minmax(0, 42%) minmax(0, 58%) !important;
+            gap: 0.35rem 0.65rem !important;
+            align-items: start !important;
+            padding: 0.48rem 0 !important;
+            border: none !important;
+            border-bottom: 1px solid #e5e7eb !important;
+            font-size: clamp(0.95rem, 0.52rem + 2.4vw, 1.08rem) !important;
+            line-height: 1.4 !important;
+            width: 100% !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody tr td:last-child {
+            border-bottom: none !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td::before {
+            content: "" !important;
+            display: none !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label {
+            font-weight: 700 !important;
+            color: #475569 !important;
+            min-width: 0 !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap {
+            display: inline-block !important;
+            max-width: 100% !important;
+            white-space: normal !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val {
+            min-width: 0 !important;
+            text-align: right !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+
+        /* Tooltips — fit viewport on phones */
+        .stMarkdown .tip-wrap .tip-text {
+            position: fixed !important;
+            left: max(0.65rem, env(safe-area-inset-left, 0px)) !important;
+            right: max(0.65rem, env(safe-area-inset-right, 0px)) !important;
+            top: max(10vh, calc(env(safe-area-inset-top, 0px) + 0.5rem)) !important;
+            bottom: auto !important;
+            width: auto !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            max-height: min(72vh, 28rem) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            transform: none !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            word-break: break-word !important;
+            overflow-wrap: anywhere !important;
+            text-align: left !important;
+            z-index: 100001 !important;
+        }
+        .stMarkdown .tip-wrap .tip-text::before,
+        .stMarkdown .tip-wrap .tip-text::after {
+            display: none !important;
+        }
+
+        [data-testid="stHorizontalBlock"] { flex-wrap: wrap !important; }
+        [data-testid="stHorizontalBlock"] > div { flex: 1 1 100% !important; min-width: 100% !important; }
+        [data-testid="stSidebar"] { min-width: 280px !important; }
+
+        /* Sidebar brand title (The Scoop 52): larger on mobile only */
+        .sidebar-brand-text,
+        [data-testid="stSidebar"] #scoop-title {
+            font-size: clamp(2.6rem, 11vw, 3.8rem) !important;
+            line-height: 1.05 !important;
+        }
+
+        /* Mobile: reduce gap under the Scoop 52 title */
+        .sidebar-brand {
+            margin: 0.15rem -1rem 1.1rem -1rem !important;
+            padding: 0.55rem 1rem !important;
+        }
+
+        /* Sidebar page links: larger on mobile only */
+        [data-testid="stSidebar"] [data-testid="stPageLink"] a,
+        [data-testid="stSidebar"] [data-testid="stPageLink"] span,
+        [data-testid="stSidebar"] [data-testid="stPageLink"] p {
+            font-size: clamp(1.25rem, 4.6vw, 1.55rem) !important;
+            line-height: 1.25 !important;
+        }
+    }
+
+    /* ===== TABLET ===== */
+    @media (min-width: 769px) and (max-width: 1200px) {
+        html, body, [class*="css"] { font-size: 26px !important; }
+        h1 { font-size: 3.4rem !important; }
+        [data-testid="stMetricValue"] > div { font-size: 3.2rem !important; }
+        [data-testid="stHorizontalBlock"] { flex-wrap: wrap !important; }
+        [data-testid="stHorizontalBlock"] > div { flex: 1 1 48% !important; min-width: 48% !important; }
+    }
+    [data-testid="stSidebar"] #scoop-title {
+        font-size: 60px !important;
+        line-height: 1.05 !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ── Custom sidebar navigation ─────────────────────────────────────────
+st.sidebar.image(logo_path_str(), use_container_width=True)
+st.sidebar.markdown(
+    """
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-row">
+        <span id="scoop-title" class="sidebar-brand-text" style="font-size:60px !important;line-height:1.05 !important;">The Scoop 52</span>
+      </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+st.sidebar.page_link("pages/1_NYSE_Top_10.py", label="📊 NYSE 10")
+st.sidebar.page_link("pages/2_NASDAQ_Top_10.py", label="💹 NASDAQ 10")
+st.sidebar.page_link("pages/3_Crypto_Top_10.py", label="🪙 Crypto 10")
+st.sidebar.page_link("pages/4_New_Crypto_Top_10.py", label="🚀 New Crypto 10")
+st.sidebar.page_link("pages/5_CME_Top_10.py", label="🌾 CME Commodities 10")
+st.sidebar.page_link("pages/6_ICE_Top_10.py", label="🛢️ ICE Commodities 10")
+st.sidebar.page_link("app.py", label="🔎 Search")
+st.sidebar.markdown("---")
+st.sidebar.page_link("pages/7_Terms_of_Service.py", label="📜 Terms of Service")
+agreed = st.session_state.get("agree_terms_new_crypto", False)
+ensure_timezone_cookie(st)
+if agreed:
+    log_terms_acceptance(st, consent_key="agree_terms_new_crypto")
+
+# ── Constants ─────────────────────────────────────────────────────────
+# Newer / emerging cryptocurrencies from tier-1 exchanges.
+# Each entry: (name, launch_date, exchanges)
+CRYPTO_INFO = {
+    # Layer 1 / New Chains
+    "SUI20947-USD": ("Sui",            "2023-05-03", "Coinbase, Binance, Kraken, KuCoin"),
+    "SEI-USD":   ("Sei",               "2023-08-15", "Coinbase, Binance, KuCoin"),
+    "APT21794-USD": ("Aptos",          "2022-10-19", "Coinbase, Binance, Kraken, KuCoin"),
+    "TIA-USD":   ("Celestia",          "2023-10-31", "Coinbase, Binance, Kraken, KuCoin"),
+    "MANTA-USD": ("Manta Network",     "2024-01-18", "Binance, KuCoin"),
+    "BLUR-USD":  ("Blur",              "2023-02-14", "Coinbase, Binance, KuCoin"),
+    "JTO-USD":   ("Jito",              "2023-12-07", "Coinbase, Binance, KuCoin"),
+    "JUP29210-USD": ("Jupiter",        "2024-01-31", "Coinbase, Binance, Kraken, KuCoin"),
+    "PYTH-USD":  ("Pyth Network",      "2023-11-20", "Coinbase, Binance, Kraken, KuCoin"),
+    "W-USD":     ("Wormhole",          "2024-04-03", "Coinbase, Binance, KuCoin"),
+    "ENA-USD":   ("Ethena",            "2024-04-02", "Coinbase, Binance, Kraken, KuCoin"),
+    "ONDO-USD":  ("Ondo Finance",      "2024-01-18", "Coinbase, Binance, KuCoin"),
+    "EIGEN-USD": ("EigenLayer",        "2024-10-01", "Coinbase, Binance, KuCoin"),
+    # AI / DePin
+    "FET-USD":   ("Fetch.ai",          "2019-03-28", "Coinbase, Binance, Kraken, KuCoin"),
+    "RENDER-USD": ("Render",           "2020-06-10", "Coinbase, Binance, Kraken, KuCoin"),
+    "AKT-USD":   ("Akash Network",     "2021-03-08", "Coinbase, Binance, Kraken, KuCoin"),
+    "AR-USD":    ("Arweave",           "2018-06-08", "Coinbase, Binance, Kraken, KuCoin"),
+    "TAO22974-USD": ("Bittensor",      "2023-03-06", "Coinbase, Binance, KuCoin"),
+    "AIOZ-USD":  ("AIOZ Network",      "2021-04-20", "Binance, KuCoin"),
+    "GLM-USD":   ("Golem",             "2016-11-18", "Coinbase, Binance, Kraken, KuCoin"),
+    "OCEAN-USD": ("Ocean Protocol",    "2019-05-06", "Coinbase, Binance, Kraken, KuCoin"),
+    # Meme / Community (newer waves)
+    "PEPE24478-USD": ("Pepe",          "2023-04-17", "Coinbase, Binance, Kraken, KuCoin"),
+    "BONK-USD":  ("Bonk",              "2022-12-25", "Coinbase, Binance, KuCoin"),
+    "WIF-USD":   ("dogwifhat",         "2023-12-02", "Coinbase, Binance, KuCoin"),
+    "FLOKI-USD": ("Floki Inu",         "2021-07-10", "Coinbase, Binance, KuCoin"),
+    "TURBO-USD": ("Turbo",             "2023-05-01", "Coinbase, Binance, KuCoin"),
+    "MEME28301-USD": ("Memecoin",      "2023-10-28", "Coinbase, Binance, KuCoin"),
+    "MYRO-USD":  ("Myro",              "2023-11-04", "KuCoin"),
+    # Gaming / Metaverse (newer)
+    "PORTAL29555-USD": ("Portal",      "2024-02-29", "Coinbase, Binance, KuCoin"),
+    "RON14101-USD": ("Ronin",          "2022-01-27", "Coinbase, Binance, KuCoin"),
+    "BEAM-USD":   ("Beam",             "2023-10-26", "Coinbase, Binance, KuCoin"),
+    "PRIME23711-USD": ("Echelon Prime","2023-03-28", "Coinbase, KuCoin"),
+    "GALA-USD":   ("Gala",             "2020-09-16", "Coinbase, Binance, Kraken, KuCoin"),
+    "YGG-USD":    ("Yield Guild Games","2021-07-27", "Coinbase, Binance, KuCoin"),
+    # DeFi (newer)
+    "PENDLE-USD": ("Pendle",           "2021-04-28", "Coinbase, Binance, KuCoin"),
+    "AERO29270-USD": ("Aerodrome Finance","2023-08-28", "Coinbase, KuCoin"),
+    "ETHFI-USD":  ("Ether.fi",         "2024-03-18", "Coinbase, Binance, KuCoin"),
+    "DYDX-USD":   ("dYdX",             "2023-10-26", "Coinbase, Binance, Kraken, KuCoin"),
+    "OSMO-USD":   ("Osmosis",          "2022-01-12", "Coinbase, Binance, Kraken, KuCoin"),
+    "RUNE-USD":   ("THORChain",        "2019-07-23", "Coinbase, Binance, Kraken, KuCoin"),
+    # Social / Identity
+    "MASK8536-USD": ("Mask Network",   "2021-02-24", "Coinbase, Binance, KuCoin"),
+    "RSS3-USD":   ("RSS3",             "2022-02-14", "Binance, KuCoin"),
+    # Infrastructure
+    "AXL17799-USD": ("Axelar",         "2022-09-29", "Coinbase, Binance, KuCoin"),
+    "SAFE21585-USD": ("Safe",          "2024-10-15", "Coinbase, Binance, KuCoin"),
+}
+
+CRYPTO_UNIVERSE = list(CRYPTO_INFO.keys())
+DISPLAY_TICKERS = {
+    "APT21794-USD":    "APT",
+    "RENDER-USD":      "RNDR",
+    "SUI20947-USD":    "SUI",
+    "JUP29210-USD":    "JUP",
+    "TAO22974-USD":    "TAO",
+    "PEPE24478-USD":   "PEPE",
+    "MEME28301-USD":   "MEME",
+    "PORTAL29555-USD": "PORTAL",
+    "RON14101-USD":    "RON",
+    "PRIME23711-USD":  "PRIME",
+    "AERO29270-USD":   "AERO",
+    "MASK8536-USD":    "MASK",
+    "AXL17799-USD":    "AXL",
+    "SAFE21585-USD":   "SAFE",
+}
+
+CRYPTO_SUMMARIES = {
+    "SUI": "High-throughput layer-1 blockchain using the Move programming language.",
+    "SEI": "Layer-1 blockchain optimized for trading and DeFi applications.",
+    "APT": "Layer-1 blockchain built with Move language for safety and scalability.",
+    "TIA": "Modular data availability layer letting rollups post and verify data cheaply.",
+    "MANTA": "Modular blockchain for zero-knowledge applications on Ethereum.",
+    "BLUR": "NFT marketplace and aggregator with pro-trading features and airdrops.",
+    "JTO": "Liquid staking and MEV protocol on Solana.",
+    "JUP": "Leading DEX aggregator on Solana for best-price token swaps.",
+    "PYTH": "Decentralized oracle delivering high-frequency market data to blockchains.",
+    "W": "Cross-chain messaging protocol connecting 30+ blockchains.",
+    "ENA": "Synthetic dollar protocol providing crypto-native yield via USDe.",
+    "ONDO": "Tokenized real-world asset protocol bringing treasuries and bonds on-chain.",
+    "EIGEN": "Restaking protocol letting ETH stakers secure additional networks.",
+    "FET": "AI-powered decentralized network for autonomous economic agents.",
+    "RNDR": "Decentralized GPU rendering network for 3D graphics and AI workloads.",
+    "AKT": "Decentralized cloud computing marketplace for deploying containers.",
+    "AR": "Permanent decentralized data storage network using blockweave technology.",
+    "TAO": "Decentralized machine learning network incentivizing AI model creation.",
+    "AIOZ": "Decentralized content delivery and AI computation network.",
+    "GLM": "Peer-to-peer marketplace for renting computing power.",
+    "OCEAN": "Decentralized data exchange protocol for AI and data sharing.",
+    "PEPE": "Frog-themed meme token on Ethereum with viral community momentum.",
+    "BONK": "Solana-based meme coin with community airdrops and integrations.",
+    "WIF": "Dog-with-hat meme token on Solana with strong community following.",
+    "FLOKI": "Meme token with utility plans including a metaverse game and DeFi products.",
+    "TURBO": "AI-created meme token on Ethereum with community governance.",
+    "MEME": "Memecoin token from the 9GAG ecosystem with NFT integrations.",
+    "MYRO": "Solana meme token inspired by Raj Gokal's dog.",
+    "PORTAL": "Cross-chain gaming platform connecting players across multiple blockchains.",
+    "RON": "Ethereum sidechain built specifically for blockchain gaming (Axie Infinity).",
+    "BEAM": "Gaming-focused blockchain network built on Avalanche subnet technology.",
+    "PRIME": "Token powering the Echelon Prime gaming ecosystem and Parallel card game.",
+    "GALA": "Blockchain gaming platform hosting play-to-earn games.",
+    "YGG": "Gaming guild that invests in NFTs and lends them to play-to-earn gamers.",
+    "PENDLE": "DeFi protocol for tokenizing and trading future yield.",
+    "AERO": "Leading DEX on Base chain using the ve(3,3) tokenomics model.",
+    "ETHFI": "Non-custodial liquid staking protocol for Ethereum.",
+    "DYDX": "Decentralized perpetual futures exchange with its own appchain.",
+    "OSMO": "AMM DEX and DeFi hub for the Cosmos ecosystem.",
+    "RUNE": "Cross-chain liquidity protocol enabling native asset swaps.",
+    "MASK": "Browser extension bridging Web2 social networks with Web3 features.",
+    "RSS3": "Decentralized protocol for indexing open information across networks.",
+    "AXL": "Cross-chain communication network connecting Web3 ecosystems.",
+    "SAFE": "Multi-sig smart account infrastructure securing billions in crypto assets.",
+}
+
+DISQUALIFY_KEYWORDS = [
+    "fraud", "illegal", "lawsuit", "bankrupt", "bankruptcy", "indicted",
+    "indictment", "criminal", "sec charges", "securities fraud",
+    "rug pull", "rugpull", "scam", "ponzi", "hack", "exploit",
+    "delisted", "embezzlement", "money laundering",
+    "shutting down", "closing all",
+]
+
+DEFAULT_THRESHOLD_PCT = 20
+MAX_THRESHOLD_PCT = 50
+SCREENER_SYMBOL_LIMIT = get_screener_symbol_limit()
+
+
+# ── Helper functions ──────────────────────────────────────────────────
+@st.cache_data(ttl=900, show_spinner=False)
+def screen_crypto(ticker: str) -> dict | None:
+    """Return screening data for one crypto, or None on failure."""
+    try:
+        import math
+        market_data = get_market_data()
+        snapshot = market_data.get_market_snapshot(ticker)
+        if not snapshot:
+            return None
+        current_price = snapshot["current_price"]
+        year_low = snapshot["year_low"]
+        year_high = snapshot["year_high"]
+
+        if (current_price is None or year_low is None or year_high is None
+                or (isinstance(year_low, float) and math.isnan(year_low))
+                or (isinstance(year_high, float) and math.isnan(year_high))
+                or (isinstance(current_price, float) and math.isnan(current_price))
+                or year_low <= 0):
+            return None
+
+        pct_above_low = ((current_price - year_low) / year_low) * 100
+
+        # Keep screener calls price-first so Alpha Vantage rate limits do not
+        # block the whole Top 10 table. Detailed headline analysis remains on Search.
+        news = []
+        headlines = []
+        headline_links = []
+        for item in news:
+            title = item.get("title", "")
+            url = item.get("url", "")
+            if title:
+                headlines.append(title)
+                headline_links.append(url)
+
+        lower_headlines = " ".join(headlines).lower()
+        for kw in DISQUALIFY_KEYWORDS:
+            if kw in lower_headlines:
+                return None
+
+        polarity = 0.0
+        if headlines:
+            for hl in headlines:
+                polarity += TextBlob(hl).sentiment.polarity
+            polarity /= len(headlines)
+
+        if polarity < -0.35:
+            return None
+
+        if pct_above_low < 0:
+            signal = "BELOW LOW"
+        elif pct_above_low <= 2:
+            signal = "AT LOW"
+        else:
+            signal = "NEAR LOW"
+
+        raw = ticker.replace("-USD", "")
+        display_ticker = DISPLAY_TICKERS.get(ticker, raw)
+        info_tuple = CRYPTO_INFO.get(ticker, (display_ticker, "Unknown", "—"))
+        name = info_tuple[0]
+        launch_date_raw = info_tuple[1]
+        exchanges = info_tuple[2] if len(info_tuple) > 2 else "—"
+        try:
+            launch_fmt = datetime.strptime(launch_date_raw, "%Y-%m-%d").strftime("%b %d, %Y")
+        except (ValueError, TypeError):
+            launch_fmt = launch_date_raw
+        return {
+            "Ticker": display_ticker,
+            "Name": name,
+            "Launched": launch_fmt,
+            "Exchanges": exchanges,
+            "_launch_sort": launch_date_raw,
+            "Price": current_price,
+            "52W Low": year_low,
+            "52W High": year_high,
+            "% Above Low": round(pct_above_low, 2),
+            "Headline Sentiment": round(polarity, 3),
+            "Headlines": len(headlines),
+            "Market Mood": signal,
+            "_headline_texts": headlines,
+            "_headline_urls": headline_links,
+        }
+    except Exception:
+        return None
+
+
+# ── Exchange performance banner ───────────────────────────────────────
+@st.cache_data(ttl=300, show_spinner=False)
+def _fetch_index(ticker: str):
+    """Return (price, daily_change_pct) for an index ticker."""
+    try:
+        return get_market_data().get_daily_change(ticker)
+    except Exception:
+        return None, None
+
+_btc_price, _btc_chg = _fetch_index("BTC-USD")
+_eth_price, _eth_chg = _fetch_index("ETH-USD")
+_total_price, _total_chg = _fetch_index("^CMC200")
+
+def _banner_card(label, price, chg, prefix="$"):
+    if price is None:
+        return ""
+    c = "#22c55e" if chg >= 0 else "#ef4444"
+    a = "▲" if chg >= 0 else "▼"
+    return (
+        f'<div style="flex:1;min-width:220px;background:linear-gradient(135deg,#1e293b,#0f172a);'
+        f'border:1px solid #334155;border-left:4px solid {c};border-radius:12px;'
+        f'padding:1.2rem 1.8rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">'
+        f'<span style="font-size:1.4rem;color:#e2e8f0;font-weight:500;">{label}</span>'
+        f'<span style="font-size:2.2rem;font-weight:700;color:#f1f5f9;">{prefix}{price:,.2f}</span>'
+        f'<span style="font-size:1.4rem;font-weight:600;color:{c};background:{c}18;'
+        f'padding:0.3rem 0.8rem;border-radius:6px;">{a} {chg:+.2f}%</span></div>'
+    )
+
+_cards = (
+    _banner_card("Bitcoin (BTC) — Today", _btc_price, _btc_chg)
+    + _banner_card("Ethereum (ETH) — Today", _eth_price, _eth_chg)
+    + _banner_card("CMC Crypto 200 — Today", _total_price, _total_chg, prefix="")
+)
+if _cards:
+    st.markdown(
+        f'<div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">{_cards}</div>',
+        unsafe_allow_html=True,
+    )
+
+# ── UI ────────────────────────────────────────────────────────────────
+st.title("🚀 New Crypto — Newest First")
+st.markdown(
+    "Screens **{}** newer / emerging cryptocurrencies from **tier-1 exchanges** "
+    "(Coinbase, Binance, Kraken, KuCoin), sorted by **release date** "
+    "(newest first) and proximity to their 52-week low using Alpha Vantage daily market data. "
+    "Detailed headline sentiment remains available on the Search page.".format(len(CRYPTO_UNIVERSE))
+)
+st.caption(
+    "Some exchange links may be affiliate links. "
+    "See our [Terms of Service](/Terms_of_Service) for details."
+)
+
+st.markdown("---")
+
+col_a, col_b = st.columns([1, 3])
+with col_a:
+    threshold = st.slider(
+        "Max % above 52-week low",
+        min_value=1,
+        max_value=MAX_THRESHOLD_PCT,
+        value=DEFAULT_THRESHOLD_PCT,
+        step=1,
+        help="Only cryptos within this percentage of their 52-week low are shown.",
+    )
+with col_b:
+    st.info(
+        "**How it works:** Each crypto is checked for "
+        "(1) proximity to its 52-week low, "
+        "then sorted **newest first** by launch date. If no assets meet the slider threshold, "
+        "the table shows the closest available new cryptos instead of going empty."
+    )
+
+@st.cache_data(ttl=900, show_spinner="Refreshing New Crypto data…")
+def _run_screen():
+    results = []
+    scan_universe = CRYPTO_UNIVERSE[:SCREENER_SYMBOL_LIMIT]
+    for tkr in scan_universe:
+        row = screen_crypto(tkr)
+        if row is not None:
+            results.append(row)
+    return results, datetime.now().strftime("%b %d, %Y  %I:%M %p")
+
+if not agreed:
+    st.warning("Please agree to the **Disclaimer & Terms of Service** to view results.")
+    agreed = st.checkbox(
+        "I agree to the [Disclaimer & Terms](/Terms_of_Service)",
+        key="agree_terms_new_crypto",
+    )
+    if agreed:
+        log_terms_acceptance(st, consent_key="agree_terms_new_crypto")
+else:
+    all_results, last_updated = _run_screen()
+    scanned_count = min(SCREENER_SYMBOL_LIMIT, len(CRYPTO_UNIVERSE))
+
+    df = pd.DataFrame(all_results) if all_results else pd.DataFrame()
+    showing_closest = False
+    if not df.empty:
+        filtered_df = df[df["% Above Low"] <= threshold]
+        if filtered_df.empty:
+            showing_closest = True
+        else:
+            df = filtered_df
+
+    st.markdown(
+        f'<div style="text-align:right;color:#64748b;font-size:1.1rem;margin-bottom:0.5rem;">'
+        f'Last updated: <b>{last_updated}</b>  ·  Auto-refreshes every 15 min</div>',
+        unsafe_allow_html=True,
+    )
+
+    if df.empty:
+        st.warning(
+            "No crypto data is available right now. Alpha Vantage may be rate-limiting "
+            "requests; wait a minute and refresh."
+        )
+    else:
+        df = df.sort_values(
+            ["_launch_sort", "% Above Low"],
+            ascending=[False, True],
+        ).head(10).reset_index(drop=True)
+        df = df.drop(columns=["_launch_sort"])
+        df.index = df.index + 1
+        total = len(CRYPTO_UNIVERSE)
+
+        if showing_closest:
+            st.info(
+                f"No new cryptos are within **{threshold}%** of their 52-week low right now, "
+                "so showing the closest available new cryptos instead."
+            )
+        else:
+            st.success(f"Found **{len(df)}** candidates from {scanned_count} of {total} new cryptos scanned (newest first).")
+
+        # ── Metrics row for top 3 ─────────────────────────────────────
+        st.markdown("### 🏆 Top Picks")
+        top_cols = st.columns(min(3, len(df)))
+        for idx, col in enumerate(top_cols):
+            if idx >= len(df):
+                break
+            row = df.iloc[idx]
+            with col:
+                delta_txt = f"{row['% Above Low']:+.1f}% above 52W low"
+                st.metric(
+                    label=f"#{idx + 1}  {row['Ticker']}",
+                    value=f"${row['Price']:,.6f}",
+                    delta=delta_txt,
+                    delta_color="normal",
+                )
+                tip = CRYPTO_SUMMARIES.get(row["Ticker"], "")
+                if row["Market Mood"] == "BELOW LOW":
+                    badge = "🚨 BELOW 52W LOW — New Floor"
+                elif row["Market Mood"] == "AT LOW":
+                    badge = "🔥 AT 52W LOW"
+                else:
+                    badge = "📉 NEAR 52W LOW"
+                st.markdown(
+                    f'<div style="font-size:1.5rem;line-height:1.8;">'
+                    f'<span class="tip-wrap" style="font-weight:700;">'
+                    f'{row["Name"]}<span class="tip-text">{tip}</span></span><br>'
+                    f'🗓️ Launched: <b>{row["Launched"]}</b><br>'
+                    f'52W Low: <b style="color:#22c55e;">${row["52W Low"]:,.6f}</b> · '
+                    f'52W High: <b>${row["52W High"]:,.6f}</b><br>'
+                    f'Sentiment: <b>{row["Headline Sentiment"]:+.3f}</b><br>'
+                    f'📍 <span style="color:#94a3b8;">{row["Exchanges"]}</span><br>'
+                    f'<b>{badge}</b>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+
+        # ── Full table (HTML with hover tooltips) ─────────────────────
+        st.markdown("### 📋 Full Results")
+
+        headline_map = {}
+        for _, r in df.iterrows():
+            texts = r.get("_headline_texts", [])
+            urls = r.get("_headline_urls", [])
+            headline_map[r["Ticker"]] = list(zip(texts, urls))
+
+        display_df = df.drop(columns=["_headline_texts", "_headline_urls"], errors="ignore").copy()
+        display_df["Price"] = display_df["Price"].apply(lambda x: f"${x:,.6f}")
+        display_df["52W Low"] = display_df["52W Low"].apply(lambda x: f"${x:,.6f}")
+        display_df["52W High"] = display_df["52W High"].apply(lambda x: f"${x:,.6f}")
+        display_df["% Above Low"] = display_df["% Above Low"].apply(lambda x: f"{x:.2f}%")
+        display_df["Headline Sentiment"] = display_df["Headline Sentiment"].apply(lambda x: f"{x:+.3f}")
+
+        COLUMN_TIPS = {
+            "Exchanges": "Tier-1 exchanges where this crypto can be purchased (Coinbase, Binance, Kraken, KuCoin).",
+            "Headline Sentiment": "Average polarity score of recent news headlines (TextBlob). Ranges from -1.0 (very negative) to +1.0 (very positive). Cryptos below -0.35 are automatically disqualified.",
+            "Headlines": "Number of recent news headlines found for this crypto. More headlines give a more reliable sentiment reading.",
+            "Market Mood": "Proximity to the 52-week low: BELOW LOW = trading under the recorded low, AT LOW = within 2%, NEAR LOW = within the slider threshold.",
+            "% Above Low": "How far the current price is above the 52-week low, expressed as a percentage. Lower is closer to the floor.",
+            "Launched": "Date the token was first listed or created on-chain.",
+        }
+
+        def _tip(text, tooltip, anchor_id: str = ""):
+            anchor_style = f' style="anchor-name: {anchor_id};"' if anchor_id else ""
+            tip_style = f' style="position-anchor: {anchor_id};"' if anchor_id else ""
+            return (
+                f'<span class="tip-wrap"{anchor_style}>{text}'
+                f'<span class="tip-text"{tip_style}>{tooltip}</span></span>'
+            )
+
+        def _headlines_tip(count_display, hl_pairs: list, row_idx: int) -> str:
+            aid = f"--hl-r{int(row_idx)}"
+            rows_inner = []
+            for title, url in hl_pairs:
+                stitle = html.escape(str(title))
+                if url:
+                    surl = html.escape(str(url), quote=True)
+                    rows_inner.append(
+                        f'<div class="hl-tip-line"><a href="{surl}" target="_blank" '
+                        f'rel="noopener noreferrer">{stitle}</a></div>'
+                    )
+                else:
+                    rows_inner.append(f'<div class="hl-tip-line">{stitle}</div>')
+            list_html = "".join(rows_inner)
+            return (
+                f'<span class="tip-wrap headlines-tip" style="anchor-name: {aid};">'
+                f'{html.escape(str(count_display))}'
+                f'<span class="tip-text" style="position-anchor: {aid};">'
+                f'<span class="hl-tip-heading">Headlines</span>'
+                f'<div class="headlines-tip-list">{list_html}</div>'
+                f"</span></span>"
+            )
+
+        def _attr_html(s):
+            return (
+                str(s)
+                .replace("&", "&amp;")
+                .replace('"', "&quot;")
+                .replace("<", "&lt;")
+            )
+
+        def _td(col_label: str, inner_html: str, label_tip: str = "") -> str:
+            label_html = _attr_html(col_label)
+            if label_tip:
+                label_html = _tip(_attr_html(col_label), html.escape(label_tip))
+            return (
+                f'<td data-label="{_attr_html(col_label)}">'
+                f'<span class="fr-label">{label_html}</span>'
+                f'<span class="fr-val">{inner_html}</span></td>'
+            )
+
+        def _build_html_table(dataframe):
+            cols = list(dataframe.columns)
+            rows_html = ""
+            header_cells = '<th>#</th>'
+            for idx_col, c in enumerate(cols):
+                tip = COLUMN_TIPS.get(c, "")
+                if tip:
+                    header_cells += f'<th>{_tip(c, tip, f"--frh-{idx_col}")}</th>'
+                else:
+                    header_cells += f"<th>{c}</th>"
+            for idx_row, (i, r) in enumerate(dataframe.iterrows()):
+                cells = _td("#", str(i))
+                for c in cols:
+                    val = r[c]
+                    if c == "Name":
+                        tip = CRYPTO_SUMMARIES.get(r["Ticker"], "")
+                        cells += (
+                            _td(c, _tip(val, tip), COLUMN_TIPS.get(c, "")) if tip else _td(c, str(val), COLUMN_TIPS.get(c, ""))
+                        )
+                    elif c == "Headlines":
+                        hl_pairs = headline_map.get(r["Ticker"], [])
+                        if hl_pairs:
+                            cells += _td(c, _headlines_tip(val, hl_pairs, idx_row), COLUMN_TIPS.get(c, ""))
+                        else:
+                            cells += _td(c, str(val), COLUMN_TIPS.get(c, ""))
+                    else:
+                        cells += _td(c, str(val), COLUMN_TIPS.get(c, ""))
+                rows_html += f"<tr>{cells}</tr>"
+            return (
+                f'<div class="full-results-wrap">'
+                f'<table class="full-results-table"><thead><tr>{header_cells}</tr></thead><tbody>{rows_html}</tbody></table>'
+                f"</div>"
+            )
+
+        _fr_legend_rows = "".join(
+            f"<div class='fr-mobile-tip-row'><strong>{html.escape(c)}</strong>"
+            f"<p>{html.escape(t)}</p></div>"
+            for c, t in COLUMN_TIPS.items()
+        )
+        st.markdown(
+            f'<div class="full-results-mobile-legend">{_fr_legend_rows}</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(_build_html_table(display_df), unsafe_allow_html=True)
+
+        # ── Explanation card ──────────────────────────────────────────
+        st.markdown("---")
+        st.markdown(
+            """
+            #### 🧠 Selection Criteria
+
+            | Criterion | Check |
+            |-----------|-------|
+            | **Newest first** | Results are ranked by launch date (most recent first) so the freshest opportunities surface at the top |
+            | **No scandal headlines** | Recent news contains no keywords related to fraud, scams, rug-pulls, or hacks |
+            | **Headline context** | Detailed headline sentiment is available on the Search page |
+
+            > **Disclaimer:** New cryptos are inherently higher risk. This is an automated screen —
+            > not financial advice. Always do your own due diligence before investing.
+            """
+        )
+
+# ── Sticky disclaimer footer ─────────────────────────────────────────
+st.markdown(
+    """
+    <style>
+    .disclaimer-footer {
+        position: fixed; bottom: 0; left: var(--footer-sidebar-width); width: calc(100% - var(--footer-sidebar-width));
+        background: #020617; border-top: 1px solid #334155;
+        padding: 0.6rem 1rem;
+        box-sizing: border-box; z-index: 10000;
+        font-size: clamp(0.78rem, 0.72rem + 0.15vw, 0.9rem) !important; color: #e2e8f0;
+        text-align: center; line-height: 1.45; white-space: normal;
+        transition: left 0.25s ease, width 0.25s ease, font-size 0.25s ease;
+    }
+    .disclaimer-footer a { color: #93c5fd; text-decoration: underline; font-weight: 600; }
+    .stMainBlockContainer { padding-bottom: 9rem !important; }
+    :root { --footer-sidebar-width: 360px; }
+    @media (max-width: 1400px) { :root { --footer-sidebar-width: 330px; } }
+    @media (max-width: 1200px) { :root { --footer-sidebar-width: 300px; } }
+    @media (max-width: 992px)  { :root { --footer-sidebar-width: 270px; } }
+    @media (max-width: 768px) {
+        :root { --footer-sidebar-width: 0px; }
+        .disclaimer-footer {
+            position: static !important;
+            left: 0 !important;
+            width: 100% !important;
+            /* Mobile: keep footer compact so it doesn't block form controls */
+            padding: 0.35rem 0.55rem !important;
+            font-size: 0.64rem !important;
+            line-height: 1.25 !important;
+        }
+        .disclaimer-footer strong,
+        .disclaimer-footer a {
+            font-size: inherit !important;
+        }
+        .stMainBlockContainer { padding-bottom: 2rem !important; }
+    }
+    </style>
+    <div class="disclaimer-footer">
+        <strong>⚠️ ALGORITHMIC RESEARCH ONLY – NOT FINANCIAL ADVICE</strong>
+        This tool provides automated sentiment analysis and 'Market Mood' scores based on third-party news data.
+        It is intended for <strong>informational and educational purposes only</strong> and does not constitute investment advice.
+        Market data is provided 'as-is' and may be delayed or inaccurate.
+        <strong>Trading involves significant risk of loss.</strong>
+        <a href="/Terms_of_Service" target="_self">Terms of Service</a> ·
+        Past performance is not indicative of future results.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)

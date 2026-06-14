@@ -1,0 +1,16 @@
+# Market Prediction App – dependencies
+# Core (used in future when replacing simulated data)
+requests>=2.31
+# NLP / sentiment (upgrade path from keyword matching)
+textblob>=0.18
+# Dashboard
+streamlit>=1.54
+streamlit-js-eval>=0.1.7
+plotly>=6.5
+pandas>=2.3
+# Utilities
+python-dateutil>=2.9
+# Legal consent logger API
+fastapi>=0.116
+uvicorn>=0.35
+psycopg[binary]>=3.2
