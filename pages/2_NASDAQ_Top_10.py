@@ -13,6 +13,8 @@ from legal_consent_logger import ensure_timezone_cookie, log_terms_acceptance
 from branding import logo_path_str
 from market_data import MarketData
 from app_config import get_screener_symbol_limit
+from screener_headlines import enrich_headline_sentiment
+from tooltip_scroll import install_tooltip_scroll_handler
 import html
 
 # ── Page config ───────────────────────────────────────────────────────
@@ -187,6 +189,45 @@ st.markdown(
                 max-width: min(700px, calc(100vw - 2rem)) !important;
             }
         }
+        /* Body-row tooltips appear near the hovered text, upper-right of the trigger. */
+        .full-results-wrap .full-results-table tbody .tip-wrap:not(.headlines-tip) .tip-text {
+            display: block !important;
+            position: absolute !important;
+            left: calc(100% + 12px) !important;
+            right: auto !important;
+            top: auto !important;
+            bottom: calc(100% + 8px) !important;
+            transform: none !important;
+            width: max-content !important;
+            min-width: 260px !important;
+            max-width: min(360px, calc(100vw - 2rem)) !important;
+            max-height: min(45vh, 22rem) !important;
+            overflow-y: auto !important;
+            pointer-events: none !important;
+        }
+        .full-results-wrap .full-results-table tbody .tip-wrap:not(.headlines-tip) .tip-text::before {
+            display: block !important;
+            content: "" !important;
+            position: absolute !important;
+            left: -14px !important;
+            right: auto !important;
+            top: 0 !important;
+            bottom: 0 !important;
+            width: 14px !important;
+            height: 100% !important;
+        }
+        .full-results-wrap .full-results-table tbody .tip-wrap:not(.headlines-tip) .tip-text::after {
+            display: block !important;
+            top: auto !important;
+            bottom: 10px !important;
+            left: -16px !important;
+            transform: none !important;
+            border-color: transparent #1e1e2f transparent transparent !important;
+        }
+        .full-results-wrap .full-results-table tbody .tip-wrap:not(.headlines-tip) .tip-text:hover {
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
     }
 
     /* Desktop/webview only: Headlines — narrow wrap + beside trigger (anchor) / right-edge fallback; mobile unchanged */
@@ -224,7 +265,7 @@ st.markdown(
             word-break: break-word !important;
             overflow-wrap: anywhere !important;
             z-index: 100020 !important;
-            padding: 0.85rem 1rem !important;
+            padding: 2.1rem 1rem 0.85rem 1rem !important;
             box-sizing: border-box !important;
         }
         .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text::-webkit-scrollbar {
@@ -243,14 +284,15 @@ st.markdown(
             display: block !important;
             position: sticky !important;
             top: 0 !important;
-            z-index: 1 !important;
-            margin: 0 0 0.55rem 0 !important;
-            padding: 0 !important;
+            z-index: 2 !important;
+            margin: -2.1rem -1rem 0.95rem -1rem !important;
+            padding: 1.45rem 1rem 0.85rem 1rem !important;
             background: #1e1e2f !important;
             color: #ffffff !important;
-            font-weight: 400 !important;
-            font-size: 1rem !important;
+            font-weight: 700 !important;
+            font-size: 1.15rem !important;
             line-height: 1.2 !important;
+            border-bottom: 1px solid #334155 !important;
         }
         .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text::before,
         .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text::after {
@@ -260,6 +302,7 @@ st.markdown(
             display: flex !important;
             flex-direction: column !important;
             gap: 0.45rem !important;
+            padding-top: 0.65rem !important;
             min-width: 0 !important;
         }
         .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .hl-tip-line {
@@ -404,11 +447,11 @@ st.markdown(
         /* Mobile: center hover tooltips so no horizontal scrolling is needed */
         .tip-wrap .tip-text {
             position: fixed !important;
-            left: 50% !important;
-            right: auto !important;
+            left: auto !important;
+            right: 0 !important;
             top: 20vh !important;
             bottom: auto !important;
-            transform: translateX(-50%) !important;
+            transform: none !important;
             width: 92vw !important;
             max-width: 92vw !important;
             min-width: 0 !important;
@@ -463,6 +506,15 @@ st.markdown(
         }
 
         /* Top Picks (mobile only): make each pick read as a single card. */
+        [data-testid="stHorizontalBlock"] > div:has([data-testid="stMetric"]) {
+            background: #ffffff !important;
+            border: 2px solid #cbd5e1 !important;
+            border-left: 6px solid #22c55e !important;
+            border-radius: 14px !important;
+            padding: 0.9rem 0.95rem 1rem 0.95rem !important;
+            margin: 0 0 1rem 0 !important;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.10) !important;
+        }
         .stApp div[data-testid="metric-container"] {
             margin: 0 !important;
             padding: 0.75rem 0.85rem 0.65rem 0.85rem !important;
@@ -548,6 +600,7 @@ st.markdown(
             box-sizing: border-box !important;
         }
         .stMarkdown .full-results-wrap .full-results-table tbody td {
+            position: relative !important;
             display: grid !important;
             grid-template-columns: minmax(0, 42%) minmax(0, 58%) !important;
             gap: 0.35rem 0.65rem !important;
@@ -577,6 +630,10 @@ st.markdown(
             display: inline-block !important;
             max-width: 100% !important;
             white-space: normal !important;
+            position: relative !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap {
+            position: relative !important;
         }
         .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val {
             min-width: 0 !important;
@@ -585,16 +642,16 @@ st.markdown(
             word-break: break-word !important;
         }
 
-        /* Tooltips — fit viewport on phones */
+        /* Tooltips — mobile: appear above the touched text; page scroll hides sticky hover */
         .stMarkdown .tip-wrap .tip-text {
-            position: fixed !important;
-            left: max(0.65rem, env(safe-area-inset-left, 0px)) !important;
-            right: max(0.65rem, env(safe-area-inset-right, 0px)) !important;
-            top: max(10vh, calc(env(safe-area-inset-top, 0px) + 0.5rem)) !important;
-            bottom: auto !important;
-            width: auto !important;
+            position: absolute !important;
+            left: 0 !important;
+            right: auto !important;
+            top: auto !important;
+            bottom: calc(100% + 1.25rem) !important;
+            width: min(18rem, calc(100vw - 2rem)) !important;
             min-width: 0 !important;
-            max-width: none !important;
+            max-width: min(18rem, calc(100vw - 2rem)) !important;
             max-height: min(72vh, 28rem) !important;
             overflow-x: hidden !important;
             overflow-y: auto !important;
@@ -606,6 +663,22 @@ st.markdown(
             overflow-wrap: anywhere !important;
             text-align: left !important;
             z-index: 100001 !important;
+            pointer-events: none !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap .tip-text {
+            left: auto !important;
+            right: 0 !important;
+        }
+        .stMarkdown .tip-wrap:hover .tip-text,
+        .stMarkdown .tip-wrap:active .tip-text {
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        html.scoop-tooltip-scrolling .stMarkdown .tip-wrap .tip-text,
+        body.scoop-tooltip-scrolling .stMarkdown .tip-wrap .tip-text {
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
         .stMarkdown .tip-wrap .tip-text::before,
         .stMarkdown .tip-wrap .tip-text::after {
@@ -630,6 +703,7 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+install_tooltip_scroll_handler()
 
 # ── Custom sidebar navigation ─────────────────────────────────────────
 st.sidebar.image(logo_path_str(), use_container_width=True)
@@ -914,6 +988,7 @@ def screen_stock(ticker: str) -> dict | None:
 
         return {
             "Ticker": ticker,
+            "_source_ticker": ticker,
             "Company": COMPANY_NAMES.get(ticker, ticker),
             "Price": current_price,
             "52W Low": year_low,
@@ -971,7 +1046,7 @@ st.title("💹 NASDAQ")
 st.markdown(
     "Screens **{}** major NASDAQ-listed stocks for those trading **at or near "
     "their 52-week low** using Alpha Vantage daily market data. "
-    "Detailed headline sentiment remains available on the Search page.".format(len(NASDAQ_UNIVERSE))
+    "Headline sentiment is fetched for the final displayed rows.".format(len(NASDAQ_UNIVERSE))
 )
 
 st.markdown("---")
@@ -1034,6 +1109,10 @@ else:
     else:
         df = pd.DataFrame(results)
         df = df.sort_values("% Above Low", ascending=True).head(10).reset_index(drop=True)
+        df = enrich_headline_sentiment(df, get_market_data())
+        df["Headlines"] = df["Headlines"].clip(upper=10)
+        df["_headline_texts"] = df["_headline_texts"].apply(lambda items: items[:10])
+        df["_headline_urls"] = df["_headline_urls"].apply(lambda items: items[:10])
         df.index = df.index + 1
 
         if showing_closest:
@@ -1088,7 +1167,7 @@ else:
             urls = r.get("_headline_urls", [])
             headline_map[r["Ticker"]] = list(zip(texts, urls))
 
-        display_df = df.drop(columns=["_headline_texts", "_headline_urls"], errors="ignore").copy()
+        display_df = df.drop(columns=["_source_ticker", "_headline_texts", "_headline_urls"], errors="ignore").copy()
         display_df["Price"] = display_df["Price"].apply(lambda x: f"${x:,.2f}")
         display_df["52W Low"] = display_df["52W Low"].apply(lambda x: f"${x:,.2f}")
         display_df["52W High"] = display_df["52W High"].apply(lambda x: f"${x:,.2f}")

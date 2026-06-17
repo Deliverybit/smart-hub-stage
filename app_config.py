@@ -21,8 +21,8 @@ def get_alpha_vantage_api_key(required: bool = False) -> str | None:
     return key
 
 
-def get_screener_symbol_limit(default: int = 4) -> int:
-    """Limit Alpha Vantage screener calls so the free key can populate test data."""
+def get_screener_symbol_limit(default: int = 1000) -> int:
+    """Limit Alpha Vantage screener calls; high default scans each full page universe."""
     raw_limit = os.getenv("SCREENER_SYMBOL_LIMIT")
     if not raw_limit:
         try:

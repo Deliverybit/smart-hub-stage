@@ -527,6 +527,45 @@ def get_sentiment_engine():
 _SEARCH_ANALYSIS_TTL_SEC = 15 * 60
 
 
+_SEARCH_ASSET_NAMES = {
+    "BTC": "Bitcoin",
+    "BTC-USD": "Bitcoin",
+    "ETH": "Ethereum",
+    "ETH-USD": "Ethereum",
+    "DOGE": "Dogecoin",
+    "DOGE-USD": "Dogecoin",
+    "SOL": "Solana",
+    "SOL-USD": "Solana",
+    "ADA": "Cardano",
+    "ADA-USD": "Cardano",
+    "XRP": "XRP",
+    "XRP-USD": "XRP",
+    "BNB": "BNB",
+    "BNB-USD": "BNB",
+    "AVAX": "Avalanche",
+    "AVAX-USD": "Avalanche",
+    "LINK": "Chainlink",
+    "LINK-USD": "Chainlink",
+    "SAND": "The Sandbox",
+    "SAND-USD": "The Sandbox",
+    "MANA": "Decentraland",
+    "MANA-USD": "Decentraland",
+    "AAPL": "Apple Inc.",
+    "MSFT": "Microsoft Corp.",
+    "TSLA": "Tesla Inc.",
+    "NVDA": "NVIDIA Corp.",
+    "AMZN": "Amazon.com Inc.",
+    "GOOGL": "Alphabet Inc.",
+    "META": "Meta Platforms Inc.",
+}
+
+
+def _search_asset_display_name(ticker: str) -> str:
+    """Return a readable label for the searched asset."""
+    normalized = ticker.strip().upper()
+    return _SEARCH_ASSET_NAMES.get(normalized, normalized)
+
+
 @st.cache_data(
     ttl=_SEARCH_ANALYSIS_TTL_SEC,
     show_spinner="Loading headlines and sentiment (updates every 15 minutes)…",
@@ -539,7 +578,7 @@ def _cached_search_analysis_bundle(ticker: str, days, compare_ticker: str) -> di
     market_eng = get_market_data()
     sentiment_eng = get_sentiment_engine()
     predictor_eng = get_predictor()
-    news_items = market_eng.get_news_items(ticker)
+    news_items = market_eng.get_news_items(ticker)[:10]
     headlines = [item["title"] for item in news_items]
     history = market_eng.get_price_history(ticker, days)
     if not history:
@@ -650,6 +689,31 @@ def _render_search_dashboard(ticker: str, compare_ticker: str) -> None:
     arrow = "⬆️" if combined > 0 else "⬇️"
     color = "#4ade80" if combined > 0 else "#f87171"
     bg = "#14532d" if combined > 0 else "#7f1d1d"
+
+    asset_name = _search_asset_display_name(ticker)
+    st.markdown(
+        f"""
+        <div style="
+            border:1px solid #cbd5e1;
+            border-left:6px solid #2563eb;
+            border-radius:12px;
+            padding:0.9rem 1.1rem;
+            margin:0 0 1rem 0;
+            background:#f8fafc;
+        ">
+            <div style="font-size:1rem;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">
+                Selected Asset
+            </div>
+            <div style="font-size:2rem;line-height:1.25;font-weight:800;color:#0f172a;">
+                {html.escape(asset_name)}
+            </div>
+            <div style="font-size:1.15rem;color:#475569;font-weight:700;margin-top:0.2rem;">
+                Ticker: {html.escape(ticker)}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.caption(
         f"Headline sentiment, news, and related scores use a snapshot refreshed at most every "
@@ -832,7 +896,7 @@ def _render_search_dashboard(ticker: str, compare_ticker: str) -> None:
                 headline_to_urls.setdefault(title, []).append(item.get("url", ""))
 
         rows_html = ""
-        for headline, score in sent_result["headline_scores"]:
+        for headline, score in sent_result["headline_scores"][:10]:
             urls = headline_to_urls.get(headline, [])
             source_url = urls.pop(0) if urls else ""
             safe_headline = html.escape(str(headline))

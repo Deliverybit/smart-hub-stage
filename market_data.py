@@ -246,14 +246,14 @@ class MarketData:
     def get_news_items(self, ticker):
         """Pulls headline + source URL pairs for the specific asset."""
         symbol = self._format_ticker(ticker)
-        params = {"function": "NEWS_SENTIMENT", "limit": 20}
+        params = {"function": "NEWS_SENTIMENT", "limit": 10}
         if self._is_crypto(ticker):
             params["tickers"] = f"CRYPTO:{symbol}"
         elif symbol:
             params["tickers"] = symbol
 
         data = self._request(**params)
-        news = data.get("feed", [])
+        news = data.get("feed", [])[:10]
         headlines = []
         for item in news:
             title = item.get("title", "")
@@ -261,4 +261,4 @@ class MarketData:
             if title:
                 headlines.append({"title": title, "url": url})
 
-        return headlines if headlines else [{"title": f"No current news found for {symbol}", "url": ""}]
+        return headlines[:10] if headlines else [{"title": f"No current news found for {symbol}", "url": ""}]
