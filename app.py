@@ -61,6 +61,24 @@ def _search_price_chart_margin_top(has_compare: bool) -> int:
     return 88 if has_compare else 28
 
 
+def _format_search_price(value) -> str:
+    """Currency display: cents above $1, up to 8 decimals below $1."""
+    try:
+        price = float(value)
+    except (TypeError, ValueError):
+        return "N/A"
+
+    if abs(price) > 1:
+        return f"${price:,.2f}"
+
+    formatted = f"{price:,.8f}"
+    whole, _, decimal = formatted.partition(".")
+    decimal = decimal.rstrip("0")
+    if len(decimal) < 2:
+        decimal = decimal.ljust(2, "0")
+    return f"${whole}.{decimal}"
+
+
 def _build_search_price_figure(
     *,
     has_compare: bool,
@@ -132,9 +150,10 @@ def _build_search_price_figure(
             go.Scatter(
                 x=plot_df["date_dt"],
                 y=plot_df["price"],
+                customdata=plot_df["price"].apply(_format_search_price),
                 name=ticker,
                 line=dict(color="#4ade80", width=2),
-                hovertemplate="Price: $%{y:,.4f}<extra></extra>",
+                hovertemplate="Price: %{customdata}<extra></extra>",
             )
         )
         fig.update_layout(
@@ -738,7 +757,7 @@ def _render_search_dashboard(ticker: str, compare_ticker: str) -> None:
 
     st.metric(
         label="Live Price (USD)",
-        value=f"${last_price:,.4f}",
+        value=_format_search_price(last_price),
         delta=f"{change_24h_pct:+.2f}% (24h)",
     )
 
@@ -767,12 +786,12 @@ def _render_search_dashboard(ticker: str, compare_ticker: str) -> None:
 
                 low_c1, low_c2, _ = st.columns([1, 1, 1])
                 with low_c1:
-                    st.metric(label="52-Week Low", value=f"${week52_low:,.4f}")
+                    st.metric(label="52-Week Low", value=_format_search_price(week52_low))
                     st.caption(f"Hit on {low_date}" if low_date else "")
                 with low_c2:
                     st.metric(
                         label="Above 52-Week Low",
-                        value=f"${low_dollar_diff:,.4f}",
+                        value=_format_search_price(low_dollar_diff),
                         delta=f"{pct_above_low:+.1f}%",
                     )
 
@@ -791,12 +810,12 @@ def _render_search_dashboard(ticker: str, compare_ticker: str) -> None:
 
                 high_c1, high_c2, _ = st.columns([1, 1, 1])
                 with high_c1:
-                    st.metric(label="52-Week High", value=f"${week52_high:,.4f}")
+                    st.metric(label="52-Week High", value=_format_search_price(week52_high))
                     st.caption(f"Hit on {high_date}" if high_date else "")
                 with high_c2:
                     st.metric(
                         label="Below 52-Week High",
-                        value=f"${abs(high_dollar_diff):,.4f}",
+                        value=_format_search_price(abs(high_dollar_diff)),
                         delta=f"{high_dollar_diff / week52_high * 100:+.1f}%",
                     )
 

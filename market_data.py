@@ -246,19 +246,61 @@ class MarketData:
     def get_news_items(self, ticker):
         """Pulls headline + source URL pairs for the specific asset."""
         symbol = self._format_ticker(ticker)
-        params = {"function": "NEWS_SENTIMENT", "limit": 10}
-        if self._is_crypto(ticker):
+        is_crypto = self._is_crypto(ticker)
+        params = {"function": "NEWS_SENTIMENT", "limit": 50 if is_crypto else 10}
+        if is_crypto:
             params["tickers"] = f"CRYPTO:{symbol}"
         elif symbol:
             params["tickers"] = symbol
 
         data = self._request(**params)
-        news = data.get("feed", [])[:10]
+        feed = data.get("feed", [])
+        if is_crypto:
+            expected_ticker = f"CRYPTO:{symbol}"
+            news = [
+                item for item in feed
+                if any(
+                    sentiment.get("ticker") == expected_ticker
+                    for sentiment in item.get("ticker_sentiment", [])
+                )
+            ]
+            source_priority = {
+                "Cointelegraph": 0,
+                "Decrypt.co": 1,
+                "Benzinga": 2,
+                "Motley Fool": 3,
+            }
+            news = sorted(
+                enumerate(news),
+                key=lambda pair: (
+                    source_priority.get(
+                        pair[1].get("source") or pair[1].get("source_domain") or "",
+                        99,
+                    ),
+                    pair[0],
+                ),
+            )
+            news = [item for _, item in news]
+        else:
+            news = feed
+
         headlines = []
+        seen = set()
         for item in news:
             title = item.get("title", "")
             url = item.get("url", "")
-            if title:
-                headlines.append({"title": title, "url": url})
+            source = item.get("source") or item.get("source_domain") or ""
+            if is_crypto and source:
+                title = f"{source}: {title}"
+            key = (title, url)
+            if title and key not in seen:
+                seen.add(key)
+                headlines.append({
+                    "title": title,
+                    "url": url,
+                    "source": source,
+                })
+            if len(headlines) >= 10:
+                break
 
         return headlines[:10] if headlines else [{"title": f"No current news found for {symbol}", "url": ""}]

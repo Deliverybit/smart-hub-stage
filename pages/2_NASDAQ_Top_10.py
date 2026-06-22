@@ -267,6 +267,11 @@ st.markdown(
             z-index: 100020 !important;
             padding: 2.1rem 1rem 0.85rem 1rem !important;
             box-sizing: border-box !important;
+            transition: opacity 0.25s ease-in-out 0.18s, visibility 0s linear 0.9s !important;
+        }
+        .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip:hover .tip-text,
+        .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text:hover {
+            transition-delay: 0s !important;
         }
         .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text::-webkit-scrollbar {
             width: 10px !important;
@@ -669,6 +674,58 @@ st.markdown(
             left: auto !important;
             right: 0 !important;
         }
+        .stMarkdown .tip-wrap.headlines-tip .tip-text,
+        .stMarkdown .tip-wrap.headlines-tip .tip-text a {
+            pointer-events: auto !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip .tip-text {
+            position: fixed !important;
+            left: max(0.75rem, env(safe-area-inset-left, 0px)) !important;
+            right: max(0.75rem, env(safe-area-inset-right, 0px)) !important;
+            top: max(4.25rem, calc(env(safe-area-inset-top, 0px) + 0.75rem)) !important;
+            bottom: auto !important;
+            width: auto !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            max-height: min(calc(100dvh - 5.25rem), 28rem) !important;
+            padding: 0 0.85rem 0.85rem 0.85rem !important;
+            overflow-x: hidden !important;
+            overflow-y: scroll !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior: contain !important;
+            scrollbar-gutter: stable !important;
+            scrollbar-width: thin !important;
+            scrollbar-color: #94a3b8 #111827 !important;
+            transform: none !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip .tip-text::-webkit-scrollbar {
+            width: 10px !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip .tip-text::-webkit-scrollbar-track {
+            background: #111827 !important;
+            border-radius: 999px !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip .tip-text::-webkit-scrollbar-thumb {
+            background: #94a3b8 !important;
+            border: 2px solid #111827 !important;
+            border-radius: 999px !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip .tip-text .hl-tip-heading {
+            display: block !important;
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 2 !important;
+            margin: 0 -0.85rem 0.65rem -0.85rem !important;
+            padding: 0.85rem !important;
+            background: #1e1e2f !important;
+            color: #ffffff !important;
+            font-weight: 700 !important;
+            line-height: 1.2 !important;
+            border-bottom: 1px solid #334155 !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip .tip-text .headlines-tip-list {
+            padding-top: 0 !important;
+        }
         .stMarkdown .tip-wrap:hover .tip-text,
         .stMarkdown .tip-wrap:active .tip-text {
             visibility: visible !important;
@@ -679,6 +736,12 @@ st.markdown(
             visibility: hidden !important;
             opacity: 0 !important;
             pointer-events: none !important;
+        }
+        html.scoop-headline-panel-scrolling .stMarkdown .tip-wrap.headlines-tip .tip-text,
+        body.scoop-headline-panel-scrolling .stMarkdown .tip-wrap.headlines-tip .tip-text {
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
         }
         .stMarkdown .tip-wrap .tip-text::before,
         .stMarkdown .tip-wrap .tip-text::after {
