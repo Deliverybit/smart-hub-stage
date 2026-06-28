@@ -12,7 +12,7 @@ from datetime import datetime
 from legal_consent_logger import ensure_timezone_cookie, log_terms_acceptance
 from branding import logo_path_str
 from market_data import MarketData
-from app_config import get_screener_symbol_limit
+from app_config import get_screener_symbol_limit, SCREENER_CACHE_VERSION
 from screener_headlines import enrich_headline_sentiment
 from tooltip_scroll import install_tooltip_scroll_handler
 import html
@@ -26,7 +26,7 @@ st.set_page_config(
 
 
 @st.cache_resource
-def get_market_data():
+def get_market_data(_cache_version: int = SCREENER_CACHE_VERSION):
     return MarketData()
 
 # ── Global responsive styling (shared with app.py) ────────────────────
@@ -572,12 +572,15 @@ st.markdown(
         .stMarkdown .full-results-wrap .full-results-table tbody tr {
             display: block !important;
             width: 100% !important;
-            margin: 0 0 1rem 0 !important;
-            padding: 0.5rem 0.65rem !important;
-            border: 1px solid #e2e8f0 !important;
-            border-radius: 12px !important;
-            background: #fafafa !important;
+            margin: 0 0 1.15rem 0 !important;
+            padding: 0.65rem 0.85rem 0.75rem 0.85rem !important;
+            border: 2px solid #cbd5e1 !important;
+            border-left: 6px solid #22c55e !important;
+            border-radius: 14px !important;
+            background: #ffffff !important;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.10) !important;
             box-sizing: border-box !important;
+            overflow: hidden !important;
         }
         .stMarkdown .full-results-wrap .full-results-table tbody td {
             position: relative !important;
@@ -623,7 +626,7 @@ st.markdown(
         }
 
         /* Tooltips — mobile: appear above the touched text; page scroll hides sticky hover */
-        .stMarkdown .tip-wrap .tip-text {
+        .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text {
             position: absolute !important;
             left: 0 !important;
             right: auto !important;
@@ -645,78 +648,159 @@ st.markdown(
             z-index: 100001 !important;
             pointer-events: none !important;
         }
-        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap .tip-text {
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text {
             left: auto !important;
             right: 0 !important;
         }
-        .stMarkdown .tip-wrap.headlines-tip .tip-text,
-        .stMarkdown .tip-wrap.headlines-tip .tip-text a {
-            pointer-events: auto !important;
+        /* Headlines: tap count label toggles checkbox (compact panel + scroll) */
+        .stMarkdown .tip-wrap.headlines-tip {
+            cursor: default !important;
         }
-        .stMarkdown .tip-wrap.headlines-tip .tip-text {
+        .stMarkdown .tip-wrap.headlines-tip .hl-tip-cb {
+            position: absolute !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            height: 0 !important;
+            margin: 0 !important;
+            pointer-events: none !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip .hl-tip-count {
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            -webkit-tap-highlight-color: rgba(34, 197, 94, 0.2) !important;
+            text-decoration: none !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip .hl-tip-backdrop {
+            display: none !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .hl-tip-backdrop {
+            display: block !important;
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 100001 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: rgba(15, 23, 42, 0.12) !important;
+            cursor: default !important;
+            pointer-events: auto !important;
+            touch-action: manipulation !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .hl-tip-backdrop span {
+            display: none !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:not(:has(.hl-tip-cb:checked)) .tip-text {
+            display: none !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text {
+            display: flex !important;
+            flex-direction: column !important;
             position: fixed !important;
             left: max(0.75rem, env(safe-area-inset-left, 0px)) !important;
             right: max(0.75rem, env(safe-area-inset-right, 0px)) !important;
-            top: max(4.25rem, calc(env(safe-area-inset-top, 0px) + 0.75rem)) !important;
+            top: max(4rem, calc(env(safe-area-inset-top, 0px) + 0.65rem)) !important;
             bottom: auto !important;
             width: auto !important;
             min-width: 0 !important;
             max-width: none !important;
-            max-height: min(calc(100dvh - 5.25rem), 28rem) !important;
-            padding: 0 0.85rem 0.85rem 0.85rem !important;
-            overflow-x: hidden !important;
-            overflow-y: scroll !important;
-            -webkit-overflow-scrolling: touch !important;
-            overscroll-behavior: contain !important;
-            scrollbar-gutter: stable !important;
-            scrollbar-width: thin !important;
-            scrollbar-color: #94a3b8 #111827 !important;
-            transform: none !important;
-        }
-        .stMarkdown .tip-wrap.headlines-tip .tip-text::-webkit-scrollbar {
-            width: 10px !important;
-        }
-        .stMarkdown .tip-wrap.headlines-tip .tip-text::-webkit-scrollbar-track {
-            background: #111827 !important;
-            border-radius: 999px !important;
-        }
-        .stMarkdown .tip-wrap.headlines-tip .tip-text::-webkit-scrollbar-thumb {
-            background: #94a3b8 !important;
-            border: 2px solid #111827 !important;
-            border-radius: 999px !important;
-        }
-        .stMarkdown .tip-wrap.headlines-tip .tip-text .hl-tip-heading {
-            display: block !important;
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 2 !important;
-            margin: 0 -0.85rem 0.65rem -0.85rem !important;
-            padding: 0.85rem !important;
-            background: #1e1e2f !important;
-            color: #ffffff !important;
-            font-weight: 700 !important;
-            line-height: 1.2 !important;
-            border-bottom: 1px solid #334155 !important;
-        }
-        .stMarkdown .tip-wrap.headlines-tip .tip-text .headlines-tip-list {
-            padding-top: 0 !important;
-        }
-        .stMarkdown .tip-wrap:hover .tip-text,
-        .stMarkdown .tip-wrap:active .tip-text {
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-        html.scoop-tooltip-scrolling .stMarkdown .tip-wrap .tip-text,
-        body.scoop-tooltip-scrolling .stMarkdown .tip-wrap .tip-text {
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-        html.scoop-headline-panel-scrolling .stMarkdown .tip-wrap.headlines-tip .tip-text,
-        body.scoop-headline-panel-scrolling .stMarkdown .tip-wrap.headlines-tip .tip-text {
+            max-height: min(calc(10.5rem + 300px), calc(100dvh - 5rem)) !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            text-align: left !important;
             visibility: visible !important;
             opacity: 1 !important;
             pointer-events: auto !important;
+            touch-action: auto !important;
+            transform: none !important;
+            background: #111827 !important;
+            border: 1px solid #334155 !important;
+            border-radius: 8px !important;
+            box-sizing: border-box !important;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.35) !important;
+            z-index: 100002 !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-heading {
+            flex: 0 0 auto !important;
+            text-align: left !important;
+            color: #ffffff !important;
+            padding: 0.45rem 0.6rem !important;
+            font-size: calc(0.82rem + 4pt) !important;
+            font-weight: 700 !important;
+            line-height: 1.15 !important;
+            background: #1e1e2f !important;
+            border-bottom: 1px solid #334155 !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            height: calc(7.25rem + 300px) !important;
+            max-height: calc(7.25rem + 300px) !important;
+            overflow-x: hidden !important;
+            overflow-y: scroll !important;
+            -webkit-overflow-scrolling: touch !important;
+            touch-action: pan-y !important;
+            scrollbar-gutter: stable !important;
+            scrollbar-width: thin !important;
+            scrollbar-color: #94a3b8 #1e293b !important;
+            padding: 0.28rem 0.35rem 0.35rem 0.55rem !important;
+            text-align: left !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll::-webkit-scrollbar {
+            width: 8px !important;
+            -webkit-appearance: none !important;
+            display: block !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll::-webkit-scrollbar-track {
+            background: #1e293b !important;
+            border-radius: 4px !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll::-webkit-scrollbar-thumb {
+            background: #94a3b8 !important;
+            border-radius: 4px !important;
+            min-height: 28px !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-list {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.28rem !important;
+            min-width: 0 !important;
+            text-align: left !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-line {
+            display: block !important;
+            padding: 0.32rem 0.38rem !important;
+            margin: 0 !important;
+            border: 1px solid rgba(148, 163, 184, 0.28) !important;
+            border-radius: 5px !important;
+            background: rgba(15, 23, 42, 0.45) !important;
+            line-height: 1.28 !important;
+            font-size: calc(0.72rem + 4pt) !important;
+            min-width: 0 !important;
+            text-align: left !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-line a {
+            display: block !important;
+            color: #93c5fd !important;
+            font-size: calc(0.72rem + 4pt) !important;
+            text-align: left !important;
+            text-decoration: underline !important;
+            text-underline-offset: 0.12em !important;
+            word-break: break-word !important;
+            overflow-wrap: anywhere !important;
+        }
+        .stMarkdown .tip-wrap:not(.headlines-tip):hover .tip-text,
+        .stMarkdown .tip-wrap:not(.headlines-tip):active .tip-text {
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        html.scoop-tooltip-scrolling .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text,
+        body.scoop-tooltip-scrolling .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text {
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
         .stMarkdown .tip-wrap .tip-text::before,
         .stMarkdown .tip-wrap .tip-text::after {
@@ -872,7 +956,6 @@ SCREENER_SYMBOL_LIMIT = get_screener_symbol_limit()
 
 
 # ── Helper functions ──────────────────────────────────────────────────
-@st.cache_data(ttl=900, show_spinner=False)
 def screen_commodity(ticker: str) -> dict | None:
     """Return screening data for one commodity / ETF, or None on failure."""
     try:
@@ -1014,7 +1097,7 @@ with col_b:
     )
 
 @st.cache_data(ttl=900, show_spinner="Refreshing ICE data…")
-def _run_screen():
+def _run_screen(_cache_version: int = SCREENER_CACHE_VERSION):
     results = []
     scan_universe = ICE_UNIVERSE[:SCREENER_SYMBOL_LIMIT]
     for tkr in scan_universe:
@@ -1051,6 +1134,9 @@ else:
             "No commodity data is available right now. Alpha Vantage may be rate-limiting "
             "requests; wait a minute and refresh."
         )
+        if st.button("Clear cache and refresh", key="refresh_ice"):
+            st.cache_data.clear()
+            st.rerun()
     else:
         df = pd.DataFrame(results)
         df = df.sort_values("% Above Low", ascending=True).head(10).reset_index(drop=True)
@@ -1147,12 +1233,19 @@ else:
                 else:
                     rows_inner.append(f'<div class="hl-tip-line">{stitle}</div>')
             list_html = "".join(rows_inner)
+            cb_id = f"hl-cb-r{int(row_idx)}"
             return (
                 f'<span class="tip-wrap headlines-tip" style="anchor-name: {aid};">'
-                f'{html.escape(str(count_display))}'
+                f'<input type="checkbox" id="{cb_id}" class="hl-tip-cb" aria-hidden="true">'
+                f'<label class="hl-tip-count" for="{cb_id}">'
+                f"{html.escape(str(count_display))}</label>"
+                f'<label class="hl-tip-backdrop" for="{cb_id}" aria-hidden="true">'
+                f"<span>&nbsp;</span></label>"
                 f'<span class="tip-text" style="position-anchor: {aid};">'
                 f'<span class="hl-tip-heading">Headlines</span>'
+                f'<div class="headlines-tip-scroll">'
                 f'<div class="headlines-tip-list">{list_html}</div>'
+                f"</div>"
                 f"</span></span>"
             )
 

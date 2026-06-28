@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 import pandas as pd
 import requests
 
@@ -91,20 +93,34 @@ class MarketData:
         return symbol in self._CRYPTO_SYMBOLS
 
     def _request(self, **params) -> dict:
-        try:
-            response = self.session.get(
-                self.base_url,
-                params={**params, "apikey": self.api_key},
-                timeout=20,
-            )
-            response.raise_for_status()
-            data = response.json()
-        except (requests.RequestException, ValueError):
-            return {}
+        max_attempts = 4
+        for attempt in range(max_attempts):
+            try:
+                response = self.session.get(
+                    self.base_url,
+                    params={**params, "apikey": self.api_key},
+                    timeout=20,
+                )
+                response.raise_for_status()
+                data = response.json()
+            except (requests.RequestException, ValueError):
+                if attempt + 1 < max_attempts:
+                    time.sleep(12 * (attempt + 1))
+                    continue
+                return {}
 
-        if "Error Message" in data or "Information" in data or "Note" in data:
-            return {}
-        return data
+            if "Error Message" in data:
+                return {}
+
+            if "Note" in data or "Information" in data:
+                if attempt + 1 < max_attempts:
+                    time.sleep(12 * (attempt + 1))
+                    continue
+                return {}
+
+            return data
+
+        return {}
 
     @staticmethod
     def _to_float(value) -> float | None:
