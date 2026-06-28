@@ -19,7 +19,30 @@ class MarketData:
         "LINK", "TRX", "DOT", "MATIC", "LTC", "BCH", "UNI", "ATOM", "ETC",
         "XLM", "FIL", "APT", "ARB", "OP", "NEAR", "INJ", "IMX", "SAND",
         "MANA", "AXS", "ENS", "SNX", "COMP", "SUSHI", "1INCH", "BAT",
-        "ZEC", "DASH", "PEPE", "BONK", "WIF",
+        "ZEC", "DASH", "PEPE", "BONK", "WIF", "EIGEN", "SAFE", "AERO",
+        "JUP", "SUI", "TIA", "PYTH", "JTO", "SEI", "TAO", "ETHFI", "ONDO",
+        "TRUMP", "PENGU", "POPCAT", "PNUT", "MOODENG", "ME", "MOVE", "DRIFT",
+        "IO", "REZ", "ZK", "ZRO", "BLUR", "TURBO", "PRIME", "AXL",
+    }
+
+    # Alpha Vantage crypto symbols often omit CoinMarketCap numeric suffixes.
+    _CRYPTO_ID_ALIASES = {
+        "SUI20947": "SUI",
+        "JUP29210": "JUP",
+        "PEPE24478": "PEPE",
+        "APT21794": "APT",
+        "UNI7083": "UNI",
+        "GRT6719": "GRT",
+        "ARB11841": "ARB",
+        "IMX10603": "IMX",
+        "COMP5692": "COMP",
+        "AERO29270": "AERO",
+        "AXL17799": "AXL",
+        "SAFE21585": "SAFE",
+        "TAO22974": "TAO",
+        "PRIME23711": "PRIME",
+        "PORTAL29555": "PORTAL",
+        "MEME28301": "MEME",
     }
 
     _INDEX_SYMBOLS = {
@@ -80,7 +103,8 @@ class MarketData:
         if ticker in self._FUTURES_SYMBOLS:
             return self._FUTURES_SYMBOLS[ticker]
         if ticker.endswith("-USD"):
-            return ticker.replace("-USD", "")
+            base = ticker.replace("-USD", "")
+            return self._CRYPTO_ID_ALIASES.get(base, base)
         if ticker in self._CRYPTO_SYMBOLS:
             return ticker
         if ticker.endswith("=F"):
@@ -89,6 +113,8 @@ class MarketData:
 
     def _is_crypto(self, ticker: str) -> bool:
         ticker = (ticker or "").strip().upper()
+        if ticker.endswith("-USD"):
+            return True
         symbol = ticker.replace("-USD", "")
         return symbol in self._CRYPTO_SYMBOLS
 

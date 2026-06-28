@@ -1,8 +1,9 @@
 """
 New Crypto
-Screens newer / emerging cryptocurrencies (available on Coinbase) for
-those trading at or near their 52-week low **and** whose recent
-headlines do NOT contain signals of fraud, scams, or rug-pulls.
+Screens cryptocurrencies **recently listed on tier-1 exchanges** (Coinbase,
+Binance, Kraken, KuCoin, Gemini) so users can quickly spot what major venues
+added just lately. Results are ranked newest listing first; optional 52-week-low
+filter and headline checks still apply.
 """
 
 import streamlit as st
@@ -881,79 +882,37 @@ if agreed:
     log_terms_acceptance(st, consent_key="agree_terms_new_crypto")
 
 # ── Constants ─────────────────────────────────────────────────────────
-# Newer / emerging cryptocurrencies from tier-1 exchanges.
-# Each entry: (name, launch_date, exchanges)
+# Each entry: (name, tier1_listed_date, exchanges)
+# tier1_listed_date = approximate date first available on a tier-1 exchange
+TIER1_EXCHANGES = frozenset({"Coinbase", "Binance", "Kraken", "KuCoin", "Gemini"})
+MAX_NEW_CRYPTO_LISTINGS = 10
+
+# The 10 most recent tier-1 listings (newest first when sorted by tier1_listed_date).
 CRYPTO_INFO = {
-    # Layer 1 / New Chains
-    "SUI20947-USD": ("Sui",            "2023-05-03", "Coinbase, Binance, Kraken, KuCoin"),
-    "SEI-USD":   ("Sei",               "2023-08-15", "Coinbase, Binance, KuCoin"),
-    "APT21794-USD": ("Aptos",          "2022-10-19", "Coinbase, Binance, Kraken, KuCoin"),
-    "TIA-USD":   ("Celestia",          "2023-10-31", "Coinbase, Binance, Kraken, KuCoin"),
-    "MANTA-USD": ("Manta Network",     "2024-01-18", "Binance, KuCoin"),
-    "BLUR-USD":  ("Blur",              "2023-02-14", "Coinbase, Binance, KuCoin"),
-    "JTO-USD":   ("Jito",              "2023-12-07", "Coinbase, Binance, KuCoin"),
-    "JUP29210-USD": ("Jupiter",        "2024-01-31", "Coinbase, Binance, Kraken, KuCoin"),
-    "PYTH-USD":  ("Pyth Network",      "2023-11-20", "Coinbase, Binance, Kraken, KuCoin"),
-    "W-USD":     ("Wormhole",          "2024-04-03", "Coinbase, Binance, KuCoin"),
-    "ENA-USD":   ("Ethena",            "2024-04-02", "Coinbase, Binance, Kraken, KuCoin"),
-    "ONDO-USD":  ("Ondo Finance",      "2024-01-18", "Coinbase, Binance, KuCoin"),
-    "EIGEN-USD": ("EigenLayer",        "2024-10-01", "Coinbase, Binance, KuCoin"),
-    # AI / DePin
-    "FET-USD":   ("Fetch.ai",          "2019-03-28", "Coinbase, Binance, Kraken, KuCoin"),
-    "RENDER-USD": ("Render",           "2020-06-10", "Coinbase, Binance, Kraken, KuCoin"),
-    "AKT-USD":   ("Akash Network",     "2021-03-08", "Coinbase, Binance, Kraken, KuCoin"),
-    "AR-USD":    ("Arweave",           "2018-06-08", "Coinbase, Binance, Kraken, KuCoin"),
-    "TAO22974-USD": ("Bittensor",      "2023-03-06", "Coinbase, Binance, KuCoin"),
-    "AIOZ-USD":  ("AIOZ Network",      "2021-04-20", "Binance, KuCoin"),
-    "GLM-USD":   ("Golem",             "2016-11-18", "Coinbase, Binance, Kraken, KuCoin"),
-    "OCEAN-USD": ("Ocean Protocol",    "2019-05-06", "Coinbase, Binance, Kraken, KuCoin"),
-    # Meme / Community (newer waves)
-    "PEPE24478-USD": ("Pepe",          "2023-04-17", "Coinbase, Binance, Kraken, KuCoin"),
-    "BONK-USD":  ("Bonk",              "2022-12-25", "Coinbase, Binance, KuCoin"),
-    "WIF-USD":   ("dogwifhat",         "2023-12-02", "Coinbase, Binance, KuCoin"),
-    "FLOKI-USD": ("Floki Inu",         "2021-07-10", "Coinbase, Binance, KuCoin"),
-    "TURBO-USD": ("Turbo",             "2023-05-01", "Coinbase, Binance, KuCoin"),
-    "MEME28301-USD": ("Memecoin",      "2023-10-28", "Coinbase, Binance, KuCoin"),
-    "MYRO-USD":  ("Myro",              "2023-11-04", "KuCoin"),
-    # Gaming / Metaverse (newer)
-    "PORTAL29555-USD": ("Portal",      "2024-02-29", "Coinbase, Binance, KuCoin"),
-    "RON14101-USD": ("Ronin",          "2022-01-27", "Coinbase, Binance, KuCoin"),
-    "BEAM-USD":   ("Beam",             "2023-10-26", "Coinbase, Binance, KuCoin"),
-    "PRIME23711-USD": ("Echelon Prime","2023-03-28", "Coinbase, KuCoin"),
-    "GALA-USD":   ("Gala",             "2020-09-16", "Coinbase, Binance, Kraken, KuCoin"),
-    "YGG-USD":    ("Yield Guild Games","2021-07-27", "Coinbase, Binance, KuCoin"),
-    # DeFi (newer)
-    "PENDLE-USD": ("Pendle",           "2021-04-28", "Coinbase, Binance, KuCoin"),
-    "AERO29270-USD": ("Aerodrome Finance","2023-08-28", "Coinbase, KuCoin"),
-    "ETHFI-USD":  ("Ether.fi",         "2024-03-18", "Coinbase, Binance, KuCoin"),
-    "DYDX-USD":   ("dYdX",             "2023-10-26", "Coinbase, Binance, Kraken, KuCoin"),
-    "OSMO-USD":   ("Osmosis",          "2022-01-12", "Coinbase, Binance, Kraken, KuCoin"),
-    "RUNE-USD":   ("THORChain",        "2019-07-23", "Coinbase, Binance, Kraken, KuCoin"),
-    # Social / Identity
-    "MASK8536-USD": ("Mask Network",   "2021-02-24", "Coinbase, Binance, KuCoin"),
-    "RSS3-USD":   ("RSS3",             "2022-02-14", "Binance, KuCoin"),
-    # Infrastructure
-    "AXL17799-USD": ("Axelar",         "2022-09-29", "Coinbase, Binance, KuCoin"),
-    "SAFE21585-USD": ("Safe",          "2024-10-15", "Coinbase, Binance, KuCoin"),
+    "TRUMP-USD": ("Official Trump", "2025-01-20", "Coinbase, Binance, KuCoin"),
+    "PENGU-USD": ("Pudgy Penguins", "2025-02-13", "Coinbase, Binance, KuCoin"),
+    "POPCAT-USD": ("Popcat", "2025-02-13", "Coinbase, Binance, KuCoin"),
+    "ME-USD": ("Magic Eden", "2024-12-17", "Coinbase, Binance, KuCoin"),
+    "MOVE-USD": ("Movement", "2024-12-09", "Coinbase, Binance, KuCoin"),
+    "PNUT-USD": ("Peanut the Squirrel", "2024-11-14", "Binance, KuCoin"),
+    "DRIFT-USD": ("Drift Protocol", "2024-11-08", "Coinbase, KuCoin"),
+    "MOODENG-USD": ("Moo Deng", "2024-10-25", "Binance, KuCoin"),
+    "SAFE-USD": ("Safe", "2024-10-15", "Coinbase, Binance, KuCoin"),
+    "EIGEN-USD": ("EigenLayer", "2024-10-01", "Coinbase, Binance, KuCoin"),
 }
 
-CRYPTO_UNIVERSE = list(CRYPTO_INFO.keys())
-DISPLAY_TICKERS = {
-    "APT21794-USD":    "APT",
-    "RENDER-USD":      "RNDR",
-    "SUI20947-USD":    "SUI",
-    "JUP29210-USD":    "JUP",
-    "TAO22974-USD":    "TAO",
-    "PEPE24478-USD":   "PEPE",
-    "MEME28301-USD":   "MEME",
-    "PORTAL29555-USD": "PORTAL",
-    "RON14101-USD":    "RON",
-    "PRIME23711-USD":  "PRIME",
-    "AERO29270-USD":   "AERO",
-    "MASK8536-USD":    "MASK",
-    "AXL17799-USD":    "AXL",
-    "SAFE21585-USD":   "SAFE",
-}
+DISPLAY_TICKERS: dict[str, str] = {}
+
+
+def _tier1_exchange_list(exchange_str: str) -> list[str]:
+    return [part.strip() for part in exchange_str.split(",") if part.strip() in TIER1_EXCHANGES]
+
+
+CRYPTO_UNIVERSE = sorted(
+    CRYPTO_INFO.keys(),
+    key=lambda ticker: CRYPTO_INFO[ticker][1],
+    reverse=True,
+)[:MAX_NEW_CRYPTO_LISTINGS]
 
 CRYPTO_SUMMARIES = {
     "SUI": "High-throughput layer-1 blockchain using the Move programming language.",
@@ -1000,6 +959,18 @@ CRYPTO_SUMMARIES = {
     "RSS3": "Decentralized protocol for indexing open information across networks.",
     "AXL": "Cross-chain communication network connecting Web3 ecosystems.",
     "SAFE": "Multi-sig smart account infrastructure securing billions in crypto assets.",
+    "TRUMP": "Solana meme token tied to the Official Trump brand; listed broadly in early 2025.",
+    "PENGU": "Pudgy Penguins NFT ecosystem token on Solana.",
+    "POPCAT": "Solana meme coin centered on the Popcat internet meme.",
+    "PNUT": "Solana meme token inspired by Peanut the Squirrel.",
+    "MOODENG": "Solana meme token based on the Moo Deng hippo viral trend.",
+    "ME": "Magic Eden's token powering its NFT and crypto marketplace.",
+    "MOVE": "Layer-2 blockchain token for the Movement network.",
+    "DRIFT": "Decentralized perpetuals and spot trading protocol on Solana.",
+    "IO": "Decentralized GPU network for AI and machine learning workloads.",
+    "REZ": "Liquid restaking protocol built around EigenLayer integrations.",
+    "ZK": "ZKsync governance token for Ethereum L2 scaling.",
+    "ZRO": "LayerZero cross-chain messaging protocol token.",
 }
 
 DISQUALIFY_KEYWORDS = [
@@ -1075,18 +1046,19 @@ def screen_crypto(ticker: str) -> dict | None:
         info_tuple = CRYPTO_INFO.get(ticker, (display_ticker, "Unknown", "—"))
         name = info_tuple[0]
         launch_date_raw = info_tuple[1]
-        exchanges = info_tuple[2] if len(info_tuple) > 2 else "—"
+        exchanges_raw = info_tuple[2] if len(info_tuple) > 2 else "—"
+        exchanges = ", ".join(_tier1_exchange_list(exchanges_raw)) or exchanges_raw
         try:
-            launch_fmt = datetime.strptime(launch_date_raw, "%Y-%m-%d").strftime("%b %d, %Y")
+            listing_fmt = datetime.strptime(launch_date_raw, "%Y-%m-%d").strftime("%b %d, %Y")
         except (ValueError, TypeError):
-            launch_fmt = launch_date_raw
+            listing_fmt = launch_date_raw
         return {
             "Ticker": display_ticker,
             "_source_ticker": ticker,
             "Name": name,
-            "Launched": launch_fmt,
+            "Tier-1 Listed": listing_fmt,
             "Exchanges": exchanges,
-            "_launch_sort": launch_date_raw,
+            "_listing_sort": launch_date_raw,
             "Price": current_price,
             "52W Low": year_low,
             "52W High": year_high,
@@ -1141,12 +1113,13 @@ if _cards:
     )
 
 # ── UI ────────────────────────────────────────────────────────────────
-st.title("🚀 New Crypto — Newest First")
+st.title("🚀 New Crypto — Newest Tier-1 Listings")
 st.markdown(
-    "Screens **{}** newer / emerging cryptocurrencies from **tier-1 exchanges** "
-    "(Coinbase, Binance, Kraken, KuCoin), sorted by **release date** "
-    "(newest first) and proximity to their 52-week low using Alpha Vantage daily market data. "
-    "Headline sentiment is fetched for the final displayed rows.".format(len(CRYPTO_UNIVERSE))
+    "The **{} newest** cryptocurrencies listed on **tier-1 exchanges** "
+    "(Coinbase, Binance, Kraken, KuCoin, Gemini), ranked by listing date. "
+    "All {} are scanned and shown when price data is available.".format(
+        MAX_NEW_CRYPTO_LISTINGS, MAX_NEW_CRYPTO_LISTINGS
+    )
 )
 st.caption(
     "Some exchange links may be affiliate links. "
@@ -1157,20 +1130,26 @@ st.markdown("---")
 
 col_a, col_b = st.columns([1, 3])
 with col_a:
+    apply_low_filter = st.checkbox(
+        "Filter near 52-week low",
+        value=False,
+        help="Off by default — the table shows the newest tier-1 listings. "
+        "Turn on to narrow results to assets near their 52-week low.",
+    )
     threshold = st.slider(
         "Max % above 52-week low",
         min_value=1,
         max_value=MAX_THRESHOLD_PCT,
         value=DEFAULT_THRESHOLD_PCT,
         step=1,
-        help="Only cryptos within this percentage of their 52-week low are shown.",
+        disabled=not apply_low_filter,
+        help="Only used when the filter above is enabled.",
     )
 with col_b:
     st.info(
-        "**How it works:** Each crypto is checked for "
-        "(1) proximity to its 52-week low, "
-        "then sorted **newest first** by launch date. If no assets meet the slider threshold, "
-        "the table shows the closest available new cryptos instead of going empty."
+        "**How it works:** All **10** of the newest tier-1 listings are scanned for live "
+        "price data and listed below (newest first). Enable **Filter near 52-week low** "
+        "to optionally hide listings that are far from their floor."
     )
 
 @st.cache_data(ttl=900, show_spinner="Refreshing New Crypto data…")
@@ -1196,13 +1175,19 @@ else:
     scanned_count = min(SCREENER_SYMBOL_LIMIT, len(CRYPTO_UNIVERSE))
 
     df = pd.DataFrame(all_results) if all_results else pd.DataFrame()
-    showing_closest = False
+    filter_had_no_matches = False
     if not df.empty:
-        filtered_df = df[df["% Above Low"] <= threshold]
-        if filtered_df.empty:
-            showing_closest = True
-        else:
-            df = filtered_df
+        df = df.sort_values(
+            ["_listing_sort", "% Above Low"],
+            ascending=[False, True],
+        )
+        if apply_low_filter:
+            filtered_df = df[df["% Above Low"] <= threshold]
+            if filtered_df.empty:
+                filter_had_no_matches = True
+            else:
+                df = filtered_df
+        df = df.head(MAX_NEW_CRYPTO_LISTINGS).reset_index(drop=True)
 
     st.markdown(
         f'<div style="text-align:right;color:#64748b;font-size:1.1rem;margin-bottom:0.5rem;">'
@@ -1212,32 +1197,42 @@ else:
 
     if df.empty:
         st.warning(
-            "No crypto data is available right now. Alpha Vantage may be rate-limiting "
-            "requests; wait a minute and refresh."
+            f"No price data returned for the {scanned_count} recent tier-1 listings scanned. "
+            "Alpha Vantage may be rate-limiting requests — wait a minute, then use "
+            "**Clear cache and refresh**. Assets without Alpha Vantage coverage are skipped."
         )
         if st.button("Clear cache and refresh", key="refresh_new_crypto"):
             st.cache_data.clear()
             st.rerun()
     else:
-        df = df.sort_values(
-            ["_launch_sort", "% Above Low"],
-            ascending=[False, True],
-        ).head(10).reset_index(drop=True)
-        df = df.drop(columns=["_launch_sort"])
+        df = df.drop(columns=["_listing_sort"])
         df = enrich_headline_sentiment(df, get_market_data())
         df["Headlines"] = df["Headlines"].clip(upper=10)
         df["_headline_texts"] = df["_headline_texts"].apply(lambda items: items[:10])
         df["_headline_urls"] = df["_headline_urls"].apply(lambda items: items[:10])
         df.index = df.index + 1
-        total = len(CRYPTO_UNIVERSE)
+        total = MAX_NEW_CRYPTO_LISTINGS
 
-        if showing_closest:
+        if filter_had_no_matches:
             st.info(
-                f"No new cryptos are within **{threshold}%** of their 52-week low right now, "
-                "so showing the closest available new cryptos instead."
+                f"No listings are within **{threshold}%** of their 52-week low. "
+                f"Showing all **{len(df)}** newest tier-1 listings instead."
+            )
+        elif apply_low_filter:
+            st.success(
+                f"Showing **{len(df)}** of **{total}** newest listings "
+                f"within **{threshold}%** of their 52-week low."
+            )
+        elif len(df) < total:
+            st.warning(
+                f"Showing **{len(df)}** of **{total}** newest tier-1 listings — "
+                f"{total - len(df)} skipped (no Alpha Vantage price data or rate-limited). "
+                "Try **Clear cache and refresh** in a minute."
             )
         else:
-            st.success(f"Found **{len(df)}** candidates from {scanned_count} of {total} new cryptos scanned (newest first).")
+            st.success(
+                f"Showing all **{len(df)}** newest tier-1 listings (newest first)."
+            )
 
         def _format_crypto_price(value):
             try:
@@ -1280,7 +1275,7 @@ else:
                     f'<div style="font-size:1.5rem;line-height:1.8;">'
                     f'<span class="tip-wrap" style="font-weight:700;">'
                     f'{row["Name"]}<span class="tip-text">{tip}</span></span><br>'
-                    f'🗓️ Launched: <b>{row["Launched"]}</b><br>'
+                    f'🗓️ Tier-1 listed: <b>{row["Tier-1 Listed"]}</b><br>'
                     f'52W Low: <b style="color:#22c55e;">{_format_crypto_price(row["52W Low"])}</b> · '
                     f'52W High: <b>{_format_crypto_price(row["52W High"])}</b><br>'
                     f'Sentiment: <b>{row["Headline Sentiment"]:+.3f}</b><br>'
@@ -1307,12 +1302,12 @@ else:
         display_df["Headline Sentiment"] = display_df["Headline Sentiment"].apply(lambda x: f"{x:+.3f}")
 
         COLUMN_TIPS = {
-            "Exchanges": "Tier-1 exchanges where this crypto can be purchased (Coinbase, Binance, Kraken, KuCoin).",
+            "Exchanges": "Tier-1 exchanges where this crypto can be purchased (Coinbase, Binance, Kraken, KuCoin, Gemini).",
             "Headline Sentiment": "Average polarity score of recent news headlines (TextBlob). Ranges from -1.0 (very negative) to +1.0 (very positive). Cryptos below -0.35 are automatically disqualified.",
             "Headlines": "Number of recent news headlines found for this crypto. More headlines give a more reliable sentiment reading.",
             "Market Mood": "Proximity to the 52-week low: BELOW LOW = trading under the recorded low, AT LOW = within 2%, NEAR LOW = within the slider threshold.",
             "% Above Low": "How far the current price is above the 52-week low, expressed as a percentage. Lower is closer to the floor.",
-            "Launched": "Date the token was first listed or created on-chain.",
+            "Tier-1 Listed": "Approximate date this asset first became available on a tier-1 exchange (not the original token launch).",
         }
 
         def _tip(text, tooltip, anchor_id: str = ""):
@@ -1424,7 +1419,8 @@ else:
 
             | Criterion | Check |
             |-----------|-------|
-            | **Newest first** | Results are ranked by launch date (most recent first) so the freshest opportunities surface at the top |
+            | **Top 10 newest** | Fixed set of the 10 most recent tier-1 exchange listings |
+            | **All shown** | Every listing in the set appears when price data is available |
             | **No scandal headlines** | Recent news contains no keywords related to fraud, scams, rug-pulls, or hacks |
             | **Headline context** | Detailed headline sentiment is available on the Search page |
 
