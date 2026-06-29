@@ -15,7 +15,7 @@ from predictor import Predictor
 from market_data import MarketData
 from sentiment_engine import SentimentEngine
 from legal_consent_logger import ensure_timezone_cookie, log_terms_acceptance
-from branding import logo_path_str
+from branding import logo_path_str, render_environment_banner
 
 # Search price chart: axis tick/title sizes (px in Plotly). Mobile matches existing UI.
 _SEARCH_CHART_AXIS_TICK_MOBILE = 26
@@ -190,6 +190,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
+render_environment_banner(st)
 
 # ── Global responsive styling ─────────────────────────────────────────
 st.markdown(

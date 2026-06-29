@@ -23,8 +23,16 @@ import requests
 from vpn_detection import detect_vpn_proxy
 
 _SQLITE_PATH = Path(__file__).resolve().parent / "legal_consents.db"
-_POSTGRES_URL = os.getenv("DATABASE_URL", "").strip()
 _DEFAULT_TIMEZONE = os.getenv("CONSENT_DEFAULT_TIMEZONE", "America/Chicago").strip()
+
+
+def _postgres_url() -> str:
+    try:
+        from app_config import get_database_url
+
+        return get_database_url() or ""
+    except Exception:
+        return os.getenv("DATABASE_URL", "").strip()
 
 
 def ensure_timezone_cookie(st_module) -> None:
@@ -250,7 +258,8 @@ def _insert_sqlite(record: dict[str, str]) -> None:
 
 
 def _insert_postgres(record: dict[str, str]) -> bool:
-    if not _POSTGRES_URL:
+    postgres_url = _postgres_url()
+    if not postgres_url:
         return False
     try:
         import psycopg
@@ -282,7 +291,7 @@ def _insert_postgres(record: dict[str, str]) -> bool:
         VALUES (%s::uuid, %s::timestamptz, %s::inet, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
     ip_for_db = record["ip_address"] if record["ip_address"] != "unknown" else "0.0.0.0"
-    with psycopg.connect(_POSTGRES_URL) as conn:
+    with psycopg.connect(postgres_url) as conn:
         with conn.cursor() as cur:
             try:
                 cur.execute(

@@ -38,12 +38,9 @@ from typing import Optional
 import psycopg
 from fastapi import Depends, FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator
+from app_config import get_database_url
 from vpn_detection import detect_vpn_proxy
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://localhost:5432/smart_hub",
-)
 DEFAULT_TIMEZONE = os.getenv("CONSENT_DEFAULT_TIMEZONE", "America/Chicago").strip() or "UTC"
 
 
@@ -336,7 +333,8 @@ def log_legal_consent(
     """
 
     try:
-        with psycopg.connect(DATABASE_URL) as conn:
+        database_url = get_database_url(required=True)
+        with psycopg.connect(database_url) as conn:
             with conn.cursor() as cur:
                 try:
                     cur.execute(

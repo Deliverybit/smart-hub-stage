@@ -3,28 +3,6 @@ from pathlib import Path
 import tomllib
 
 
-def get_alpha_vantage_api_key(required: bool = False) -> str | None:
-    """Load the Alpha Vantage API key from deployment secrets or local env."""
-    key = os.getenv("ALPHA_VANTAGE_API_KEY")
-    if not key:
-        try:
-            import streamlit as st
-
-            key = st.secrets.get("ALPHA_VANTAGE_API_KEY")
-        except Exception:
-            key = None
-    if not key:
-        key = _load_local_streamlit_secret("ALPHA_VANTAGE_API_KEY")
-
-    if key == "replace-with-your-alpha-vantage-key":
-        key = None
-
-    if required and not key:
-        raise RuntimeError("ALPHA_VANTAGE_API_KEY is not configured")
-
-    return key
-
-
 def _load_local_streamlit_secret(name: str):
     """Read ignored local Streamlit secrets when not running inside Streamlit."""
     secrets_path = Path(__file__).resolve().parent / ".streamlit" / "secrets.toml"
@@ -35,18 +13,72 @@ def _load_local_streamlit_secret(name: str):
         return None
 
 
+def _load_secret(name: str) -> str | None:
+    """Load a secret from env, Streamlit secrets, or local secrets.toml."""
+    value = os.getenv(name)
+    if value:
+        return str(value).strip() or None
+    try:
+        import streamlit as st
+
+        raw = st.secrets.get(name)
+        if raw is not None:
+            return str(raw).strip() or None
+    except Exception:
+        pass
+    raw = _load_local_streamlit_secret(name)
+    if raw is not None:
+        return str(raw).strip() or None
+    return None
+
+
+def get_app_env(default: str = "staging") -> str:
+    """Deployment environment label: staging, production, or local."""
+    raw = _load_secret("APP_ENV")
+    env = (raw or default).strip().lower()
+    return env if env in {"staging", "production", "local"} else default
+
+
+def get_database_url(required: bool = False) -> str | None:
+    """
+    Postgres connection string (Supabase).
+
+    Prefer the Session pooler URI (port 5432) from Supabase:
+    Project Settings → Database → Connection string → URI → Session mode.
+    Append ``?sslmode=require`` if it is not already present.
+    """
+    url = _load_secret("DATABASE_URL")
+    placeholders = {
+        "",
+        "replace-with-your-supabase-database-url",
+        "postgresql://postgres:password@localhost:5432/postgres",
+    }
+    if url in placeholders:
+        url = None
+    if required and not url:
+        raise RuntimeError(
+            "DATABASE_URL is not configured. Set it in the environment, "
+            ".streamlit/secrets.toml, or your host's secret store."
+        )
+    return url
+
+
+def get_alpha_vantage_api_key(required: bool = False) -> str | None:
+    """Load the Alpha Vantage API key from deployment secrets or local env."""
+    key = _load_secret("ALPHA_VANTAGE_API_KEY")
+
+    if key == "replace-with-your-alpha-vantage-key":
+        key = None
+
+    if required and not key:
+        raise RuntimeError("ALPHA_VANTAGE_API_KEY is not configured")
+
+    return key
+
+
 def get_screener_symbol_limit(default: int = 1000) -> int:
     """Limit Alpha Vantage screener calls; high default scans each full page universe."""
-    raw_limit = os.getenv("SCREENER_SYMBOL_LIMIT")
-    if not raw_limit:
-        try:
-            import streamlit as st
-
-            raw_limit = st.secrets.get("SCREENER_SYMBOL_LIMIT")
-        except Exception:
-            raw_limit = None
-    if not raw_limit:
-        raw_limit = _load_local_streamlit_secret("SCREENER_SYMBOL_LIMIT")
+    raw_limit = _load_secret("SCREENER_SYMBOL_LIMIT")
 
     try:
         limit = int(raw_limit) if raw_limit is not None else default

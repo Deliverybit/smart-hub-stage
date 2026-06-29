@@ -3,13 +3,14 @@ Terms of Service & Financial Disclaimer
 """
 
 import streamlit as st
-from branding import logo_path_str
+from branding import logo_path_str, render_environment_banner
 
 st.set_page_config(
     page_title="Terms of Service",
     page_icon=logo_path_str(),
     layout="wide",
 )
+render_environment_banner(st)
 
 # ── Global responsive styling (shared with other pages) ───────────────
 st.markdown(

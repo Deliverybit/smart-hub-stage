@@ -11,7 +11,7 @@ import pandas as pd
 from textblob import TextBlob
 from datetime import datetime
 from legal_consent_logger import ensure_timezone_cookie, log_terms_acceptance
-from branding import logo_path_str
+from branding import logo_path_str, render_environment_banner
 from market_data import MarketData
 from app_config import get_screener_symbol_limit, SCREENER_CACHE_VERSION
 from screener_headlines import enrich_headline_sentiment
@@ -24,6 +24,7 @@ st.set_page_config(
     page_icon=logo_path_str(),
     layout="wide",
 )
+render_environment_banner(st)
 
 
 @st.cache_resource

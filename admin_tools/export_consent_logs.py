@@ -239,7 +239,9 @@ def main() -> None:
         )
         sys.exit(2)
 
-    db_url = os.getenv("DATABASE_URL", "").strip()
+    from app_config import get_database_url
+
+    db_url = get_database_url()
     if db_url:
         df = load_from_postgres(
             db_url,
