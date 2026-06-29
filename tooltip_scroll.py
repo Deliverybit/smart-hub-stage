@@ -153,6 +153,20 @@ _MOBILE_HEADLINES_CSS = """
 }
 """
 
+_DESKTOP_HEADLINES_CSS = """
+@media (min-width: 769px) {
+    /* Headlines count uses hover on desktop; hide mobile tap checkbox/backdrop. */
+    .tip-wrap.headlines-tip .hl-tip-cb,
+    .tip-wrap.headlines-tip .hl-tip-backdrop {
+        display: none !important;
+    }
+    .tip-wrap.headlines-tip .hl-tip-count {
+        cursor: help !important;
+        text-decoration: inherit !important;
+    }
+}
+"""
+
 _TOOLTIP_SCROLL_JS = """
 (() => {
     const root = document.documentElement;
@@ -188,6 +202,7 @@ def install_tooltip_scroll_handler() -> None:
     """Inject mobile headline CSS; HTML backdrop label closes panel on outside tap."""
     st.html(
         f"<style id='scoop-mobile-headlines-css'>{_MOBILE_HEADLINES_CSS}</style>"
+        f"<style id='scoop-desktop-headlines-css'>{_DESKTOP_HEADLINES_CSS}</style>"
         f"<script>{_TOOLTIP_SCROLL_JS}</script>",
         unsafe_allow_javascript=True,
     )

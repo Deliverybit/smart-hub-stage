@@ -24,6 +24,8 @@ The Scoop 52 uses Postgres for **legal consent logs** (`legal_consents` table). 
 
 ## 3. Configure secrets
 
+**Windows:** run `.\launch.ps1` once — it copies the example file if `secrets.toml` is missing.
+
 ```bash
 cp .streamlit/secrets.toml.example .streamlit/secrets.toml
 ```

@@ -1,7 +1,7 @@
 """
 app.py
 Final Live Version: Market Prediction App
-Run: streamlit run app.py
+Run: python -m streamlit run app.py
 """
 
 from datetime import timedelta

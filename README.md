@@ -12,11 +12,21 @@ Staging environment for **The Scoop 52** — Streamlit market screener with lega
 
 ## Run locally
 
+**Windows (recommended):**
+
+```powershell
+.\launch.ps1
+```
+
+The script creates a project-local `venv`, installs dependencies, copies secrets if needed, and starts Streamlit with `APP_ENV=staging`. If you copied this repo from another project and see a launcher error mentioning `smart-hub-prod`, run `.\launch.ps1 -RecreateVenv`.
+
+**Manual:**
+
 ```bash
 pip install -r requirements.txt
 cp .streamlit/secrets.toml.example .streamlit/secrets.toml
 # Edit secrets: APP_ENV, DATABASE_URL, ALPHA_VANTAGE_API_KEY
-streamlit run app.py
+python -m streamlit run app.py
 ```
 
 ## Database setup
