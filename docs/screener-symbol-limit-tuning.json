@@ -1,0 +1,310 @@
+{
+  "step": 6,
+  "configured_limit": 1000,
+  "recommended_limit": 83,
+  "max_universe": 83,
+  "target_sec": 180.0,
+  "current_benchmark": [
+    {
+      "name": "NYSE",
+      "universe_size": 70,
+      "scanned": 70,
+      "coverage_pct": 100.0,
+      "candidates": 70,
+      "elapsed_sec": 167.7,
+      "sec_per_symbol": 2.4
+    },
+    {
+      "name": "NASDAQ",
+      "universe_size": 83,
+      "scanned": 83,
+      "coverage_pct": 100.0,
+      "candidates": 83,
+      "elapsed_sec": 215.3,
+      "sec_per_symbol": 2.59
+    },
+    {
+      "name": "Crypto",
+      "universe_size": 50,
+      "scanned": 50,
+      "coverage_pct": 100.0,
+      "candidates": 50,
+      "elapsed_sec": 72.0,
+      "sec_per_symbol": 1.44
+    },
+    {
+      "name": "New Crypto",
+      "universe_size": 10,
+      "scanned": 10,
+      "coverage_pct": 100.0,
+      "candidates": 10,
+      "elapsed_sec": 4.3,
+      "sec_per_symbol": 0.43
+    },
+    {
+      "name": "CME",
+      "universe_size": 33,
+      "scanned": 33,
+      "coverage_pct": 100.0,
+      "candidates": 33,
+      "elapsed_sec": 83.5,
+      "sec_per_symbol": 2.53
+    },
+    {
+      "name": "ICE",
+      "universe_size": 26,
+      "scanned": 26,
+      "coverage_pct": 100.0,
+      "candidates": 26,
+      "elapsed_sec": 28.5,
+      "sec_per_symbol": 1.1
+    }
+  ],
+  "projections": [
+    {
+      "limit": 50,
+      "total_projected_sec": 437.9,
+      "min_coverage_pct": 60.2,
+      "screeners": [
+        {
+          "name": "NYSE",
+          "universe_size": 70,
+          "scanned": 50,
+          "coverage_pct": 71.4,
+          "projected_sec": 120.0
+        },
+        {
+          "name": "NASDAQ",
+          "universe_size": 83,
+          "scanned": 50,
+          "coverage_pct": 60.2,
+          "projected_sec": 129.5
+        },
+        {
+          "name": "Crypto",
+          "universe_size": 50,
+          "scanned": 50,
+          "coverage_pct": 100.0,
+          "projected_sec": 72.0
+        },
+        {
+          "name": "New Crypto",
+          "universe_size": 10,
+          "scanned": 10,
+          "coverage_pct": 100.0,
+          "projected_sec": 4.3
+        },
+        {
+          "name": "CME",
+          "universe_size": 33,
+          "scanned": 33,
+          "coverage_pct": 100.0,
+          "projected_sec": 83.5
+        },
+        {
+          "name": "ICE",
+          "universe_size": 26,
+          "scanned": 26,
+          "coverage_pct": 100.0,
+          "projected_sec": 28.6
+        }
+      ]
+    },
+    {
+      "limit": 83,
+      "total_projected_sec": 571.4,
+      "min_coverage_pct": 100.0,
+      "screeners": [
+        {
+          "name": "NYSE",
+          "universe_size": 70,
+          "scanned": 70,
+          "coverage_pct": 100.0,
+          "projected_sec": 168.0
+        },
+        {
+          "name": "NASDAQ",
+          "universe_size": 83,
+          "scanned": 83,
+          "coverage_pct": 100.0,
+          "projected_sec": 215.0
+        },
+        {
+          "name": "Crypto",
+          "universe_size": 50,
+          "scanned": 50,
+          "coverage_pct": 100.0,
+          "projected_sec": 72.0
+        },
+        {
+          "name": "New Crypto",
+          "universe_size": 10,
+          "scanned": 10,
+          "coverage_pct": 100.0,
+          "projected_sec": 4.3
+        },
+        {
+          "name": "CME",
+          "universe_size": 33,
+          "scanned": 33,
+          "coverage_pct": 100.0,
+          "projected_sec": 83.5
+        },
+        {
+          "name": "ICE",
+          "universe_size": 26,
+          "scanned": 26,
+          "coverage_pct": 100.0,
+          "projected_sec": 28.6
+        }
+      ]
+    },
+    {
+      "limit": 100,
+      "total_projected_sec": 571.4,
+      "min_coverage_pct": 100.0,
+      "screeners": [
+        {
+          "name": "NYSE",
+          "universe_size": 70,
+          "scanned": 70,
+          "coverage_pct": 100.0,
+          "projected_sec": 168.0
+        },
+        {
+          "name": "NASDAQ",
+          "universe_size": 83,
+          "scanned": 83,
+          "coverage_pct": 100.0,
+          "projected_sec": 215.0
+        },
+        {
+          "name": "Crypto",
+          "universe_size": 50,
+          "scanned": 50,
+          "coverage_pct": 100.0,
+          "projected_sec": 72.0
+        },
+        {
+          "name": "New Crypto",
+          "universe_size": 10,
+          "scanned": 10,
+          "coverage_pct": 100.0,
+          "projected_sec": 4.3
+        },
+        {
+          "name": "CME",
+          "universe_size": 33,
+          "scanned": 33,
+          "coverage_pct": 100.0,
+          "projected_sec": 83.5
+        },
+        {
+          "name": "ICE",
+          "universe_size": 26,
+          "scanned": 26,
+          "coverage_pct": 100.0,
+          "projected_sec": 28.6
+        }
+      ]
+    },
+    {
+      "limit": 500,
+      "total_projected_sec": 571.4,
+      "min_coverage_pct": 100.0,
+      "screeners": [
+        {
+          "name": "NYSE",
+          "universe_size": 70,
+          "scanned": 70,
+          "coverage_pct": 100.0,
+          "projected_sec": 168.0
+        },
+        {
+          "name": "NASDAQ",
+          "universe_size": 83,
+          "scanned": 83,
+          "coverage_pct": 100.0,
+          "projected_sec": 215.0
+        },
+        {
+          "name": "Crypto",
+          "universe_size": 50,
+          "scanned": 50,
+          "coverage_pct": 100.0,
+          "projected_sec": 72.0
+        },
+        {
+          "name": "New Crypto",
+          "universe_size": 10,
+          "scanned": 10,
+          "coverage_pct": 100.0,
+          "projected_sec": 4.3
+        },
+        {
+          "name": "CME",
+          "universe_size": 33,
+          "scanned": 33,
+          "coverage_pct": 100.0,
+          "projected_sec": 83.5
+        },
+        {
+          "name": "ICE",
+          "universe_size": 26,
+          "scanned": 26,
+          "coverage_pct": 100.0,
+          "projected_sec": 28.6
+        }
+      ]
+    },
+    {
+      "limit": 1000,
+      "total_projected_sec": 571.4,
+      "min_coverage_pct": 100.0,
+      "screeners": [
+        {
+          "name": "NYSE",
+          "universe_size": 70,
+          "scanned": 70,
+          "coverage_pct": 100.0,
+          "projected_sec": 168.0
+        },
+        {
+          "name": "NASDAQ",
+          "universe_size": 83,
+          "scanned": 83,
+          "coverage_pct": 100.0,
+          "projected_sec": 215.0
+        },
+        {
+          "name": "Crypto",
+          "universe_size": 50,
+          "scanned": 50,
+          "coverage_pct": 100.0,
+          "projected_sec": 72.0
+        },
+        {
+          "name": "New Crypto",
+          "universe_size": 10,
+          "scanned": 10,
+          "coverage_pct": 100.0,
+          "projected_sec": 4.3
+        },
+        {
+          "name": "CME",
+          "universe_size": 33,
+          "scanned": 33,
+          "coverage_pct": 100.0,
+          "projected_sec": 83.5
+        },
+        {
+          "name": "ICE",
+          "universe_size": 26,
+          "scanned": 26,
+          "coverage_pct": 100.0,
+          "projected_sec": 28.6
+        }
+      ]
+    }
+  ]
+}

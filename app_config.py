@@ -89,7 +89,7 @@ def get_screener_symbol_limit(default: int = 1000) -> int:
 
 
 # Bump when screener/API behavior changes to invalidate stale Streamlit caches.
-SCREENER_CACHE_VERSION = 4
+SCREENER_CACHE_VERSION = 5
 
 # Back-compat aliases used by some page variants.
 ALPHAVANTAGE_CACHE_TIMEOUT = 900

@@ -1,0 +1,97 @@
+{
+  "validated_at": "2026-07-15T00:34:18",
+  "mode": "full",
+  "screener_symbol_limit": 1000,
+  "summary": "6/6 screeners passed",
+  "note": "Six Top 10 screener pages validated. Search (app.py) validated separately via ticker smoke test.",
+  "screeners": [
+    {
+      "name": "NYSE",
+      "page": "pages/1_NYSE_Top_10.py",
+      "url": "/NYSE_Top_10",
+      "status": "PASS",
+      "universe_size": 70,
+      "scanned": 70,
+      "candidates": 70,
+      "top10_count": 10,
+      "top10_tickers": ["MCD", "LOW", "IBM", "BK", "AMT", "PEP", "PG", "T", "NKE", "ORCL"],
+      "elapsed_sec": 171.7
+    },
+    {
+      "name": "NASDAQ",
+      "page": "pages/2_NASDAQ_Top_10.py",
+      "url": "/NASDAQ_Top_10",
+      "status": "PASS",
+      "universe_size": 83,
+      "scanned": 83,
+      "candidates": 83,
+      "top10_count": 10,
+      "top10_tickers": ["ISRG", "CHTR", "NFLX", "CMCSA", "PEP", "ORCL", "COST", "KLAC", "TTD", "MSFT"],
+      "elapsed_sec": 165.7
+    },
+    {
+      "name": "Crypto",
+      "page": "pages/3_Crypto_Top_10.py",
+      "url": "/Crypto_Top_10",
+      "status": "PASS",
+      "universe_size": 50,
+      "scanned": 50,
+      "candidates": 50,
+      "top10_count": 10,
+      "top10_tickers": ["HBAR-USD", "BONK-USD", "SHIB-USD", "GRT6719-USD", "ATOM-USD", "ENS-USD", "ALGO-USD", "DOGE-USD", "DOT-USD", "BAT-USD"],
+      "elapsed_sec": 60.5
+    },
+    {
+      "name": "New Crypto",
+      "page": "pages/4_New_Crypto_Top_10.py",
+      "url": "/New_Crypto_Top_10",
+      "status": "PASS",
+      "universe_size": 10,
+      "scanned": 10,
+      "candidates": 10,
+      "top10_count": 10,
+      "top10_tickers": ["TRUMP-USD", "DRIFT-USD", "MOODENG-USD", "PENGU-USD", "ME-USD", "PNUT-USD", "POPCAT-USD", "MOVE-USD", "SAFE-USD", "EIGEN-USD"],
+      "elapsed_sec": 3.7
+    },
+    {
+      "name": "CME",
+      "page": "pages/5_CME_Top_10.py",
+      "url": "/CME_Top_10",
+      "status": "PASS",
+      "universe_size": 33,
+      "scanned": 33,
+      "candidates": 33,
+      "top10_count": 10,
+      "top10_tickers": ["ZT=F", "6J=F", "ZF=F", "ZB=F", "ZN=F", "6C=F", "PL=F", "NG=F", "ZC=F", "6B=F"],
+      "elapsed_sec": 67.7
+    },
+    {
+      "name": "ICE",
+      "page": "pages/6_ICE_Top_10.py",
+      "url": "/ICE_Top_10",
+      "status": "PASS",
+      "universe_size": 26,
+      "scanned": 26,
+      "candidates": 26,
+      "top10_count": 10,
+      "top10_tickers": ["PPLT", "UNG", "CORN", "DX=F", "CT=F", "OJ=F", "DBA", "SB=F", "CANE", "COW"],
+      "elapsed_sec": 23.7
+    }
+  ],
+  "manual_ui_checks": [
+    "Open each screener URL at http://localhost:8501",
+    "Check 'I agree to the Disclaimer & Terms'",
+    "Confirm 'Last updated' timestamp and Top Picks / results table appear"
+  ],
+  "cache_refresh_test": {
+    "validated_at": "2026-07-15T00:43:13",
+    "screener": "ICE",
+    "status": "PASS",
+    "warm_scan_sec": 46.1,
+    "cached_scan_sec": 0.0,
+    "cold_recovery_sec": 45.2,
+    "recovery_target_sec": 120,
+    "top10_after_refresh": ["PPLT", "UNG", "CORN", "DX=F", "CT=F", "OJ=F", "DBA", "SB=F", "CANE", "COW"],
+    "note": "Clear cache button in UI appears only when screener returns zero results; test simulates st.cache_data.clear() via admin_tools/test_cache_refresh.py"
+  }
+}
