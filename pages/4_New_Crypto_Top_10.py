@@ -1,9 +1,8 @@
 """
 New Crypto
 Screens cryptocurrencies **recently listed on tier-1 exchanges** (Coinbase,
-Binance, Kraken, KuCoin, Gemini) so users can quickly spot what major venues
-added just lately. Results are ranked newest listing first; optional 52-week-low
-filter and headline checks still apply.
+Binance, Kraken, KuCoin, Gemini) for those trading **at or near their 52-week low**,
+ranked by closeness to the floor.
 """
 
 import streamlit as st
@@ -15,6 +14,13 @@ from branding import logo_path_str, render_environment_banner
 from market_data import MarketData
 from app_config import get_screener_symbol_limit, SCREENER_CACHE_VERSION
 from screener_headlines import enrich_headline_sentiment
+from screener_selection import (
+    MAX_PAD_CAP_PCT,
+    MARKET_MOOD_TIP,
+    proximity_how_it_works,
+    select_proximity_results,
+    selection_status_message,
+)
 from tooltip_scroll import install_tooltip_scroll_handler
 import html
 
@@ -982,8 +988,6 @@ DISQUALIFY_KEYWORDS = [
     "shutting down", "closing all",
 ]
 
-DEFAULT_THRESHOLD_PCT = 20
-MAX_THRESHOLD_PCT = 50
 SCREENER_SYMBOL_LIMIT = get_screener_symbol_limit()
 
 
@@ -1116,10 +1120,9 @@ if _cards:
 # ── UI ────────────────────────────────────────────────────────────────
 st.title("🚀 New Crypto — Newest Tier-1 Listings")
 st.markdown(
-    "The **{} newest** cryptocurrencies listed on **tier-1 exchanges** "
-    "(Coinbase, Binance, Kraken, KuCoin, Gemini), ranked by listing date. "
-    "All {} are scanned and shown when price data is available.".format(
-        MAX_NEW_CRYPTO_LISTINGS, MAX_NEW_CRYPTO_LISTINGS
+    "Screens the **{} newest** tier-1 exchange listings for those trading **at or near "
+    "their 52-week low**, ranked by closeness to the floor.".format(
+        MAX_NEW_CRYPTO_LISTINGS
     )
 )
 st.caption(
@@ -1129,29 +1132,7 @@ st.caption(
 
 st.markdown("---")
 
-col_a, col_b = st.columns([1, 3])
-with col_a:
-    apply_low_filter = st.checkbox(
-        "Filter near 52-week low",
-        value=False,
-        help="Off by default — the table shows the newest tier-1 listings. "
-        "Turn on to narrow results to assets near their 52-week low.",
-    )
-    threshold = st.slider(
-        "Max % above 52-week low",
-        min_value=1,
-        max_value=MAX_THRESHOLD_PCT,
-        value=DEFAULT_THRESHOLD_PCT,
-        step=1,
-        disabled=not apply_low_filter,
-        help="Only used when the filter above is enabled.",
-    )
-with col_b:
-    st.info(
-        "**How it works:** All **10** of the newest tier-1 listings are scanned for live "
-        "price data and listed below (newest first). Enable **Filter near 52-week low** "
-        "to optionally hide listings that are far from their floor."
-    )
+st.info(proximity_how_it_works("listing"))
 
 @st.cache_data(ttl=900, show_spinner="Refreshing New Crypto data…")
 def _run_screen(_cache_version: int = SCREENER_CACHE_VERSION):
@@ -1174,21 +1155,8 @@ if not agreed:
 else:
     all_results, last_updated = _run_screen()
     scanned_count = min(SCREENER_SYMBOL_LIMIT, len(CRYPTO_UNIVERSE))
-
-    df = pd.DataFrame(all_results) if all_results else pd.DataFrame()
-    filter_had_no_matches = False
-    if not df.empty:
-        df = df.sort_values(
-            ["_listing_sort", "% Above Low"],
-            ascending=[False, True],
-        )
-        if apply_low_filter:
-            filtered_df = df[df["% Above Low"] <= threshold]
-            if filtered_df.empty:
-                filter_had_no_matches = True
-            else:
-                df = filtered_df
-        df = df.head(MAX_NEW_CRYPTO_LISTINGS).reset_index(drop=True)
+    selection = select_proximity_results(all_results)
+    results = selection.results
 
     st.markdown(
         f'<div style="text-align:right;color:#64748b;font-size:1.1rem;margin-bottom:0.5rem;">'
@@ -1196,7 +1164,7 @@ else:
         unsafe_allow_html=True,
     )
 
-    if df.empty:
+    if not all_results:
         st.warning(
             f"No price data returned for the {scanned_count} recent tier-1 listings scanned. "
             "Alpha Vantage may be rate-limiting requests — wait a minute, then use "
@@ -1205,35 +1173,31 @@ else:
         if st.button("Clear cache and refresh", key="refresh_new_crypto"):
             st.cache_data.clear()
             st.rerun()
+    elif not results:
+        st.warning(
+            f"No listings are within **{MAX_PAD_CAP_PCT}%** of their 52-week low among the "
+            f"{scanned_count} newest tier-1 listings scanned."
+        )
+        if st.button("Clear cache and refresh", key="refresh_new_crypto"):
+            st.cache_data.clear()
+            st.rerun()
     else:
-        df = df.drop(columns=["_listing_sort"])
+        df = pd.DataFrame(results)
+        df = df.sort_values("% Above Low", ascending=True).reset_index(drop=True)
+        df = df.drop(columns=["_listing_sort"], errors="ignore")
         df = enrich_headline_sentiment(df, get_market_data())
         df["Headlines"] = df["Headlines"].clip(upper=10)
         df["_headline_texts"] = df["_headline_texts"].apply(lambda items: items[:10])
         df["_headline_urls"] = df["_headline_urls"].apply(lambda items: items[:10])
         df.index = df.index + 1
-        total = MAX_NEW_CRYPTO_LISTINGS
 
-        if filter_had_no_matches:
-            st.info(
-                f"No listings are within **{threshold}%** of their 52-week low. "
-                f"Showing all **{len(df)}** newest tier-1 listings instead."
-            )
-        elif apply_low_filter:
-            st.success(
-                f"Showing **{len(df)}** of **{total}** newest listings "
-                f"within **{threshold}%** of their 52-week low."
-            )
-        elif len(df) < total:
-            st.warning(
-                f"Showing **{len(df)}** of **{total}** newest tier-1 listings — "
-                f"{total - len(df)} skipped (no Alpha Vantage price data or rate-limited). "
-                "Try **Clear cache and refresh** in a minute."
-            )
-        else:
-            st.success(
-                f"Showing all **{len(df)}** newest tier-1 listings (newest first)."
-            )
+        level, status_msg = selection_status_message(
+            selection,
+            asset_noun="listings",
+            scanned_count=scanned_count,
+            universe_size=MAX_NEW_CRYPTO_LISTINGS,
+        )
+        getattr(st, level)(status_msg)
 
         def _format_crypto_price(value):
             try:
@@ -1306,7 +1270,7 @@ else:
             "Exchanges": "Tier-1 exchanges where this crypto can be purchased (Coinbase, Binance, Kraken, KuCoin, Gemini).",
             "Headline Sentiment": "Average polarity score of recent news headlines (TextBlob). Ranges from -1.0 (very negative) to +1.0 (very positive). Cryptos below -0.35 are automatically disqualified.",
             "Headlines": "Number of recent news headlines found for this crypto. More headlines give a more reliable sentiment reading.",
-            "Market Mood": "Proximity to the 52-week low: BELOW LOW = trading under the recorded low, AT LOW = within 2%, NEAR LOW = within the slider threshold.",
+            "Market Mood": MARKET_MOOD_TIP,
             "% Above Low": "How far the current price is above the 52-week low, expressed as a percentage. Lower is closer to the floor.",
             "Tier-1 Listed": "Approximate date this asset first became available on a tier-1 exchange (not the original token launch).",
         }
@@ -1420,8 +1384,8 @@ else:
 
             | Criterion | Check |
             |-----------|-------|
-            | **Top 10 newest** | Fixed set of the 10 most recent tier-1 exchange listings |
-            | **All shown** | Every listing in the set appears when price data is available |
+            | **Newest tier-1 listings** | Fixed set of the 10 most recent tier-1 exchange listings scanned |
+            | **Near 52-week low** | Price is within 30% of the lowest price in the past year (15% preferred) |
             | **No scandal headlines** | Recent news contains no keywords related to fraud, scams, rug-pulls, or hacks |
             | **Headline context** | Detailed headline sentiment is available on the Search page |
 

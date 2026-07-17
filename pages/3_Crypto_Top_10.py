@@ -15,6 +15,13 @@ from branding import logo_path_str, render_environment_banner
 from market_data import MarketData
 from app_config import get_screener_symbol_limit, SCREENER_CACHE_VERSION
 from screener_headlines import enrich_headline_sentiment
+from screener_selection import (
+    MAX_PAD_CAP_PCT,
+    MARKET_MOOD_TIP,
+    proximity_how_it_works,
+    select_proximity_results,
+    selection_status_message,
+)
 from tooltip_scroll import install_tooltip_scroll_handler
 import html
 
@@ -1015,8 +1022,6 @@ DISQUALIFY_KEYWORDS = [
     "shutting down", "closing all",
 ]
 
-DEFAULT_THRESHOLD_PCT = 15
-MAX_THRESHOLD_PCT = 30
 SCREENER_SYMBOL_LIMIT = get_screener_symbol_limit()
 
 
@@ -1150,22 +1155,7 @@ st.caption(
 
 st.markdown("---")
 
-col_a, col_b = st.columns([1, 3])
-with col_a:
-    threshold = st.slider(
-        "Max % above 52-week low",
-        min_value=1,
-        max_value=MAX_THRESHOLD_PCT,
-        value=DEFAULT_THRESHOLD_PCT,
-        step=1,
-        help="Only cryptos within this percentage of their 52-week low are shown.",
-    )
-with col_b:
-    st.info(
-        "**How it works:** Each crypto is checked for (1) proximity to its 52-week low, "
-        "then ranked by closeness to that low. If no assets meet the slider threshold, "
-        "the table shows the closest available cryptos instead of going empty."
-    )
+st.info(proximity_how_it_works("crypto"))
 
 @st.cache_data(ttl=900, show_spinner="Refreshing Crypto data…")
 def _run_screen(_cache_version: int = SCREENER_CACHE_VERSION):
@@ -1188,11 +1178,8 @@ if not agreed:
 else:
     all_results, last_updated = _run_screen()
     scanned_count = min(SCREENER_SYMBOL_LIMIT, len(CRYPTO_UNIVERSE))
-    results = [r for r in all_results if r["% Above Low"] <= threshold]
-    showing_closest = False
-    if not results and all_results:
-        results = all_results
-        showing_closest = True
+    selection = select_proximity_results(all_results)
+    results = selection.results
 
     st.markdown(
         f'<div style="text-align:right;color:#64748b;font-size:1.1rem;margin-bottom:0.5rem;">'
@@ -1200,7 +1187,7 @@ else:
         unsafe_allow_html=True,
     )
 
-    if not results:
+    if not all_results:
         st.warning(
             "No crypto data is available right now. Alpha Vantage may be rate-limiting "
             "requests; wait a minute and refresh."
@@ -1208,22 +1195,29 @@ else:
         if st.button("Clear cache and refresh", key="refresh_crypto"):
             st.cache_data.clear()
             st.rerun()
+    elif not results:
+        st.warning(
+            f"No cryptos are within **{MAX_PAD_CAP_PCT}%** of their 52-week low right now."
+        )
+        if st.button("Clear cache and refresh", key="refresh_crypto"):
+            st.cache_data.clear()
+            st.rerun()
     else:
         df = pd.DataFrame(results)
-        df = df.sort_values("% Above Low", ascending=True).head(10).reset_index(drop=True)
+        df = df.sort_values("% Above Low", ascending=True).reset_index(drop=True)
         df = enrich_headline_sentiment(df, get_market_data())
         df["Headlines"] = df["Headlines"].clip(upper=10)
         df["_headline_texts"] = df["_headline_texts"].apply(lambda items: items[:10])
         df["_headline_urls"] = df["_headline_urls"].apply(lambda items: items[:10])
         df.index = df.index + 1
 
-        if showing_closest:
-            st.info(
-                f"No cryptos are within **{threshold}%** of their 52-week low right now, "
-                "so showing the closest available cryptos instead."
-            )
-        else:
-            st.success(f"Found **{len(df)}** candidates from {scanned_count} of {len(CRYPTO_UNIVERSE)} cryptos scanned.")
+        level, status_msg = selection_status_message(
+            selection,
+            asset_noun="cryptos",
+            scanned_count=scanned_count,
+            universe_size=len(CRYPTO_UNIVERSE),
+        )
+        getattr(st, level)(status_msg)
 
         def _format_crypto_price(value):
             try:
@@ -1295,7 +1289,7 @@ else:
             "Exchanges": "Tier-1 exchanges where this crypto can be purchased (Coinbase, Binance, Kraken, KuCoin, Gemini).",
             "Headline Sentiment": "Average polarity score of recent news headlines (TextBlob). Ranges from -1.0 (very negative) to +1.0 (very positive). Cryptos below -0.35 are automatically disqualified.",
             "Headlines": "Number of recent news headlines found for this crypto. More headlines give a more reliable sentiment reading.",
-            "Market Mood": "Proximity to the 52-week low: BELOW LOW = trading under the recorded low, AT LOW = within 2%, NEAR LOW = within the slider threshold.",
+            "Market Mood": MARKET_MOOD_TIP,
             "% Above Low": "How far the current price is above the 52-week low, expressed as a percentage. Lower is closer to the floor.",
         }
 
@@ -1406,14 +1400,14 @@ else:
 
             | Criterion | Check |
             |-----------|-------|
-            | **Near 52-week low** | Price is within {threshold}% of the lowest price in the past year |
+            | **Near 52-week low** | Price is within 30% of the lowest price in the past year (15% preferred) |
             | **No scandal headlines** | Recent news contains no keywords related to fraud, scams, rug-pulls, or hacks |
             | **Headline context** | Detailed headline sentiment is available on the Search page |
             | **Coinbase listed** | All cryptos in this screen are available for purchase on Coinbase |
 
             > **Disclaimer:** This is an automated screen — not financial advice.
             > Always do your own due diligence before investing.
-            """.format(threshold=threshold)
+            """
         )
 
 # ── Sticky disclaimer footer ─────────────────────────────────────────
