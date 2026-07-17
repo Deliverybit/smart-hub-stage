@@ -874,7 +874,6 @@ st.sidebar.markdown(
 st.sidebar.page_link("pages/1_NYSE_Top_10.py", label="📊 NYSE 10")
 st.sidebar.page_link("pages/2_NASDAQ_Top_10.py", label="💹 NASDAQ 10")
 st.sidebar.page_link("pages/3_Crypto_Top_10.py", label="🪙 Crypto 10")
-st.sidebar.page_link("pages/4_New_Crypto_Top_10.py", label="🚀 New Crypto 10")
 st.sidebar.page_link("pages/5_CME_Top_10.py", label="🌾 CME Commodities 10")
 st.sidebar.page_link("pages/6_ICE_Top_10.py", label="🛢️ ICE Commodities 10")
 st.sidebar.page_link("app.py", label="🔎 Search")

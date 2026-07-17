@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Validate all 7 screener universes against Alpha Vantage market data.
+Validate all 6 screener universes against Alpha Vantage market data.
 
 Usage (from repo root):
     python admin_tools/validate_screeners.py
@@ -45,15 +45,6 @@ SCREENER_PAGES = [
         "path": PAGES / "3_Crypto_Top_10.py",
         "universe_expr": "list(CRYPTO_DATA.keys())",
         "deps": ("CRYPTO_DATA",),
-    },
-    {
-        "name": "New Crypto",
-        "path": PAGES / "4_New_Crypto_Top_10.py",
-        "universe_expr": (
-            "sorted(CRYPTO_INFO.keys(), key=lambda ticker: CRYPTO_INFO[ticker][1], reverse=True)"
-            "[:MAX_NEW_CRYPTO_LISTINGS]"
-        ),
-        "deps": ("CRYPTO_INFO", "MAX_NEW_CRYPTO_LISTINGS"),
     },
     {
         "name": "CME",

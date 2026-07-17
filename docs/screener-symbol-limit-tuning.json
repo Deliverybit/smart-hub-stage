@@ -33,15 +33,6 @@
       "sec_per_symbol": 1.44
     },
     {
-      "name": "New Crypto",
-      "universe_size": 10,
-      "scanned": 10,
-      "coverage_pct": 100.0,
-      "candidates": 10,
-      "elapsed_sec": 4.3,
-      "sec_per_symbol": 0.43
-    },
-    {
       "name": "CME",
       "universe_size": 33,
       "scanned": 33,
@@ -63,7 +54,7 @@
   "projections": [
     {
       "limit": 50,
-      "total_projected_sec": 437.9,
+      "total_projected_sec": 433.6,
       "min_coverage_pct": 60.2,
       "screeners": [
         {
@@ -88,13 +79,6 @@
           "projected_sec": 72.0
         },
         {
-          "name": "New Crypto",
-          "universe_size": 10,
-          "scanned": 10,
-          "coverage_pct": 100.0,
-          "projected_sec": 4.3
-        },
-        {
           "name": "CME",
           "universe_size": 33,
           "scanned": 33,
@@ -112,7 +96,7 @@
     },
     {
       "limit": 83,
-      "total_projected_sec": 571.4,
+      "total_projected_sec": 567.1,
       "min_coverage_pct": 100.0,
       "screeners": [
         {
@@ -135,13 +119,6 @@
           "scanned": 50,
           "coverage_pct": 100.0,
           "projected_sec": 72.0
-        },
-        {
-          "name": "New Crypto",
-          "universe_size": 10,
-          "scanned": 10,
-          "coverage_pct": 100.0,
-          "projected_sec": 4.3
         },
         {
           "name": "CME",
@@ -161,7 +138,7 @@
     },
     {
       "limit": 100,
-      "total_projected_sec": 571.4,
+      "total_projected_sec": 567.1,
       "min_coverage_pct": 100.0,
       "screeners": [
         {
@@ -184,13 +161,6 @@
           "scanned": 50,
           "coverage_pct": 100.0,
           "projected_sec": 72.0
-        },
-        {
-          "name": "New Crypto",
-          "universe_size": 10,
-          "scanned": 10,
-          "coverage_pct": 100.0,
-          "projected_sec": 4.3
         },
         {
           "name": "CME",
@@ -210,7 +180,7 @@
     },
     {
       "limit": 500,
-      "total_projected_sec": 571.4,
+      "total_projected_sec": 567.1,
       "min_coverage_pct": 100.0,
       "screeners": [
         {
@@ -233,13 +203,6 @@
           "scanned": 50,
           "coverage_pct": 100.0,
           "projected_sec": 72.0
-        },
-        {
-          "name": "New Crypto",
-          "universe_size": 10,
-          "scanned": 10,
-          "coverage_pct": 100.0,
-          "projected_sec": 4.3
         },
         {
           "name": "CME",
@@ -259,7 +222,7 @@
     },
     {
       "limit": 1000,
-      "total_projected_sec": 571.4,
+      "total_projected_sec": 567.1,
       "min_coverage_pct": 100.0,
       "screeners": [
         {
@@ -282,13 +245,6 @@
           "scanned": 50,
           "coverage_pct": 100.0,
           "projected_sec": 72.0
-        },
-        {
-          "name": "New Crypto",
-          "universe_size": 10,
-          "scanned": 10,
-          "coverage_pct": 100.0,
-          "projected_sec": 4.3
         },
         {
           "name": "CME",

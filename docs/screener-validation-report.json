@@ -42,18 +42,6 @@
       "elapsed_sec": 60.5
     },
     {
-      "name": "New Crypto",
-      "page": "pages/4_New_Crypto_Top_10.py",
-      "url": "/New_Crypto_Top_10",
-      "status": "PASS",
-      "universe_size": 10,
-      "scanned": 10,
-      "candidates": 10,
-      "top10_count": 10,
-      "top10_tickers": ["TRUMP-USD", "DRIFT-USD", "MOODENG-USD", "PENGU-USD", "ME-USD", "PNUT-USD", "POPCAT-USD", "MOVE-USD", "SAFE-USD", "EIGEN-USD"],
-      "elapsed_sec": 3.7
-    },
-    {
       "name": "CME",
       "page": "pages/5_CME_Top_10.py",
       "url": "/CME_Top_10",

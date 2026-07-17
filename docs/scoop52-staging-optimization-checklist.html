@@ -164,8 +164,8 @@
   </tr>
   <tr>
     <td>3</td>
-    <td>Validate all 7 screeners</td>
-    <td><code>pages/1_NYSE_Top_10.py</code> … <code>pages/6_ICE_Top_10.py</code>, <code>pages/4_New_Crypto_Top_10.py</code></td>
+    <td>Validate all 6 screeners</td>
+    <td><code>pages/1_NYSE_Top_10.py</code> … <code>pages/6_ICE_Top_10.py</code></td>
     <td>Each page shows Top 10 + “Last updated” timestamp</td>
   </tr>
   <tr>
@@ -258,7 +258,7 @@
     <pre class="mermaid">
 flowchart TB
     Start["Start: optimize staging"] --> Deploy["Deploy headline cache to Community Cloud"]
-    Deploy --> Test7["Test all 7 screener pages"]
+    Deploy --> Test7["Test all 6 screener pages"]
     Test7 --> Consent["Verify consent logging to smart-hub-stage"]
     Consent --> Docker["Dockerfile + local container test"]
     Docker --> Gates{"All staging gates pass?"}
@@ -296,7 +296,7 @@ flowchart TB
 
 <h2>9. Suggested Timeline (This Week)</h2>
 <pre class="code">Today     → Deploy headline cache to staging (push + Community Cloud redeploy)
-Day 2–3   → Walk all 7 screeners + consent + search
+Day 2–3   → Walk all 6 screeners + consent + search
 Day 4–5   → Dockerfile + local container test
 Next week → If staging gates pass → create smart-hub-prod + prod host</pre>
 
