@@ -1,43 +1,21 @@
 from __future__ import annotations
 
-from textblob import TextBlob
-
 import streamlit as st
 
 from app_config import ALPHAVANTAGE_CACHE_TIMEOUT, SCREENER_CACHE_VERSION
-
-
-def _headlines_from_news_items(news_items: list) -> tuple[list[str], list[str]]:
-    headlines = []
-    urls = []
-    for item in news_items[:10]:
-        title = item.get("title", "")
-        url = item.get("url", "")
-        if not title or (not url and title.startswith("No current news found")):
-            continue
-        headlines.append(title)
-        urls.append(url)
-    return headlines, urls
-
-
-def _polarity_from_headlines(headlines: list[str]) -> float:
-    if not headlines:
-        return 0.0
-    return sum(TextBlob(headline).sentiment.polarity for headline in headlines) / len(headlines)
+from headline_service import (
+    enrich_result_row,
+    fetch_news_items,
+    headlines_from_news_items,
+    polarity_from_headlines,
+)
 
 
 @st.cache_data(ttl=ALPHAVANTAGE_CACHE_TIMEOUT, show_spinner=False)
 def _cached_news_items(ticker: str, _cache_version: int = SCREENER_CACHE_VERSION) -> tuple[tuple[str, str, str], ...]:
     """Fetch and cache headline payloads per ticker (matches screener refresh cadence)."""
-    from market_data import MarketData
-
-    try:
-        news_items = MarketData().get_news_items(ticker)
-    except Exception:
-        news_items = []
-
     rows = []
-    for item in news_items[:10]:
+    for item in fetch_news_items(ticker)[:10]:
         rows.append((
             item.get("title", ""),
             item.get("url", ""),
@@ -66,8 +44,8 @@ def enrich_headline_sentiment(
 
         cached_rows = _cached_news_items(ticker, cache_version)
         news_items = [{"title": t, "url": u, "source": s} for t, u, s in cached_rows]
-        headlines, urls = _headlines_from_news_items(news_items)
-        polarity = _polarity_from_headlines(headlines)
+        headlines, urls = headlines_from_news_items(news_items)
+        polarity = polarity_from_headlines(headlines)
 
         enriched.at[idx, "Headline Sentiment"] = round(polarity, 3)
         enriched.at[idx, "Headlines"] = len(headlines)

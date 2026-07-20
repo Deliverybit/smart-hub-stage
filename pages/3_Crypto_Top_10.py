@@ -15,11 +15,11 @@ from branding import logo_path_str, render_environment_banner
 from market_data import MarketData
 from app_config import get_screener_symbol_limit, SCREENER_CACHE_VERSION
 from screener_headlines import enrich_headline_sentiment
+from screener_page_data import load_screener_page_data
 from screener_selection import (
     MAX_PAD_CAP_PCT,
     MARKET_MOOD_TIP,
     proximity_how_it_works,
-    select_proximity_results,
     selection_status_message,
 )
 from tooltip_scroll import install_tooltip_scroll_handler
@@ -1175,10 +1175,17 @@ if not agreed:
     if agreed:
         log_terms_acceptance(st, consent_key="agree_terms_crypto_top10")
 else:
-    all_results, last_updated = _run_screen()
-    scanned_count = min(SCREENER_SYMBOL_LIMIT, len(CRYPTO_UNIVERSE))
-    selection = select_proximity_results(all_results)
-    results = selection.results
+    loaded = load_screener_page_data(
+        "CRYPTO",
+        universe_size=len(CRYPTO_UNIVERSE),
+        asset_noun="cryptos",
+        run_live=_run_screen,
+    )
+    all_results = loaded.all_results
+    results = loaded.display_results
+    last_updated = loaded.last_updated
+    scanned_count = loaded.scanned_count
+    selection = loaded.selection
 
     st.markdown(
         f'<div style="text-align:right;color:#64748b;font-size:1.1rem;margin-bottom:0.5rem;">'
@@ -1204,7 +1211,8 @@ else:
     else:
         df = pd.DataFrame(results)
         df = df.sort_values("% Above Low", ascending=True).reset_index(drop=True)
-        df = enrich_headline_sentiment(df, get_market_data())
+        if not loaded.headlines_enriched:
+            df = enrich_headline_sentiment(df, get_market_data())
         df["Headlines"] = df["Headlines"].clip(upper=10)
         df["_headline_texts"] = df["_headline_texts"].apply(lambda items: items[:10])
         df["_headline_urls"] = df["_headline_urls"].apply(lambda items: items[:10])
@@ -1212,7 +1220,7 @@ else:
 
         level, status_msg = selection_status_message(
             selection,
-            asset_noun="cryptos",
+            asset_noun=loaded.asset_noun,
             scanned_count=scanned_count,
             universe_size=len(CRYPTO_UNIVERSE),
         )

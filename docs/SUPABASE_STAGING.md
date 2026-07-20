@@ -45,7 +45,7 @@ python admin_tools/run_migrations.py
 
 ## 5. Verify
 
-- **Table Editor** → `legal_consents`, `schema_migrations`
+- **Table Editor** → `legal_consents`, `screener_snapshots`, `schema_migrations`
 - Accept Terms in the app → new row in `legal_consents`
 - `python admin_tools/export_consent_logs.py --limit 5` → source **PostgreSQL**
 
@@ -55,4 +55,29 @@ Create a **separate** Supabase project (`smart-hub-prod`), separate Streamlit de
 
 ## What is stored
 
-Only **legal consent audit events**. Market/screener data stays in Alpha Vantage + Streamlit cache — not in Supabase.
+- **Legal consent audit events** (`legal_consents`)
+- **Precomputed screener snapshots** (`screener_snapshots`) — refreshed every 15 minutes by `admin_tools/screener_worker.py` so Top 10 pages load instantly
+
+Market prices still come from Alpha Vantage; snapshots cache the processed Top 10 rows (including headlines) in Postgres.
+
+## 6. Precomputed screener snapshots
+
+After migrations, refresh snapshots locally:
+
+```bash
+python admin_tools/screener_worker.py
+```
+
+Or one screener:
+
+```bash
+python admin_tools/screener_worker.py --screener NYSE
+```
+
+**GitHub Actions:** workflow `.github/workflows/screener-snapshots.yml` runs every 15 minutes when repo secrets `DATABASE_URL` and `ALPHA_VANTAGE_API_KEY` are set.
+
+Verify:
+
+```bash
+python admin_tools/test_screener_snapshots.py
+```

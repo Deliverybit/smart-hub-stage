@@ -35,6 +35,7 @@ See [docs/SUPABASE_STAGING.md](docs/SUPABASE_STAGING.md).
 
 ```bash
 python admin_tools/run_migrations.py
+python admin_tools/screener_worker.py
 ```
 
 ## Secrets (never commit)
