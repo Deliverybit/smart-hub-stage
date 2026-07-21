@@ -2,8 +2,13 @@ name: Refresh screener snapshots
 
 on:
   schedule:
+    # Every 15 minutes at :00, :15, :30, :45 UTC (GitHub cron uses UTC).
     - cron: "*/15 * * * *"
   workflow_dispatch:
+
+concurrency:
+  group: screener-snapshots
+  cancel-in-progress: true
 
 jobs:
   refresh:
@@ -20,6 +25,24 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      - name: Validate secrets
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
+        run: |
+          python - <<'PY'
+          import os, sys
+          from app_config import get_database_url, get_alpha_vantage_api_key
+
+          try:
+              get_database_url(required=True)
+              get_alpha_vantage_api_key(required=True)
+          except RuntimeError as exc:
+              print(f"ERROR: {exc}", file=sys.stderr)
+              sys.exit(1)
+          print("Secrets format OK")
+          PY
 
       - name: Apply migrations
         env:
