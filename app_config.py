@@ -39,6 +39,14 @@ def get_app_env(default: str = "staging") -> str:
     return env if env in {"staging", "production", "local"} else default
 
 
+def _normalize_database_url(url: str) -> str:
+    """Strip whitespace and accidental quotes from copied connection strings."""
+    cleaned = url.strip()
+    if len(cleaned) >= 2 and cleaned[0] == cleaned[-1] and cleaned[0] in {'"', "'"}:
+        cleaned = cleaned[1:-1].strip()
+    return cleaned
+
+
 def get_database_url(required: bool = False) -> str | None:
     """
     Postgres connection string (Supabase).
@@ -55,6 +63,14 @@ def get_database_url(required: bool = False) -> str | None:
     }
     if url in placeholders:
         url = None
+    if url:
+        url = _normalize_database_url(url)
+        if not url.startswith(("postgresql://", "postgres://")):
+            raise RuntimeError(
+                "DATABASE_URL must start with postgresql:// (Supabase Session pooler URI). "
+                "Use the raw URI only — no surrounding quotes and no "
+                "DATABASE_URL = prefix."
+            )
     if required and not url:
         raise RuntimeError(
             "DATABASE_URL is not configured. Set it in the environment, "

@@ -76,6 +76,15 @@ python admin_tools/screener_worker.py --screener NYSE
 
 **GitHub Actions:** workflow `.github/workflows/screener-snapshots.yml` runs every 15 minutes when repo secrets `DATABASE_URL` and `ALPHA_VANTAGE_API_KEY` are set.
 
+In **Settings → Secrets and variables → Actions**, add:
+
+| Secret name | Value |
+|-------------|--------|
+| `DATABASE_URL` | Copy **only** the `postgresql://...?sslmode=require` string from `secrets.toml` — **no quotes**, no `DATABASE_URL =` prefix |
+| `ALPHA_VANTAGE_API_KEY` | Same API key as in `secrets.toml` — raw key only |
+
+If migrations fail with `invalid connection option`, the secret usually has extra quotes or is missing the `postgresql://` prefix. Re-paste the exact URI that works locally with `python admin_tools/run_migrations.py`.
+
 Verify:
 
 ```bash

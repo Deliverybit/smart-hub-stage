@@ -21,6 +21,7 @@ class ScreenerPageLoad:
     universe_size: int
     asset_noun: str
     from_snapshot: bool
+    snapshot_stale: bool
     headlines_enriched: bool
 
 
@@ -31,9 +32,10 @@ def load_screener_page_data(
     asset_noun: str,
     run_live: Callable[[], tuple[list[dict], str]],
 ) -> ScreenerPageLoad:
-    """Return precomputed snapshot data when fresh, otherwise run the live screener."""
+    """Return the latest snapshot when available; live-scan only if none exists."""
     payload = fetch_snapshot(screener_key)
-    if payload and snapshot_is_fresh(payload):
+    if payload:
+        stale = not snapshot_is_fresh(payload)
         selection = selection_from_payload(payload)
         return ScreenerPageLoad(
             all_results=list(payload.get("all_results") or []),
@@ -44,6 +46,7 @@ def load_screener_page_data(
             universe_size=int(payload.get("universe_size") or universe_size),
             asset_noun=str(payload.get("asset_noun") or asset_noun),
             from_snapshot=True,
+            snapshot_stale=stale,
             headlines_enriched=bool(payload.get("headlines_enriched")),
         )
 
@@ -59,5 +62,6 @@ def load_screener_page_data(
         universe_size=universe_size,
         asset_noun=asset_noun,
         from_snapshot=False,
+        snapshot_stale=False,
         headlines_enriched=False,
     )
