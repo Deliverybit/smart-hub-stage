@@ -4,6 +4,7 @@ Terms of Service & Financial Disclaimer
 
 import streamlit as st
 from branding import logo_path_str, render_environment_banner
+from tooltip_scroll import install_responsive_sidebar_handler
 
 st.set_page_config(
     page_title="Terms of Service",
@@ -11,11 +12,45 @@ st.set_page_config(
     layout="wide",
 )
 render_environment_banner(st)
+install_responsive_sidebar_handler()
 
 # ── Global responsive styling (shared with other pages) ───────────────
 st.markdown(
     """
     <style>
+    :root {
+        --scoop-sidebar-width: clamp(12rem, 20vw, 36rem);
+    }
+    /* Sidebar: rem-based width scales with browser zoom; no label clipping */
+    [data-testid="stSidebar"],
+    [data-testid="stSidebar"] > div,
+    [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+        min-width: var(--scoop-sidebar-width) !important;
+        width: var(--scoop-sidebar-width) !important;
+        max-width: min(92vw, 36rem) !important;
+        overflow-x: visible !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stPageLink"] {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stPageLink"] a,
+    [data-testid="stSidebar"] [data-testid="stPageLink"] span,
+    [data-testid="stSidebar"] [data-testid="stPageLink"] p {
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+        max-width: 100% !important;
+    }
+    [data-testid="stSidebar"] .stCaption p,
+    [data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+    }
+
     /* ===== DESKTOP / HIGH-RES ===== */
     html, body, [class*="css"] {
         font-size: 30px !important;
@@ -33,7 +68,7 @@ st.markdown(
     .stCaption p, [data-testid="stCaptionContainer"] p { font-size: 1.4rem !important; }
 
     /* Sidebar — larger text & inputs */
-    [data-testid="stSidebar"] { min-width: 380px !important; }
+    
     [data-testid="stSidebar"] p,
     [data-testid="stSidebar"] label,
     [data-testid="stSidebar"] span,
@@ -100,7 +135,15 @@ st.markdown(
         [data-testid="stMarkdownContainer"] table th {
             font-size: clamp(0.95rem, 3.25vw, 1.08rem) !important;
         }
-        [data-testid="stSidebar"] { min-width: 280px !important; }
+        :root { --scoop-sidebar-width: clamp(20rem, 92vw, 36rem); }
+        [data-testid="stSidebar"],
+        [data-testid="stSidebar"] > div,
+        [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+            min-width: var(--scoop-sidebar-width) !important;
+            width: var(--scoop-sidebar-width) !important;
+            max-width: 92vw !important;
+            overflow-x: visible !important;
+        }
 
         /* Sticky disclaimer: keep readable but not overwhelming */
         .disclaimer-footer {
@@ -128,19 +171,326 @@ st.markdown(
         [data-testid="stSidebar"] [data-testid="stPageLink"] a,
         [data-testid="stSidebar"] [data-testid="stPageLink"] span,
         [data-testid="stSidebar"] [data-testid="stPageLink"] p {
-            font-size: clamp(1.25rem, 4.6vw, 1.55rem) !important;
+            font-size: clamp(1.15rem, 4.2vw, 1.45rem) !important;
             line-height: 1.25 !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
         }
     }
 
-    /* ===== TABLET ===== */
-    @media (min-width: 769px) and (max-width: 1200px) {
-        html, body, [class*="css"] { font-size: 26px !important; }
-        h1 { font-size: 3.4rem !important; }
+    /* ===== TABLET (769px–1366px) — mobile-style layout; mobile/desktop unchanged ===== */
+    @media (min-width: 769px) and (max-width: 1366px) {
+
+        :root {
+            --scoop-sidebar-width: clamp(16rem, 42vw, 28rem);
+            --footer-sidebar-width: 0px;
+        }
+
+        .stApp {
+            overflow-x: hidden !important;
+        }
+
+        /* Main content uses full viewport width (sidebar overlays when open). */
+        [data-testid="stAppViewContainer"] {
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+        }
+        [data-testid="stAppViewContainer"] > section.main,
+        [data-testid="stMainBlockContainer"],
+        section.main > div {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        /* Slide-out sidebar overlays the page (mobile-style). */
+        section[data-testid="stSidebar"] {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100dvh !important;
+            min-height: 100dvh !important;
+            z-index: 999999 !important;
+            min-width: var(--scoop-sidebar-width) !important;
+            width: var(--scoop-sidebar-width) !important;
+            max-width: min(92vw, 28rem) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            box-shadow: 4px 0 28px rgba(15, 23, 42, 0.22) !important;
+            transform: translateX(-105%) !important;
+            transition: transform 0.28s ease !important;
+            pointer-events: none !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            transform: translateX(0) !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stSidebar"] > div,
+        [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+            position: relative !important;
+            top: auto !important;
+            left: auto !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            height: auto !important;
+            min-height: 100% !important;
+            z-index: auto !important;
+            transform: none !important;
+            box-shadow: none !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stSidebarBackdrop"] {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 999998 !important;
+            cursor: pointer !important;
+        }
+        [data-testid="stHeader"] {
+            z-index: 1000005 !important;
+        }
+        [data-testid="stSidebarCollapseButton"],
+        [data-testid="stExpandSidebarButton"],
+        [data-testid="collapsedControl"] {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 1000006 !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"] {
+            display: flex !important;
+            color: #31333f !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 0.5rem !important;
+            background: #ffffff !important;
+            box-shadow: 0 1px 6px rgba(15, 23, 42, 0.12) !important;
+        }
+        [data-testid="stSidebarCollapseButton"] button,
+        [data-testid="stExpandSidebarButton"],
+        [data-testid="stExpandSidebarButton"] button,
+        [data-testid="collapsedControl"] button {
+            min-width: 2.75rem !important;
+            min-height: 2.75rem !important;
+            color: #31333f !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarHeader"] {
+            position: relative !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] {
+            position: absolute !important;
+            top: 0.35rem !important;
+            right: 0.35rem !important;
+            left: auto !important;
+            z-index: 1000007 !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            border-radius: 0.5rem !important;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.18) !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] button {
+            color: #31333f !important;
+        }
+        .scoop-responsive-sidebar-close {
+            position: fixed !important;
+            z-index: 10000010 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 2.85rem !important;
+            height: 2.85rem !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: 1px solid #94a3b8 !important;
+            border-radius: 0.55rem !important;
+            background: #ffffff !important;
+            color: #0f172a !important;
+            font-size: 1.45rem !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+            box-shadow: 0 3px 14px rgba(15, 23, 42, 0.24) !important;
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            touch-action: manipulation !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stAppViewContainer"]::before {
+            content: "" !important;
+            position: fixed !important;
+            inset: 0 !important;
+            background: rgba(15, 23, 42, 0.38) !important;
+            z-index: 999997 !important;
+            pointer-events: none !important;
+        }
+
+        [data-testid="stSidebar"] p,
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] span,
+        [data-testid="stSidebar"] div {
+            font-size: clamp(1.1rem, 2.2vw, 1.32rem) !important;
+        }
+
+        .sidebar-brand-text,
+        [data-testid="stSidebar"] #scoop-title {
+            font-size: clamp(2.4rem, 5.5vw, 3.25rem) !important;
+            line-height: 1.05 !important;
+        }
+        .sidebar-brand {
+            margin: 0.15rem -1rem 1.1rem -1rem !important;
+            padding: 0.65rem 1rem !important;
+            white-space: normal !important;
+        }
+
+        [data-testid="stSidebar"] [data-testid="stPageLink"] a,
+        [data-testid="stSidebar"] [data-testid="stPageLink"] span,
+        [data-testid="stSidebar"] [data-testid="stPageLink"] p {
+            font-size: clamp(1.15rem, 2.2vw, 1.42rem) !important;
+            line-height: 1.3 !important;
+            white-space: normal !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+
+
+        html, body, [class*="css"] {
+            font-size: clamp(21px, 2.35vw, 24px) !important;
+            line-height: 1.62 !important;
+        }
+        h1 { font-size: clamp(2.2rem, 5vw, 3.1rem) !important; line-height: 1.12 !important; }
+        h2 { font-size: clamp(1.85rem, 4.2vw, 2.6rem) !important; line-height: 1.18 !important; }
+        h3 { font-size: clamp(1.6rem, 3.6vw, 2.15rem) !important; line-height: 1.22 !important; }
+        h4 { font-size: clamp(1.4rem, 3.2vw, 1.85rem) !important; line-height: 1.28 !important; }
+
+        [data-testid="stMarkdownContainer"] p,
+        [data-testid="stMarkdownContainer"] li,
+        [data-testid="stMarkdownContainer"] span,
+        [data-testid="stMarkdownContainer"] div,
+        .stMarkdown p {
+            font-size: clamp(1.2rem, 2.6vw, 1.45rem) !important;
+            line-height: 1.65 !important;
+        }
+
+        .stAlert p, [data-testid="stAlert"] p,
+        .stSuccess p, .stWarning p, .stInfo p, .stError p {
+            font-size: clamp(1.2rem, 2.6vw, 1.45rem) !important;
+            line-height: 1.65 !important;
+        }
+
+        [data-testid="stMetricValue"] > div {
+            font-size: clamp(2.35rem, 5.2vw, 3.25rem) !important;
+        }
+        [data-testid="stMetricLabel"] > div > div > p,
+        [data-testid="stMetricLabel"] label {
+            font-size: clamp(1.15rem, 2.5vw, 1.38rem) !important;
+        }
+        [data-testid="stMetricDelta"] > div {
+            font-size: clamp(1.1rem, 2.3vw, 1.3rem) !important;
+        }
+
+        .stButton button {
+            font-size: clamp(1.15rem, 2.5vw, 1.38rem) !important;
+            padding: 0.95rem 1.35rem !important;
+            min-height: 3.1rem !important;
+        }
+        .stCaption p {
+            font-size: clamp(1.05rem, 2.2vw, 1.22rem) !important;
+        }
+
+        .disclaimer-footer {
+            font-size: clamp(0.88rem, 2vw, 1.02rem) !important;
+            line-height: 1.45 !important;
+        }
+        .disclaimer-footer strong {
+            font-size: clamp(0.9rem, 2.05vw, 1.04rem) !important;
+        }
+
+        [data-testid="stMainBlockContainer"],
+        section.main > div {
+            padding-left: 1.1rem !important;
+            padding-right: 1.1rem !important;
+            padding-bottom: 2.5rem !important;
+        }
+
+        div[data-testid="stCheckbox"] {
+            margin-bottom: 1.25rem !important;
+        }
+
     }
-    [data-testid="stSidebar"] #scoop-title {
-        font-size: 60px !important;
-        line-height: 1.05 !important;
+    @media (min-width: 1367px) {
+
+        :root {
+            --footer-sidebar-width: clamp(12rem, 20vw, 36rem);
+        }
+
+        /* Desktop: sidebar always visible — no slide-out overlay. */
+        section[data-testid="stSidebar"],
+        section[data-testid="stSidebar"][aria-expanded="false"],
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            position: relative !important;
+            transform: none !important;
+            translate: none !important;
+            transition: none !important;
+            pointer-events: auto !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            display: block !important;
+            height: auto !important;
+            min-height: 100% !important;
+            z-index: auto !important;
+            box-shadow: none !important;
+            min-width: var(--scoop-sidebar-width) !important;
+            width: var(--scoop-sidebar-width) !important;
+            max-width: min(92vw, 36rem) !important;
+            margin-left: 0 !important;
+            left: auto !important;
+            top: auto !important;
+        }
+        [data-testid="stSidebar"] > div,
+        [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+            position: relative !important;
+            transform: none !important;
+            width: 100% !important;
+            min-width: var(--scoop-sidebar-width) !important;
+            max-width: min(92vw, 36rem) !important;
+            height: auto !important;
+            min-height: auto !important;
+            pointer-events: auto !important;
+            box-shadow: none !important;
+        }
+        [data-testid="stSidebarBackdrop"] {
+            display: none !important;
+        }
+        [data-testid="stExpandSidebarButton"],
+        [data-testid="stSidebarCollapseButton"],
+        [data-testid="collapsedControl"] {
+            display: none !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] {
+            display: none !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"]) [data-testid="stAppViewContainer"]::before {
+            display: none !important;
+            content: none !important;
+        }
+        [data-testid="stAppViewContainer"] {
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+            width: auto !important;
+            max-width: none !important;
+        }
+        [data-testid="stAppViewContainer"] > section.main,
+        [data-testid="stMainBlockContainer"],
+        section.main > div {
+            width: auto !important;
+            max-width: none !important;
+        }
+        [data-testid="stSidebar"] #scoop-title {
+            font-size: 60px !important;
+            line-height: 1.05 !important;
+        }
     }
     </style>
     """,
@@ -153,7 +503,7 @@ st.sidebar.markdown(
     """
     <div class="sidebar-brand">
       <div class="sidebar-brand-row">
-        <span id="scoop-title" class="sidebar-brand-text" style="font-size:60px !important;line-height:1.05 !important;">The Scoop 52</span>
+        <span id="scoop-title" class="sidebar-brand-text" style="line-height:1.05 !important;">The Scoop 52</span>
       </div>
     </div>
     """,
@@ -287,10 +637,7 @@ st.markdown(
     }
     .disclaimer-footer a { color: #93c5fd; text-decoration: underline; font-weight: 600; }
     .stMainBlockContainer { padding-bottom: 9rem !important; }
-    :root { --footer-sidebar-width: 360px; }
-    @media (max-width: 1400px) { :root { --footer-sidebar-width: 330px; } }
-    @media (max-width: 1200px) { :root { --footer-sidebar-width: 300px; } }
-    @media (max-width: 992px)  { :root { --footer-sidebar-width: 270px; } }
+    :root { --footer-sidebar-width: clamp(12rem, 20vw, 36rem); }
     @media (max-width: 768px) {
         :root { --footer-sidebar-width: 0px; }
         .disclaimer-footer {
@@ -307,6 +654,25 @@ st.markdown(
             font-size: inherit !important;
         }
         .stMainBlockContainer { padding-bottom: 2rem !important; }
+    }
+    @media (min-width: 769px) and (max-width: 1366px) {
+        .disclaimer-footer {
+            position: static !important;
+            left: 0 !important;
+            width: 100% !important;
+            margin-top: 1.25rem !important;
+            padding: 0.5rem 0.75rem !important;
+            font-size: clamp(0.76rem, 1.8vw, 0.92rem) !important;
+            line-height: 1.35 !important;
+        }
+        .disclaimer-footer strong,
+        .disclaimer-footer a {
+            font-size: inherit !important;
+        }
+        .stMainBlockContainer,
+        [data-testid="stMainBlockContainer"] {
+            padding-bottom: 2.5rem !important;
+        }
     }
     </style>
     <div class="disclaimer-footer">
