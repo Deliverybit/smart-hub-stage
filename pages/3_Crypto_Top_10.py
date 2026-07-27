@@ -19,6 +19,7 @@ from screener_page_data import load_screener_page_data
 from screener_selection import (
     MAX_PAD_CAP_PCT,
     MARKET_MOOD_TIP,
+    order_full_results_columns,
     proximity_how_it_works,
     selection_status_message,
 )
@@ -281,8 +282,7 @@ st.markdown(
             margin: -0.1rem -0.25rem !important;
         }
         .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text {
-            display: flex !important;
-            flex-direction: column !important;
+            display: block !important;
             position: fixed !important;
             top: var(--hl-fixed-top, -10000px) !important;
             left: var(--hl-fixed-left, -10000px) !important;
@@ -299,7 +299,7 @@ st.markdown(
             width: var(--hl-fixed-width, var(--hl-pop-w)) !important;
             min-width: 0 !important;
             max-width: var(--hl-fixed-width, var(--hl-pop-w)) !important;
-            height: auto !important;
+            height: fit-content !important;
             min-height: 0 !important;
             max-height: var(--hl-fixed-max-height, var(--hl-pop-h)) !important;
             overflow: hidden !important;
@@ -322,18 +322,21 @@ st.markdown(
             border: 1px solid #334155 !important;
             border-radius: 8px !important;
             box-shadow: 0 10px 28px rgba(15, 23, 42, 0.35) !important;
+            height: fit-content !important;
             transition-delay: 0s !important;
         }
         .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll {
-            flex: 1 1 auto !important;
+            display: block !important;
+            height: auto !important;
             min-height: 0 !important;
+            max-height: none !important;
             overflow-x: hidden !important;
-            overflow-y: auto !important;
+            overflow-y: visible !important;
             scrollbar-gutter: stable !important;
             scrollbar-width: thin !important;
             scrollbar-color: #94a3b8 #111827 !important;
             -webkit-overflow-scrolling: touch !important;
-            padding: 0.65rem 1rem 0.85rem 1rem !important;
+            padding: 0.65rem 1rem 0.65rem 1rem !important;
         }
         .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll::-webkit-scrollbar {
             width: 10px !important;
@@ -349,8 +352,6 @@ st.markdown(
         }
         .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .hl-tip-heading {
             display: block !important;
-            flex: 0 0 auto !important;
-            flex-shrink: 0 !important;
             position: relative !important;
             z-index: 2 !important;
             margin: 0 !important;
@@ -1689,7 +1690,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-install_tooltip_scroll_handler()
 
 # ── Custom sidebar navigation ─────────────────────────────────────────
 st.sidebar.image(logo_path_str(), use_container_width=True)
@@ -2119,6 +2119,7 @@ else:
         display_df["52W High"] = display_df["52W High"].apply(_format_crypto_price)
         display_df["% Above Low"] = display_df["% Above Low"].apply(lambda x: f"{x:.2f}%")
         display_df["Headline Sentiment"] = display_df["Headline Sentiment"].apply(lambda x: f"{x:+.3f}")
+        display_df = display_df[order_full_results_columns(display_df.columns)]
 
         COLUMN_TIPS = {
             "Exchanges": "Tier-1 exchanges where this crypto can be purchased (Coinbase, Binance, Kraken, KuCoin, Gemini).",
@@ -2310,3 +2311,5 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+install_tooltip_scroll_handler()

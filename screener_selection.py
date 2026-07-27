@@ -135,3 +135,27 @@ def proximity_how_it_works(asset_label: str = "asset") -> str:
         f"Names within **{INTERNAL_THRESHOLD_PCT}%** are preferred; if fewer than 10 qualify, "
         f"the closest names up to **{MAX_PAD_CAP_PCT}%** fill the table."
     )
+
+
+# Desktop table column order — mirrors mobile card layout (tablet_mobile_layout_css.py).
+_FULL_RESULTS_COLUMN_ORDER = (
+    "Company",
+    "Commodity",
+    "Name",
+    "Ticker",
+    "Price",
+    "52W Low",
+    "% Above Low",
+    "52W High",
+    "Exchanges",
+    "Headlines",
+    "Market Mood",
+    "Headline Sentiment",
+)
+
+
+def order_full_results_columns(columns) -> list[str]:
+    """Reorder Full Results table columns to match mobile card field order."""
+    cols = list(columns)
+    ordered = [c for c in _FULL_RESULTS_COLUMN_ORDER if c in cols]
+    return ordered + [c for c in cols if c not in ordered]

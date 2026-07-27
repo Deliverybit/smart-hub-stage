@@ -42,15 +42,14 @@ _DESKTOP_HEADLINES_CSS = """
         visibility: hidden !important;
         opacity: 0 !important;
         pointer-events: none !important;
-        display: flex !important;
-        flex-direction: column !important;
         transform: none !important;
         --hl-pop-w: min(21rem, 36vw);
         --hl-pop-h: min(calc(100vh - 1.5rem), 42rem);
+        display: block !important;
         width: var(--hl-fixed-width, var(--hl-pop-w)) !important;
         min-width: 0 !important;
         max-width: var(--hl-fixed-width, var(--hl-pop-w)) !important;
-        height: var(--hl-fixed-max-height, var(--hl-pop-h)) !important;
+        height: fit-content !important;
         min-height: 0 !important;
         max-height: var(--hl-fixed-max-height, var(--hl-pop-h)) !important;
         overflow: hidden !important;
@@ -67,12 +66,10 @@ _DESKTOP_HEADLINES_CSS = """
         border: 1px solid #334155 !important;
         border-radius: 8px !important;
         box-shadow: 0 10px 28px rgba(15, 23, 42, 0.35) !important;
-        height: var(--hl-fixed-max-height, var(--hl-pop-h)) !important;
+        height: fit-content !important;
         max-height: var(--hl-fixed-max-height, var(--hl-pop-h)) !important;
     }
     .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .hl-tip-heading {
-        flex: 0 0 auto !important;
-        flex-shrink: 0 !important;
         display: block !important;
         visibility: visible !important;
         position: relative !important;
@@ -87,17 +84,18 @@ _DESKTOP_HEADLINES_CSS = """
         border-bottom: 1px solid #334155 !important;
     }
     .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll {
-        flex: 1 1 0 !important;
-        height: 0 !important;
+        display: block !important;
+        height: auto !important;
         min-height: 0 !important;
+        max-height: none !important;
         overflow-x: hidden !important;
-        overflow-y: auto !important;
+        overflow-y: visible !important;
         -webkit-overflow-scrolling: touch !important;
         overscroll-behavior: contain !important;
         overscroll-behavior-y: contain !important;
         pointer-events: auto !important;
         touch-action: pan-y !important;
-        padding: 0.65rem 1rem 0.85rem 1rem !important;
+        padding: 0.65rem 1rem 0.65rem 1rem !important;
     }
     .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text::before,
     .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text::after {
@@ -337,6 +335,7 @@ _TOOLTIP_SCROLL_JS = """
     const RESPONSIVE_MAX = 1366;
     const VIEWPORT_PAD = 12;
     const GAP = 10;
+    const HEADLINES_DESKTOP_OFFSET = 12;
 
     const isResponsiveHeadlinesViewport = () =>
         window.innerWidth >= RESPONSIVE_MIN && window.innerWidth <= RESPONSIVE_MAX;
@@ -398,7 +397,44 @@ _TOOLTIP_SCROLL_JS = """
         const scroll = tip.querySelector(".headlines-tip-scroll");
         if (scroll) {
             scroll.scrollTop = 0;
+            scroll.style.removeProperty("height");
+            scroll.style.removeProperty("max-height");
+            scroll.style.removeProperty("overflow-y");
         }
+    };
+
+    const fitDesktopHeadlinesTip = (tip, slot) => {
+        if (!tip || !slot) {
+            return;
+        }
+        const scroll = tip.querySelector(".headlines-tip-scroll");
+        const heading = tip.querySelector(".hl-tip-heading");
+
+        tip.style.removeProperty("height");
+        if (scroll) {
+            scroll.style.removeProperty("height");
+            scroll.style.removeProperty("max-height");
+            scroll.style.removeProperty("overflow-y");
+        }
+
+        const maxHeight = slot.maxHeight;
+        const contentHeight = tip.scrollHeight;
+        if (contentHeight <= maxHeight) {
+            tip.style.setProperty("height", `${contentHeight}px`, "important");
+            return;
+        }
+
+        tip.style.setProperty("height", `${maxHeight}px`, "important");
+        if (!scroll) {
+            return;
+        }
+        const headingHeight = heading ? heading.offsetHeight : 0;
+        scroll.style.setProperty(
+            "max-height",
+            `${Math.max(80, maxHeight - headingHeight)}px`,
+            "important"
+        );
+        scroll.style.setProperty("overflow-y", "auto", "important");
     };
 
     const getHeadlinesColumnRect = () => {
@@ -436,11 +472,7 @@ _TOOLTIP_SCROLL_JS = """
         let left = VIEWPORT_PAD;
         const headlinesCol = getHeadlinesColumnRect();
         if (headlinesCol) {
-            // Sit beside the Headlines column so links are easy to reach from the count.
-            left = Math.round(headlinesCol.right - width);
-            if (left + width < headlinesCol.left + headlinesCol.width * 0.35) {
-                left = Math.round(headlinesCol.left);
-            }
+            left = Math.round(headlinesCol.right + HEADLINES_DESKTOP_OFFSET);
         } else {
             const content =
                 document.querySelector(".full-results-wrap") ||
@@ -483,12 +515,13 @@ _TOOLTIP_SCROLL_JS = """
         tip.style.setProperty("--hl-fixed-left", `${slot.left}px`);
         tip.style.setProperty("--hl-fixed-width", `${slot.width}px`);
         tip.style.setProperty("--hl-fixed-max-height", `${slot.maxHeight}px`);
-        tip.style.setProperty("height", `${slot.maxHeight}px`, "important");
+        tip.style.removeProperty("height");
 
         const scroll = tip.querySelector(".headlines-tip-scroll");
         if (scroll) {
             scroll.scrollTop = 0;
         }
+        fitDesktopHeadlinesTip(tip, slot);
     };
 
     const repositionHoveredDesktopHeadlines = () => {
@@ -502,7 +535,14 @@ _TOOLTIP_SCROLL_JS = """
 
     const scheduleDesktopHeadlinesPosition = (wrap) => {
         positionDesktopHeadlinesTip(wrap);
-        window.requestAnimationFrame(() => positionDesktopHeadlinesTip(wrap));
+        window.requestAnimationFrame(() => {
+            const tip = wrap && wrap.querySelector(":scope > .tip-text");
+            if (!tip) {
+                return;
+            }
+            positionDesktopHeadlinesTip(wrap);
+            fitDesktopHeadlinesTip(tip, getDesktopHeadlinesSlot());
+        });
     };
 
     const getResponsiveHeadlinesSlot = () => {
