@@ -230,6 +230,57 @@ MOBILE_HEADLINES_CARD_OVERLAY = """
         }
 """
 
+# Mobile/tablet card field order (desktop table unchanged).
+# Order: #, Name, Ticker, Price, 52W Low, % Above Low, 52W High, Exchanges, Headlines, Market Mood, Headline Sentiment
+MOBILE_CARD_FIELD_ORDER = """
+        /* Full Results card — reorder fields without changing card format/size */
+        .stMarkdown .full-results-wrap .full-results-table tbody tr {
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody tr td:last-child {
+            border-bottom: 1px solid #e5e7eb !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Headline Sentiment"] {
+            border-bottom: none !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="#"] {
+            order: 0 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"],
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"],
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] {
+            order: 1 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Ticker"] {
+            order: 2 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Price"] {
+            order: 3 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="52W Low"] {
+            order: 4 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="% Above Low"] {
+            order: 5 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="52W High"] {
+            order: 6 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Exchanges"] {
+            order: 7 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Headlines"] {
+            order: 8 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Market Mood"] {
+            order: 9 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Headline Sentiment"] {
+            order: 10 !important;
+        }
+"""
+
 # Shared mobile card layout for screener Full Results + Top Picks + tooltips/headlines.
 TABLET_SCREENER_MOBILE_LAYOUT = (
     """
@@ -630,6 +681,7 @@ TABLET_SCREENER_MOBILE_LAYOUT = (
             display: none !important;
         }
 """
+    + MOBILE_CARD_FIELD_ORDER
 )
 
 TABLET_SIDEBAR = """

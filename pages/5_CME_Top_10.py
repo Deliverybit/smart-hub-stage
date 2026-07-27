@@ -280,19 +280,24 @@ st.markdown(
             display: flex !important;
             flex-direction: column !important;
             position: fixed !important;
-            top: var(--hl-fixed-top, 0.75rem) !important;
-            left: var(--hl-fixed-left, 0.75rem) !important;
+            top: var(--hl-fixed-top, -10000px) !important;
+            left: var(--hl-fixed-left, -10000px) !important;
             right: auto !important;
             bottom: auto !important;
             transform: none !important;
+            position-anchor: none !important;
+            anchor-name: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
             --hl-pop-w: min(21rem, 36vw);
             --hl-pop-h: min(calc(100vh - 1.5rem), 42rem);
-            width: var(--hl-pop-w) !important;
-            min-width: var(--hl-pop-w) !important;
-            max-width: var(--hl-pop-w) !important;
+            width: var(--hl-fixed-width, var(--hl-pop-w)) !important;
+            min-width: 0 !important;
+            max-width: var(--hl-fixed-width, var(--hl-pop-w)) !important;
             height: auto !important;
             min-height: 0 !important;
-            max-height: var(--hl-pop-h) !important;
+            max-height: var(--hl-fixed-max-height, var(--hl-pop-h)) !important;
             overflow: hidden !important;
             white-space: normal !important;
             text-align: left !important;
@@ -341,7 +346,9 @@ st.markdown(
         .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .hl-tip-heading {
             display: block !important;
             flex: 0 0 auto !important;
-            position: static !important;
+            flex-shrink: 0 !important;
+            position: relative !important;
+            z-index: 2 !important;
             margin: 0 !important;
             padding: 1.45rem 1rem 0.85rem 1rem !important;
             background: #1e1e2f !important;
@@ -386,6 +393,37 @@ st.markdown(
         }
         .full-results-wrap:has(.tip-wrap.headlines-tip:hover) {
             overflow: visible !important;
+        }
+        /* Commodity pages: even full-width desktop table layout. */
+        .full-results-wrap.commodity-results .full-results-table {
+            display: table !important;
+            table-layout: fixed !important;
+            width: 100% !important;
+            border-collapse: collapse !important;
+        }
+        .full-results-wrap.commodity-results .full-results-table thead {
+            display: table-header-group !important;
+        }
+        .full-results-wrap.commodity-results .full-results-table tbody {
+            display: table-row-group !important;
+        }
+        .full-results-wrap.commodity-results .full-results-table tr {
+            display: table-row !important;
+        }
+        .full-results-wrap.commodity-results .full-results-table th,
+        .full-results-wrap.commodity-results .full-results-table td {
+            display: table-cell !important;
+            vertical-align: middle !important;
+            padding: 0.65rem 0.75rem !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+            box-sizing: border-box !important;
+            text-align: left !important;
+            white-space: normal !important;
+        }
+        .full-results-wrap.commodity-results .full-results-table th:first-child,
+        .full-results-wrap.commodity-results .full-results-table td:first-child {
+            width: 3.5rem !important;
         }
     }
 
@@ -1553,6 +1591,53 @@ st.markdown(
             display: none !important;
         }
 
+        /* Full Results card — reorder fields without changing card format/size */
+        .stMarkdown .full-results-wrap .full-results-table tbody tr {
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody tr td:last-child {
+            border-bottom: 1px solid #e5e7eb !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Headline Sentiment"] {
+            border-bottom: none !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="#"] {
+            order: 0 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"],
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"],
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] {
+            order: 1 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Ticker"] {
+            order: 2 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Price"] {
+            order: 3 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="52W Low"] {
+            order: 4 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="% Above Low"] {
+            order: 5 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="52W High"] {
+            order: 6 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Exchanges"] {
+            order: 7 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Headlines"] {
+            order: 8 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Market Mood"] {
+            order: 9 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Headline Sentiment"] {
+            order: 10 !important;
+        }
+
     }
     @media (min-width: 1367px) {
 
@@ -1999,6 +2084,15 @@ else:
         display_df["% Above Low"] = display_df["% Above Low"].apply(lambda x: f"{x:.2f}%")
         display_df["Headline Sentiment"] = display_df["Headline Sentiment"].apply(lambda x: f"{x:+.3f}")
 
+        _table_cols = list(display_df.columns)
+        if "Commodity" in _table_cols and "Ticker" in _table_cols:
+            _lead = ["Commodity", "Ticker"]
+            _table_cols = _lead + [c for c in _table_cols if c not in _lead]
+        if "% Above Low" in _table_cols and "52W High" in _table_cols:
+            _table_cols.remove("% Above Low")
+            _table_cols.insert(_table_cols.index("52W High") + 1, "% Above Low")
+        display_df = display_df[_table_cols]
+
         COLUMN_TIPS = {
             "Headline Sentiment": "Average polarity score of recent news headlines (TextBlob). Ranges from -1.0 (very negative) to +1.0 (very positive). Items below -0.35 are automatically disqualified.",
             "Headlines": "Number of recent news headlines found. More headlines give a more reliable sentiment reading.",
@@ -2091,7 +2185,7 @@ else:
                         cells += _td(c, str(val), COLUMN_TIPS.get(c, ""))
                 rows_html += f"<tr>{cells}</tr>"
             return (
-                f'<div class="full-results-wrap">'
+                f'<div class="full-results-wrap commodity-results">'
                 f'<table class="full-results-table"><thead><tr>{header_cells}</tr></thead><tbody>{rows_html}</tbody></table>'
                 f"</div>"
             )
