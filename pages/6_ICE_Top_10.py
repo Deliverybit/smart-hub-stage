@@ -976,38 +976,13 @@ st.markdown(
         :root {
             --scoop-sidebar-width: min(92vw, 36rem);
             --footer-sidebar-width: 0px;
-            --scoop-tablet-gutter: clamp(0.85rem, 2.5vw, 1.1rem);
-            --scoop-sidebar-arrow-size: 32px;
-            --scoop-sidebar-arrow-top: 14px;
-            --scoop-sidebar-arrow-left: 12px;
         }
 
-        html, body {
-            width: 100% !important;
-            max-width: 100vw !important;
-            min-height: 100dvh !important;
-            overflow-x: hidden !important;
-        }
-
-        .stApp {
-            overflow-x: hidden !important;
-            width: 100% !important;
-            max-width: 100vw !important;
-            min-height: 100dvh !important;
-        }
-
-        /* Main content uses full viewport width (sidebar overlays when open). */
         [data-testid="stAppViewContainer"] {
             margin-left: 0 !important;
             padding-left: 0 !important;
             width: 100% !important;
             max-width: 100vw !important;
-            min-height: 100dvh !important;
-        }
-        [data-testid="stAppViewContainer"] > section.main {
-            width: 100% !important;
-            max-width: 100vw !important;
-            min-height: 100dvh !important;
         }
         [data-testid="stAppViewContainer"] > section.main,
         [data-testid="stMainBlockContainer"],
@@ -1017,7 +992,6 @@ st.markdown(
             max-width: 100% !important;
         }
 
-        /* Slide-out sidebar overlays the page (mobile-style). */
         section[data-testid="stSidebar"] {
             position: fixed !important;
             top: 0 !important;
@@ -1032,8 +1006,8 @@ st.markdown(
             overflow-y: auto !important;
             -webkit-overflow-scrolling: touch !important;
             box-shadow: 4px 0 28px rgba(15, 23, 42, 0.22) !important;
-            transform: translateX(-100%) !important;
-            transition: transform 0.28s ease !important;
+            transform: translateX(-100vw) !important;
+            transition: transform 0.28s ease, visibility 0.28s ease !important;
             pointer-events: none !important;
             visibility: hidden !important;
         }
@@ -1042,18 +1016,18 @@ st.markdown(
             pointer-events: auto !important;
             visibility: visible !important;
         }
+        section[data-testid="stSidebar"]:not([aria-expanded="true"]) {
+            transform: translateX(-100vw) !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+        }
         [data-testid="stSidebar"] > div,
         [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
             position: relative !important;
-            top: auto !important;
-            left: auto !important;
+            transform: none !important;
             width: 100% !important;
             min-width: 0 !important;
             max-width: 100% !important;
-            height: auto !important;
-            min-height: 100% !important;
-            z-index: auto !important;
-            transform: none !important;
             box-shadow: none !important;
             pointer-events: auto !important;
         }
@@ -1066,59 +1040,51 @@ st.markdown(
         [data-testid="stHeader"] {
             z-index: 1000005 !important;
         }
-        /* iPhone-like header arrows: one fixed slot, same 32px size open/closed. */
+
+        /* Mobile-style toggle: plain Streamlit arrows (no boxed chrome). */
         [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
         [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
         [data-testid="stHeader"] [data-testid="collapsedControl"],
-        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] {
-            position: fixed !important;
-            top: var(--scoop-sidebar-arrow-top) !important;
-            left: var(--scoop-sidebar-arrow-left) !important;
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {
+            position: static !important;
+            top: auto !important;
+            left: auto !important;
             right: auto !important;
             bottom: auto !important;
+            width: auto !important;
+            height: auto !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
             margin: 0 !important;
-            z-index: 1000006 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: var(--scoop-sidebar-arrow-size) !important;
-            height: var(--scoop-sidebar-arrow-size) !important;
-            min-width: var(--scoop-sidebar-arrow-size) !important;
-            min-height: var(--scoop-sidebar-arrow-size) !important;
             padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            transform: none !important;
+            display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
             pointer-events: auto !important;
-            transform: none !important;
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 0.5rem !important;
-            background: #ffffff !important;
-            box-shadow: 0 1px 6px rgba(15, 23, 42, 0.12) !important;
         }
         [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] button,
         [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
         [data-testid="stHeader"] [data-testid="stExpandSidebarButton"] button,
         [data-testid="stHeader"] [data-testid="collapsedControl"] button,
-        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] button {
-            width: var(--scoop-sidebar-arrow-size) !important;
-            height: var(--scoop-sidebar-arrow-size) !important;
-            min-width: var(--scoop-sidebar-arrow-size) !important;
-            min-height: var(--scoop-sidebar-arrow-size) !important;
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button {
+            width: auto !important;
+            height: auto !important;
+            min-width: 31.5px !important;
+            min-height: 31.5px !important;
             padding: 0 !important;
             margin: 0 !important;
             font-size: 15.75px !important;
             line-height: 1 !important;
             color: #31333f !important;
             border: none !important;
-            border-radius: 0.5rem !important;
+            border-radius: 0 !important;
             background: transparent !important;
             box-shadow: none !important;
-        }
-        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
-        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stHeader"] [data-testid="collapsedControl"],
-        section[data-testid="stSidebar"][aria-expanded="false"] [data-testid="stSidebarCollapseButton"],
-        section[data-testid="stSidebar"][aria-expanded="false"] [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] {
-            display: none !important;
         }
         .scoop-responsive-sidebar-close {
             display: none !important;
@@ -1132,32 +1098,37 @@ st.markdown(
             pointer-events: none !important;
         }
 
-        [data-testid="stSidebar"] p,
-        [data-testid="stSidebar"] label,
-        [data-testid="stSidebar"] span,
-        [data-testid="stSidebar"] div {
-            font-size: clamp(1.1rem, 2.2vw, 1.32rem) !important;
+        section[data-testid="stSidebar"] {
+            top: 0 !important;
+            transform: translateX(-100vw) !important;
+            transition: transform 0.28s ease, visibility 0.28s ease !important;
         }
-
-        .sidebar-brand-text,
-        [data-testid="stSidebar"] #scoop-title {
-            font-size: clamp(2.4rem, 5.5vw, 3.25rem) !important;
-            line-height: 1.05 !important;
+        section[data-testid="stSidebar"]:not([aria-expanded="true"]) {
+            transform: translateX(-100vw) !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
         }
-        .sidebar-brand {
-            margin: 0.15rem -1rem 1.1rem -1rem !important;
-            padding: 0.65rem 1rem !important;
-            white-space: normal !important;
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            z-index: 1000010 !important;
+            transform: translateX(0) !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
         }
-
-        [data-testid="stSidebar"] [data-testid="stPageLink"] a,
-        [data-testid="stSidebar"] [data-testid="stPageLink"] span,
-        [data-testid="stSidebar"] [data-testid="stPageLink"] p {
-            font-size: clamp(1.15rem, 2.2vw, 1.42rem) !important;
-            line-height: 1.3 !important;
-            white-space: normal !important;
-            overflow-wrap: anywhere !important;
-            word-break: break-word !important;
+        [data-testid="stSidebarBackdrop"] {
+            z-index: 1000009 !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stAppViewContainer"]::before {
+            z-index: 1000008 !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stHeader"] [data-testid="stToolbar"] {
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="collapsedControl"],
+        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] {
+            z-index: 1000012 !important;
         }
 
     }
@@ -1259,51 +1230,51 @@ st.markdown(
         [data-testid="stHeader"] {
             z-index: 1000005 !important;
         }
-        /* iPhone-like header arrows: one fixed slot, same 32px size open/closed. */
+        /* Plain Streamlit arrows (Surface Pro 7 / Duo style) — no boxed chrome. */
         [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
         [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
         [data-testid="stHeader"] [data-testid="collapsedControl"],
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"],
         section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] {
-            position: fixed !important;
-            top: var(--scoop-sidebar-arrow-top) !important;
-            left: var(--scoop-sidebar-arrow-left) !important;
+            position: static !important;
+            top: auto !important;
+            left: auto !important;
             right: auto !important;
             bottom: auto !important;
+            width: auto !important;
+            height: auto !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
             margin: 0 !important;
-            z-index: 1000006 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: var(--scoop-sidebar-arrow-size) !important;
-            height: var(--scoop-sidebar-arrow-size) !important;
-            min-width: var(--scoop-sidebar-arrow-size) !important;
-            min-height: var(--scoop-sidebar-arrow-size) !important;
             padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            transform: none !important;
+            display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
             pointer-events: auto !important;
-            transform: none !important;
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 0.5rem !important;
-            background: #ffffff !important;
-            box-shadow: 0 1px 6px rgba(15, 23, 42, 0.12) !important;
+            z-index: 1000006 !important;
         }
         [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] button,
         [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
         [data-testid="stHeader"] [data-testid="stExpandSidebarButton"] button,
         [data-testid="stHeader"] [data-testid="collapsedControl"] button,
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button,
         section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] button {
-            width: var(--scoop-sidebar-arrow-size) !important;
-            height: var(--scoop-sidebar-arrow-size) !important;
-            min-width: var(--scoop-sidebar-arrow-size) !important;
-            min-height: var(--scoop-sidebar-arrow-size) !important;
+            width: auto !important;
+            height: auto !important;
+            min-width: 31.5px !important;
+            min-height: 31.5px !important;
             padding: 0 !important;
             margin: 0 !important;
             font-size: 15.75px !important;
             line-height: 1 !important;
             color: #31333f !important;
             border: none !important;
-            border-radius: 0.5rem !important;
+            border-radius: 0 !important;
             background: transparent !important;
             box-shadow: none !important;
         }
@@ -2267,51 +2238,51 @@ st.markdown(
         [data-testid="stHeader"] {
             z-index: 1000005 !important;
         }
-        /* iPhone-like header arrows: one fixed slot, same 32px size open/closed. */
+        /* Plain Streamlit arrows (Surface Pro 7 / Duo style) — no boxed chrome. */
         [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
         [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
         [data-testid="stHeader"] [data-testid="collapsedControl"],
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"],
         section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] {
-            position: fixed !important;
-            top: var(--scoop-sidebar-arrow-top) !important;
-            left: var(--scoop-sidebar-arrow-left) !important;
+            position: static !important;
+            top: auto !important;
+            left: auto !important;
             right: auto !important;
             bottom: auto !important;
+            width: auto !important;
+            height: auto !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
             margin: 0 !important;
-            z-index: 1000006 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: var(--scoop-sidebar-arrow-size) !important;
-            height: var(--scoop-sidebar-arrow-size) !important;
-            min-width: var(--scoop-sidebar-arrow-size) !important;
-            min-height: var(--scoop-sidebar-arrow-size) !important;
             padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            transform: none !important;
+            display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
             pointer-events: auto !important;
-            transform: none !important;
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 0.5rem !important;
-            background: #ffffff !important;
-            box-shadow: 0 1px 6px rgba(15, 23, 42, 0.12) !important;
+            z-index: 1000006 !important;
         }
         [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] button,
         [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
         [data-testid="stHeader"] [data-testid="stExpandSidebarButton"] button,
         [data-testid="stHeader"] [data-testid="collapsedControl"] button,
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button,
         section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] button {
-            width: var(--scoop-sidebar-arrow-size) !important;
-            height: var(--scoop-sidebar-arrow-size) !important;
-            min-width: var(--scoop-sidebar-arrow-size) !important;
-            min-height: var(--scoop-sidebar-arrow-size) !important;
+            width: auto !important;
+            height: auto !important;
+            min-width: 31.5px !important;
+            min-height: 31.5px !important;
             padding: 0 !important;
             margin: 0 !important;
             font-size: 15.75px !important;
             line-height: 1 !important;
             color: #31333f !important;
             border: none !important;
-            border-radius: 0.5rem !important;
+            border-radius: 0 !important;
             background: transparent !important;
             box-shadow: none !important;
         }

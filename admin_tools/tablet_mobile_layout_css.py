@@ -794,51 +794,51 @@ TABLET_SIDEBAR = """
         [data-testid="stHeader"] {
             z-index: 1000005 !important;
         }
-        /* iPhone-like header arrows: one fixed slot, same 32px size open/closed. */
+        /* Plain Streamlit arrows (Surface Pro 7 / Duo style) — no boxed chrome. */
         [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
         [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
         [data-testid="stHeader"] [data-testid="collapsedControl"],
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"],
         section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] {
-            position: fixed !important;
-            top: var(--scoop-sidebar-arrow-top) !important;
-            left: var(--scoop-sidebar-arrow-left) !important;
+            position: static !important;
+            top: auto !important;
+            left: auto !important;
             right: auto !important;
             bottom: auto !important;
+            width: auto !important;
+            height: auto !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
             margin: 0 !important;
-            z-index: 1000006 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: var(--scoop-sidebar-arrow-size) !important;
-            height: var(--scoop-sidebar-arrow-size) !important;
-            min-width: var(--scoop-sidebar-arrow-size) !important;
-            min-height: var(--scoop-sidebar-arrow-size) !important;
             padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            transform: none !important;
+            display: flex !important;
             visibility: visible !important;
             opacity: 1 !important;
             pointer-events: auto !important;
-            transform: none !important;
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 0.5rem !important;
-            background: #ffffff !important;
-            box-shadow: 0 1px 6px rgba(15, 23, 42, 0.12) !important;
+            z-index: 1000006 !important;
         }
         [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] button,
         [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
         [data-testid="stHeader"] [data-testid="stExpandSidebarButton"] button,
         [data-testid="stHeader"] [data-testid="collapsedControl"] button,
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button,
         section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] button {
-            width: var(--scoop-sidebar-arrow-size) !important;
-            height: var(--scoop-sidebar-arrow-size) !important;
-            min-width: var(--scoop-sidebar-arrow-size) !important;
-            min-height: var(--scoop-sidebar-arrow-size) !important;
+            width: auto !important;
+            height: auto !important;
+            min-width: 31.5px !important;
+            min-height: 31.5px !important;
             padding: 0 !important;
             margin: 0 !important;
             font-size: 15.75px !important;
             line-height: 1 !important;
             color: #31333f !important;
             border: none !important;
-            border-radius: 0.5rem !important;
+            border-radius: 0 !important;
             background: transparent !important;
             box-shadow: none !important;
         }
@@ -1279,11 +1279,10 @@ TABLET_SEARCH_MOBILE_LAYOUT = (
 
 TABLET_TERMS_MOBILE_LAYOUT = TABLET_TYPE
 
-# iPad Mini portrait (744–768px): Streamlit keeps a split sidebar at layout="wide",
-# squishing main content. Reuse overlay sidebar + full-width main (phones ≤743 unchanged).
+# iPad Mini portrait (744–768px): overlay above Deploy bar, plain arrows like Surface Duo.
 IPAD_MINI_PORTRAIT_LAYOUT = f"""
     /* ===== iPad Mini portrait (744px–768px) — overlay sidebar; phones/tablet/desktop unchanged ===== */
     @media (min-width: 744px) and (max-width: 768px) {{
-{TABLET_SIDEBAR}
+{SURFACE_DUO_SIDEBAR}
     }}
 """
