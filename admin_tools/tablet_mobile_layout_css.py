@@ -56,9 +56,18 @@ TABLET_TYPE = """
 
         [data-testid="stMainBlockContainer"],
         section.main > div {
-            padding-left: 1.1rem !important;
-            padding-right: 1.1rem !important;
+            padding-left: var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem)) !important;
+            padding-right: var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem)) !important;
+            padding-top: calc(0.75rem + env(safe-area-inset-top, 0px) + 1.5rem) !important;
             padding-bottom: 2.5rem !important;
+        }
+
+        [data-testid="stVerticalBlock"] { gap: 0.85rem !important; }
+        h1, h2, h3, h4 { margin-top: 0.4rem !important; margin-bottom: 0.5rem !important; }
+
+        [data-testid="stMarkdownContainer"],
+        [data-testid="stMarkdownContainer"] > div {
+            max-width: 100% !important;
         }
 
         div[data-testid="stCheckbox"] {
@@ -402,14 +411,21 @@ TABLET_SCREENER_MOBILE_LAYOUT = (
         }
 
         .stMarkdown .full-results-wrap {
-            margin-left: -0.5rem !important;
-            margin-right: -0.5rem !important;
-            width: calc(100% + 1rem) !important;
+            margin-left: calc(-1 * var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem))) !important;
+            margin-right: calc(-1 * var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem))) !important;
+            width: calc(100% + 2 * var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem))) !important;
             max-width: 100vw !important;
             box-sizing: border-box !important;
-            padding: 0 0.2rem max(1rem, env(safe-area-inset-bottom)) !important;
+            padding: 0 var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem)) max(1rem, env(safe-area-inset-bottom)) !important;
             overflow-x: visible !important;
             overflow-y: visible !important;
+        }
+
+        /* Index banner cards: use full content width on tablet (desktop keeps inline 50%). */
+        [data-testid="stMarkdownContainer"] div[style*="max-width: 50%"] {
+            max-width: 100% !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
         }
         .stMarkdown .full-results-wrap .full-results-table thead {
             display: none !important;
@@ -686,12 +702,26 @@ TABLET_SCREENER_MOBILE_LAYOUT = (
 
 TABLET_SIDEBAR = """
         :root {
-            --scoop-sidebar-width: clamp(16rem, 42vw, 28rem);
+            --scoop-sidebar-width: min(92vw, 36rem);
             --footer-sidebar-width: 0px;
+            --scoop-tablet-gutter: clamp(0.85rem, 2.5vw, 1.1rem);
+            --scoop-sidebar-arrow-size: 32px;
+            --scoop-sidebar-arrow-top: 14px;
+            --scoop-sidebar-arrow-left: 12px;
+        }
+
+        html, body {
+            width: 100% !important;
+            max-width: 100vw !important;
+            min-height: 100dvh !important;
+            overflow-x: hidden !important;
         }
 
         .stApp {
             overflow-x: hidden !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+            min-height: 100dvh !important;
         }
 
         /* Main content uses full viewport width (sidebar overlays when open). */
@@ -700,10 +730,17 @@ TABLET_SIDEBAR = """
             padding-left: 0 !important;
             width: 100% !important;
             max-width: 100vw !important;
+            min-height: 100dvh !important;
+        }
+        [data-testid="stAppViewContainer"] > section.main {
+            width: 100% !important;
+            max-width: 100vw !important;
+            min-height: 100dvh !important;
         }
         [data-testid="stAppViewContainer"] > section.main,
         [data-testid="stMainBlockContainer"],
-        section.main > div {
+        section.main > div,
+        .block-container {
             width: 100% !important;
             max-width: 100% !important;
         }
@@ -718,18 +755,20 @@ TABLET_SIDEBAR = """
             z-index: 999999 !important;
             min-width: var(--scoop-sidebar-width) !important;
             width: var(--scoop-sidebar-width) !important;
-            max-width: min(92vw, 28rem) !important;
+            max-width: min(92vw, 36rem) !important;
             overflow-x: hidden !important;
             overflow-y: auto !important;
             -webkit-overflow-scrolling: touch !important;
             box-shadow: 4px 0 28px rgba(15, 23, 42, 0.22) !important;
-            transform: translateX(-105%) !important;
+            transform: translateX(-100%) !important;
             transition: transform 0.28s ease !important;
             pointer-events: none !important;
+            visibility: hidden !important;
         }
         section[data-testid="stSidebar"][aria-expanded="true"] {
             transform: translateX(0) !important;
             pointer-events: auto !important;
+            visibility: visible !important;
         }
         [data-testid="stSidebar"] > div,
         [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
@@ -755,70 +794,62 @@ TABLET_SIDEBAR = """
         [data-testid="stHeader"] {
             z-index: 1000005 !important;
         }
-        [data-testid="stSidebarCollapseButton"],
-        [data-testid="stExpandSidebarButton"],
-        [data-testid="collapsedControl"] {
+        /* iPhone-like header arrows: one fixed slot, same 32px size open/closed. */
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="collapsedControl"],
+        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] {
+            position: fixed !important;
+            top: var(--scoop-sidebar-arrow-top) !important;
+            left: var(--scoop-sidebar-arrow-left) !important;
+            right: auto !important;
+            bottom: auto !important;
+            margin: 0 !important;
+            z-index: 1000006 !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            z-index: 1000006 !important;
+            width: var(--scoop-sidebar-arrow-size) !important;
+            height: var(--scoop-sidebar-arrow-size) !important;
+            min-width: var(--scoop-sidebar-arrow-size) !important;
+            min-height: var(--scoop-sidebar-arrow-size) !important;
+            padding: 0 !important;
             visibility: visible !important;
             opacity: 1 !important;
             pointer-events: auto !important;
-        }
-        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"] {
-            display: flex !important;
-            color: #31333f !important;
+            transform: none !important;
             border: 1px solid #cbd5e1 !important;
             border-radius: 0.5rem !important;
             background: #ffffff !important;
             box-shadow: 0 1px 6px rgba(15, 23, 42, 0.12) !important;
         }
-        [data-testid="stSidebarCollapseButton"] button,
-        [data-testid="stExpandSidebarButton"],
-        [data-testid="stExpandSidebarButton"] button,
-        [data-testid="collapsedControl"] button {
-            min-width: 2.75rem !important;
-            min-height: 2.75rem !important;
-            color: #31333f !important;
-        }
-        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarHeader"] {
-            position: relative !important;
-        }
-        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] {
-            position: absolute !important;
-            top: 0.35rem !important;
-            right: 0.35rem !important;
-            left: auto !important;
-            z-index: 1000007 !important;
-            background: rgba(255, 255, 255, 0.95) !important;
-            border-radius: 0.5rem !important;
-            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.18) !important;
-        }
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] button,
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"] button,
+        [data-testid="stHeader"] [data-testid="collapsedControl"] button,
         section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] button {
-            color: #31333f !important;
-        }
-        .scoop-responsive-sidebar-close {
-            position: fixed !important;
-            z-index: 10000010 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: 2.85rem !important;
-            height: 2.85rem !important;
+            width: var(--scoop-sidebar-arrow-size) !important;
+            height: var(--scoop-sidebar-arrow-size) !important;
+            min-width: var(--scoop-sidebar-arrow-size) !important;
+            min-height: var(--scoop-sidebar-arrow-size) !important;
             padding: 0 !important;
             margin: 0 !important;
-            border: 1px solid #94a3b8 !important;
-            border-radius: 0.55rem !important;
-            background: #ffffff !important;
-            color: #0f172a !important;
-            font-size: 1.45rem !important;
-            font-weight: 800 !important;
+            font-size: 15.75px !important;
             line-height: 1 !important;
-            box-shadow: 0 3px 14px rgba(15, 23, 42, 0.24) !important;
-            cursor: pointer !important;
-            pointer-events: auto !important;
-            touch-action: manipulation !important;
+            color: #31333f !important;
+            border: none !important;
+            border-radius: 0.5rem !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stHeader"] [data-testid="collapsedControl"],
+        section[data-testid="stSidebar"][aria-expanded="false"] [data-testid="stSidebarCollapseButton"],
+        section[data-testid="stSidebar"][aria-expanded="false"] [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] {
+            display: none !important;
+        }
+        .scoop-responsive-sidebar-close {
+            display: none !important;
         }
         .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stAppViewContainer"]::before {
             content: "" !important;
@@ -856,6 +887,281 @@ TABLET_SIDEBAR = """
             overflow-wrap: anywhere !important;
             word-break: break-word !important;
         }
+"""
+
+# iPad / Surface Pro / Nest Hub / Surface Duo: open sidebar sits above Streamlit top bar
+# (covers Deploy); collapse toggle stays on top; fully off-screen when closed.
+OVERLAY_SIDEBAR_TOPBAR_LAYER = """
+        section[data-testid="stSidebar"] {
+            top: 0 !important;
+            transform: translateX(-100vw) !important;
+            transition: transform 0.28s ease, visibility 0.28s ease !important;
+        }
+        section[data-testid="stSidebar"]:not([aria-expanded="true"]) {
+            transform: translateX(-100vw) !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            z-index: 1000010 !important;
+            transform: translateX(0) !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stSidebarBackdrop"] {
+            z-index: 1000009 !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stAppViewContainer"]::before {
+            z-index: 1000008 !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stHeader"] [data-testid="stToolbar"] {
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="collapsedControl"],
+        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] {
+            z-index: 1000012 !important;
+        }
+"""
+
+# iPad 14 Pro Max (1032×1376 portrait / 1376×1032 landscape): landscape width exceeds
+# the 1366px tablet cap and hits desktop split-sidebar; force full off-screen retract.
+IPAD_14_PRO_MAX_PORTRAIT_RETRACT = """
+        section[data-testid="stSidebar"],
+        section[data-testid="stSidebar"][aria-expanded="false"] {
+            transform: translateX(calc(-100vw - 4px)) !important;
+            transition: transform 0.28s ease, visibility 0.28s ease !important;
+        }
+        section[data-testid="stSidebar"]:not([aria-expanded="true"]),
+        section[data-testid="stSidebar"][aria-expanded="false"] {
+            transform: translateX(calc(-100vw - 4px)) !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            opacity: 0 !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            transform: translateX(0) !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+"""
+
+IPAD_14_PRO_MAX_LANDSCAPE_OVERRIDE = """
+        /* Beat desktop (1367px) split-sidebar rules — same specificity, later cascade. */
+        section[data-testid="stSidebar"],
+        section[data-testid="stSidebar"][aria-expanded="false"],
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100dvh !important;
+            min-height: 100dvh !important;
+            margin-left: 0 !important;
+            display: block !important;
+            opacity: 1 !important;
+            box-shadow: 4px 0 28px rgba(15, 23, 42, 0.22) !important;
+            min-width: var(--scoop-sidebar-width) !important;
+            width: var(--scoop-sidebar-width) !important;
+            max-width: min(92vw, 36rem) !important;
+            transition: transform 0.28s ease, visibility 0.28s ease !important;
+        }
+        section[data-testid="stSidebar"],
+        section[data-testid="stSidebar"][aria-expanded="false"] {
+            transform: translateX(-100vw) !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            z-index: 999999 !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            transform: translateX(0) !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+            z-index: 1000010 !important;
+        }
+        [data-testid="stSidebar"] > div,
+        [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+            position: relative !important;
+            transform: none !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            height: auto !important;
+            min-height: 100% !important;
+            pointer-events: auto !important;
+            box-shadow: none !important;
+        }
+        [data-testid="stSidebarBackdrop"] {
+            display: block !important;
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 1000009 !important;
+            cursor: pointer !important;
+        }
+        [data-testid="stExpandSidebarButton"],
+        [data-testid="stSidebarCollapseButton"],
+        [data-testid="collapsedControl"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+        [data-testid="stHeader"] [data-testid="collapsedControl"] {
+            display: flex !important;
+        }
+        [data-testid="stAppViewContainer"] {
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+        }
+"""
+
+IPAD_14_PRO_MAX_LAYOUT = f"""
+    /* ===== iPad 14 Pro Max only — full slide-in retract ===== */
+    @media (min-width: 1028px) and (max-width: 1036px) and (min-height: 1370px) {{
+{IPAD_14_PRO_MAX_PORTRAIT_RETRACT}
+    }}
+    @media (min-width: 1370px) and (max-width: 1382px) and (max-height: 1040px) {{
+{TABLET_SIDEBAR}
+{OVERLAY_SIDEBAR_TOPBAR_LAYER}
+{IPAD_14_PRO_MAX_LANDSCAPE_OVERRIDE}
+    }}
+"""
+
+# Surface Duo (540 / 720 / ~1114 span): overlay sidebar, full off-screen hide, mobile arrows.
+SURFACE_DUO_SIDEBAR = """
+        :root {
+            --scoop-sidebar-width: min(92vw, 36rem);
+            --footer-sidebar-width: 0px;
+        }
+
+        [data-testid="stAppViewContainer"] {
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+        }
+        [data-testid="stAppViewContainer"] > section.main,
+        [data-testid="stMainBlockContainer"],
+        section.main > div,
+        .block-container {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        section[data-testid="stSidebar"] {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100dvh !important;
+            min-height: 100dvh !important;
+            z-index: 999999 !important;
+            min-width: var(--scoop-sidebar-width) !important;
+            width: var(--scoop-sidebar-width) !important;
+            max-width: min(92vw, 36rem) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            box-shadow: 4px 0 28px rgba(15, 23, 42, 0.22) !important;
+            transform: translateX(-100vw) !important;
+            transition: transform 0.28s ease, visibility 0.28s ease !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            transform: translateX(0) !important;
+            pointer-events: auto !important;
+            visibility: visible !important;
+        }
+        section[data-testid="stSidebar"]:not([aria-expanded="true"]) {
+            transform: translateX(-100vw) !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+        }
+        [data-testid="stSidebar"] > div,
+        [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+            position: relative !important;
+            transform: none !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            box-shadow: none !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stSidebarBackdrop"] {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 999998 !important;
+            cursor: pointer !important;
+        }
+        [data-testid="stHeader"] {
+            z-index: 1000005 !important;
+        }
+
+        /* Mobile-style toggle: plain Streamlit arrows (no boxed chrome). */
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="collapsedControl"],
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {
+            position: static !important;
+            top: auto !important;
+            left: auto !important;
+            right: auto !important;
+            bottom: auto !important;
+            width: auto !important;
+            height: auto !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            transform: none !important;
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] button,
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"] button,
+        [data-testid="stHeader"] [data-testid="collapsedControl"] button,
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button {
+            width: auto !important;
+            height: auto !important;
+            min-width: 31.5px !important;
+            min-height: 31.5px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            font-size: 15.75px !important;
+            line-height: 1 !important;
+            color: #31333f !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        .scoop-responsive-sidebar-close {
+            display: none !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stAppViewContainer"]::before {
+            content: "" !important;
+            position: fixed !important;
+            inset: 0 !important;
+            background: rgba(15, 23, 42, 0.38) !important;
+            z-index: 999997 !important;
+            pointer-events: none !important;
+        }
+""" + OVERLAY_SIDEBAR_TOPBAR_LAYER
+
+SURFACE_DUO_LAYOUT = f"""
+    /* ===== Surface Duo only — full slide-in, mobile-style arrows ===== */
+    @media (width: 540px),
+           ((width: 720px) and (max-height: 541px)),
+           ((min-width: 1110px) and (max-width: 1118px) and (max-height: 741px)) {{
+{SURFACE_DUO_SIDEBAR}
+    }}
 """
 
 DESKTOP_SIDEBAR = """
@@ -948,14 +1254,6 @@ TABLET_SEARCH_MOBILE_LAYOUT = (
             line-height: 1.62 !important;
         }
 
-        [data-testid="stMainBlockContainer"],
-        section.main > div {
-            padding-top: calc(0.75rem + env(safe-area-inset-top, 0px) + 1.5rem) !important;
-        }
-
-        [data-testid="stVerticalBlock"] { gap: 0.85rem !important; }
-        h1, h2, h3, h4 { margin-top: 0.4rem !important; margin-bottom: 0.5rem !important; }
-
         [data-testid="stHorizontalBlock"] { flex-wrap: wrap !important; }
         [data-testid="stHorizontalBlock"] > div {
             flex: 1 1 100% !important;
@@ -980,3 +1278,12 @@ TABLET_SEARCH_MOBILE_LAYOUT = (
 )
 
 TABLET_TERMS_MOBILE_LAYOUT = TABLET_TYPE
+
+# iPad Mini portrait (744–768px): Streamlit keeps a split sidebar at layout="wide",
+# squishing main content. Reuse overlay sidebar + full-width main (phones ≤743 unchanged).
+IPAD_MINI_PORTRAIT_LAYOUT = f"""
+    /* ===== iPad Mini portrait (744px–768px) — overlay sidebar; phones/tablet/desktop unchanged ===== */
+    @media (min-width: 744px) and (max-width: 768px) {{
+{TABLET_SIDEBAR}
+    }}
+"""

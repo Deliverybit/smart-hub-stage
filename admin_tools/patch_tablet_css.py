@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "admin_tools"))
 
 from tablet_mobile_layout_css import (  # noqa: E402
+    OVERLAY_SIDEBAR_TOPBAR_LAYER,
     TABLET_SCREENER_MOBILE_LAYOUT,
     TABLET_SEARCH_MOBILE_LAYOUT,
     TABLET_SIDEBAR,
@@ -21,6 +22,7 @@ TABLET_SCREENER = f"""
     /* ===== TABLET (769px–1366px) — mobile card layout; mobile/desktop unchanged ===== */
     @media (min-width: 769px) and (max-width: 1366px) {{
 {TABLET_SIDEBAR}
+{OVERLAY_SIDEBAR_TOPBAR_LAYER}
 {TABLET_SCREENER_MOBILE_LAYOUT}
     }}
 """
@@ -29,6 +31,7 @@ TABLET_SEARCH = f"""
     /* ===== TABLET (769px–1366px) — mobile card layout; mobile/desktop unchanged ===== */
     @media (min-width: 769px) and (max-width: 1366px) {{
 {TABLET_SIDEBAR}
+{OVERLAY_SIDEBAR_TOPBAR_LAYER}
 {TABLET_SEARCH_MOBILE_LAYOUT}
     }}
 """
@@ -37,6 +40,7 @@ TABLET_TERMS = f"""
     /* ===== TABLET (769px–1366px) — mobile-style layout; mobile/desktop unchanged ===== */
     @media (min-width: 769px) and (max-width: 1366px) {{
 {TABLET_SIDEBAR}
+{OVERLAY_SIDEBAR_TOPBAR_LAYER}
 {TABLET_TERMS_MOBILE_LAYOUT}
     }}
 """
