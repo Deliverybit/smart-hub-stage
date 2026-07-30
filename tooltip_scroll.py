@@ -117,6 +117,9 @@ _DESKTOP_HEADLINES_CSS = """
         font-size: 1.35rem !important;
         line-height: 1.25 !important;
         border-bottom: 1px solid #334155 !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+        white-space: normal !important;
     }
     .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll {
         flex: 1 1 0 !important;
@@ -205,9 +208,8 @@ _DESKTOP_HEADLINES_CSS = """
 }
 """
 
-_TABLET_HEADLINES_POPUP_CSS = """
-@media (min-width: 769px) and (max-width: 1366px) {
-    /* Tablet: card overlay at top of row — no JS required for width/position. */
+_TABLET_HEADLINES_POPUP_RULES = """
+    /* Tablet / iPad Pro-style headlines popup (fixed slot via --hl-fixed-*). */
     .stMarkdown .tip-wrap.headlines-tip:not(:has(.hl-tip-cb:checked)) .tip-text {
         display: none !important;
         visibility: hidden !important;
@@ -276,6 +278,9 @@ _TABLET_HEADLINES_POPUP_CSS = """
         line-height: 1.2 !important;
         background: #1e1e2f !important;
         border-bottom: 1px solid #334155 !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+        white-space: normal !important;
     }
     .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll {
         flex: 1 1 auto !important;
@@ -287,7 +292,21 @@ _TABLET_HEADLINES_POPUP_CSS = """
         touch-action: pan-y !important;
         overscroll-behavior-y: contain !important;
     }
-}
+"""
+
+_TABLET_HEADLINES_POPUP_CSS = f"""
+@media (min-width: 769px) and (max-width: 1366px) {{
+{_TABLET_HEADLINES_POPUP_RULES}
+}}
+"""
+
+_IPAD_MINI_SURFACE_DUO_HEADLINES_CSS = f"""
+@media (min-width: 744px) and (max-width: 768px),
+       (width: 540px),
+       ((width: 720px) and (max-height: 541px)),
+       ((min-width: 1110px) and (max-width: 1118px) and (max-height: 741px)) {{
+{_TABLET_HEADLINES_POPUP_RULES}
+}}
 """
 
 _RESPONSIVE_SIDEBAR_JS = """
@@ -434,6 +453,8 @@ _TOOLTIP_SCROLL_JS = """
     const DESKTOP_MIN = 1367;
     const RESPONSIVE_MIN = 769;
     const RESPONSIVE_MAX = 1366;
+    const IPAD_MINI_MIN = 744;
+    const IPAD_MINI_MAX = 768;
     const VIEWPORT_PAD = 12;
     const GAP = 10;
     const HEADLINES_DESKTOP_OFFSET = 12;
@@ -449,6 +470,26 @@ _TOOLTIP_SCROLL_JS = """
 
     const isResponsiveHeadlinesViewport = () =>
         window.innerWidth >= RESPONSIVE_MIN && window.innerWidth <= RESPONSIVE_MAX;
+
+    const isIpadMiniViewport = () => {
+        const w = window.innerWidth;
+        return w >= IPAD_MINI_MIN && w <= IPAD_MINI_MAX;
+    };
+
+    const isSurfaceDuoViewport = () => {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        return (
+            w === 540 ||
+            (w === 720 && h <= 541) ||
+            (w >= 1110 && w <= 1118 && h <= 741)
+        );
+    };
+
+    const usesTabletProHeadlinesPopup = () =>
+        isResponsiveHeadlinesViewport() ||
+        isIpadMiniViewport() ||
+        isSurfaceDuoViewport();
 
     const isInsideDesktopHeadlinesPopup = (node) => {
         if (window.innerWidth < DESKTOP_MIN || !node || !node.closest) {
@@ -623,6 +664,63 @@ _TOOLTIP_SCROLL_JS = """
         tip.style.removeProperty("flex-direction");
         tip.style.removeProperty("overflow");
         unbindDesktopHeadlinesScrollWheel(wrap);
+        restoreHeadlinesHeading(wrap);
+    };
+
+    const getHeadlinesHeadingBaseLabel = (heading) => {
+        if (!heading) {
+            return "Headlines";
+        }
+        if (!heading.dataset.hlBaseLabel) {
+            const current = (heading.textContent || "Headlines").trim();
+            heading.dataset.hlBaseLabel = current.split(" - ")[0].trim() || "Headlines";
+        }
+        return heading.dataset.hlBaseLabel;
+    };
+
+    const getCompanyNameFromHeadlinesRow = (wrap) => {
+        const row = wrap?.closest("tr");
+        if (!row) {
+            return "";
+        }
+
+        const valueCell =
+            row.querySelector('td[data-label="Company"] .fr-val') ||
+            row.querySelector('td[data-label="Name"] .fr-val');
+        if (!valueCell) {
+            return "";
+        }
+
+        const tipWrap = valueCell.querySelector(".tip-wrap");
+        if (tipWrap) {
+            const clone = tipWrap.cloneNode(true);
+            clone.querySelectorAll(".tip-text").forEach((node) => node.remove());
+            return (clone.textContent || "").replace(/\s+/g, " ").trim();
+        }
+
+        return (valueCell.textContent || "").replace(/\s+/g, " ").trim();
+    };
+
+    const updateHeadlinesHeading = (wrap) => {
+        if (!wrap) {
+            return;
+        }
+        const heading = wrap.querySelector(".hl-tip-heading");
+        if (!heading) {
+            return;
+        }
+
+        const baseLabel = getHeadlinesHeadingBaseLabel(heading);
+        const company = getCompanyNameFromHeadlinesRow(wrap);
+        heading.textContent = company ? `${baseLabel} - ${company}` : baseLabel;
+    };
+
+    const restoreHeadlinesHeading = (wrap) => {
+        const heading = wrap?.querySelector(".hl-tip-heading");
+        if (!heading) {
+            return;
+        }
+        heading.textContent = getHeadlinesHeadingBaseLabel(heading);
     };
 
     const measureDesktopHeadlinesContentHeight = (tip) => {
@@ -900,6 +998,7 @@ _TOOLTIP_SCROLL_JS = """
         const prevScrollTop = preserveScroll && scroll ? scroll.scrollTop : 0;
 
         tip.style.setProperty("position-anchor", "none");
+        updateHeadlinesHeading(wrap);
 
         const slot = getDesktopHeadlinesSlot();
 
@@ -1081,7 +1180,16 @@ _TOOLTIP_SCROLL_JS = """
             return;
         }
         if (checkbox.checked) {
-            scheduleResponsiveHeadlinesPosition(wrap);
+            if (usesTabletProHeadlinesPopup()) {
+                scheduleResponsiveHeadlinesPosition(wrap);
+            }
+            updateHeadlinesHeading(wrap);
+            window.requestAnimationFrame(() => {
+                if (usesTabletProHeadlinesPopup()) {
+                    scheduleResponsiveHeadlinesPosition(wrap);
+                }
+                updateHeadlinesHeading(wrap);
+            });
         } else {
             clearHeadlinesPosition(wrap);
         }
@@ -1200,7 +1308,7 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const positionResponsiveHeadlinesTip = (wrap) => {
-        if (!isResponsiveHeadlinesViewport() || !wrap) {
+        if (!usesTabletProHeadlinesPopup() || !wrap) {
             return;
         }
         const checkbox = wrap.querySelector(".hl-tip-cb");
@@ -1218,6 +1326,7 @@ _TOOLTIP_SCROLL_JS = """
         tip.style.setProperty("--hl-fixed-left", `${slot.left}px`);
         tip.style.setProperty("--hl-fixed-width", `${slot.width}px`);
         tip.style.setProperty("--hl-fixed-max-height", `${slot.maxHeight}px`);
+        updateHeadlinesHeading(wrap);
 
         const scroll = tip.querySelector(".headlines-tip-scroll");
         if (scroll) {
@@ -1231,7 +1340,7 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const repositionOpenResponsiveHeadlines = () => {
-        if (!isResponsiveHeadlinesViewport()) {
+        if (!usesTabletProHeadlinesPopup()) {
             return;
         }
         document
@@ -1442,6 +1551,7 @@ def install_tooltip_scroll_handler() -> None:
         f"<style id='scoop-mobile-tablet-card-order-css'>{_MOBILE_TABLET_CARD_ORDER_CSS}</style>"
         f"<style id='scoop-tablet-headlines-css'>{_TABLET_HEADLINES_POPUP_CSS}</style>"
         f"<style id='scoop-desktop-headlines-css'>{_DESKTOP_HEADLINES_CSS}</style>"
+        f"<style id='scoop-ipad-mini-surface-duo-headlines-css'>{_IPAD_MINI_SURFACE_DUO_HEADLINES_CSS}</style>"
         f"<script>{_COMBINED_PAGE_JS}</script>",
         unsafe_allow_javascript=True,
     )
