@@ -526,6 +526,20 @@ _TOOLTIP_SCROLL_JS = """
         return w >= IPAD_MINI_MIN && w <= IPAD_MINI_MAX;
     };
 
+    const isIpadAirViewport = () => {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const near820 = (value) => value >= 816 && value <= 824;
+        const near1180 = (value) => value >= 1176 && value <= 1184;
+        return (
+            (near820(w) && near1180(h)) ||
+            (near1180(w) && near820(h))
+        );
+    };
+
+    const isIpadMiniOrAirHeadlinesViewport = () =>
+        isIpadMiniViewport() || isIpadAirViewport();
+
     const isSurfaceDuoViewport = () => {
         const w = window.innerWidth;
         const h = window.innerHeight;
@@ -1378,6 +1392,11 @@ _TOOLTIP_SCROLL_JS = """
             left = viewLeft;
         }
 
+        if (isIpadMiniOrAirHeadlinesViewport()) {
+            left = Math.round((window.innerWidth - width) / 2);
+            left = Math.max(VIEWPORT_PAD, Math.min(left, viewRight - width));
+        }
+
         return {
             top,
             left: Math.round(left),
@@ -1516,8 +1535,8 @@ _TOOLTIP_SCROLL_JS = """
         document.addEventListener("mousemove", allowTooltip, { passive: true, capture: true });
     }
 
-    if (window.__scoopDesktopHeadlinesBindVersion !== 27) {
-        window.__scoopDesktopHeadlinesBindVersion = 27;
+    if (window.__scoopDesktopHeadlinesBindVersion !== 28) {
+        window.__scoopDesktopHeadlinesBindVersion = 28;
 
         if (window.__scoopDesktopHeadlinesMouseLeave) {
             document.removeEventListener("mouseleave", window.__scoopDesktopHeadlinesMouseLeave, true);
