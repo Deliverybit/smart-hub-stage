@@ -1397,6 +1397,11 @@ _TOOLTIP_SCROLL_JS = """
             left = Math.max(VIEWPORT_PAD, Math.min(left, viewRight - width));
         }
 
+        if (isSurfaceDuoViewport()) {
+            left = Math.round((window.innerWidth - width) / 2);
+            left = Math.max(VIEWPORT_PAD, Math.min(left, viewRight - width));
+        }
+
         return {
             top,
             left: Math.round(left),
@@ -1535,8 +1540,8 @@ _TOOLTIP_SCROLL_JS = """
         document.addEventListener("mousemove", allowTooltip, { passive: true, capture: true });
     }
 
-    if (window.__scoopDesktopHeadlinesBindVersion !== 28) {
-        window.__scoopDesktopHeadlinesBindVersion = 28;
+    if (window.__scoopDesktopHeadlinesBindVersion !== 29) {
+        window.__scoopDesktopHeadlinesBindVersion = 29;
 
         if (window.__scoopDesktopHeadlinesMouseLeave) {
             document.removeEventListener("mouseleave", window.__scoopDesktopHeadlinesMouseLeave, true);
