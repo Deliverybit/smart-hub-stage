@@ -15,6 +15,53 @@ _MOBILE_HEADLINES_CSS = f"""
 }}
 """
 
+_MOBILE_PHONE_HEADLINES_FIXED_CSS = """
+@media (max-width: 743px) {
+    /* Phone mobile: fixed top slot; cap height at 75vh so backdrop stays tappable below. */
+    .stMarkdown .full-results-wrap .full-results-table tbody tr:has(.hl-tip-cb:checked) {
+        position: static !important;
+        z-index: auto !important;
+    }
+    .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text {
+        position: fixed !important;
+        top: var(--hl-fixed-top, 20px) !important;
+        left: var(--hl-fixed-left, 0.75rem) !important;
+        right: auto !important;
+        bottom: auto !important;
+        width: var(--hl-fixed-width, calc(100vw - 1.5rem)) !important;
+        min-width: 0 !important;
+        max-width: var(--hl-fixed-width, calc(100vw - 1.5rem)) !important;
+        height: auto !important;
+        max-height: var(--hl-fixed-max-height, 75dvh) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        transform: none !important;
+        position-anchor: none !important;
+        anchor-name: none !important;
+        z-index: 100002 !important;
+    }
+    .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-heading {
+        flex: 0 0 auto !important;
+        flex-shrink: 0 !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+        white-space: normal !important;
+    }
+    .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll {
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        overflow-y: auto !important;
+    }
+    html.scoop-tooltip-scrolling .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text,
+    body.scoop-tooltip-scrolling .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text {
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+}
+"""
+
 _MOBILE_TABLET_CARD_ORDER_CSS = f"""
 @media (max-width: 1366px) {{
 {MOBILE_CARD_FIELD_ORDER}
@@ -451,6 +498,9 @@ _TOOLTIP_SCROLL_JS = """
     const root = document.documentElement;
     const className = "scoop-tooltip-scrolling";
     const DESKTOP_MIN = 1367;
+    const MOBILE_MAX = 768;
+    const MOBILE_HEADLINES_TOP_PAD = 20;
+    const MOBILE_HEADLINES_MAX_VIEWPORT_RATIO = 0.75;
     const RESPONSIVE_MIN = 769;
     const RESPONSIVE_MAX = 1366;
     const IPAD_MINI_MIN = 744;
@@ -490,6 +540,13 @@ _TOOLTIP_SCROLL_JS = """
         isResponsiveHeadlinesViewport() ||
         isIpadMiniViewport() ||
         isSurfaceDuoViewport();
+
+    const isPhoneMobileHeadlinesViewport = () =>
+        window.innerWidth <= MOBILE_MAX && !usesTabletProHeadlinesPopup();
+
+    const isPhoneMobileHeadlinesOpen = () =>
+        isPhoneMobileHeadlinesViewport() &&
+        !!document.querySelector(".full-results-wrap .tip-wrap.headlines-tip .hl-tip-cb:checked");
 
     const isInsideDesktopHeadlinesPopup = (node) => {
         if (window.innerWidth < DESKTOP_MIN || !node || !node.closest) {
@@ -567,7 +624,7 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const hideTooltips = (event) => {
-        if (isDesktopHeadlinesSessionOpen()) {
+        if (isDesktopHeadlinesSessionOpen() || isPhoneMobileHeadlinesOpen()) {
             root.classList.remove(className);
             document.body.classList.remove(className);
             return;
@@ -1182,11 +1239,24 @@ _TOOLTIP_SCROLL_JS = """
         if (checkbox.checked) {
             if (usesTabletProHeadlinesPopup()) {
                 scheduleResponsiveHeadlinesPosition(wrap);
+            } else if (isPhoneMobileHeadlinesViewport()) {
+                const savedScrollTop = getPageScrollEl().scrollTop;
+                schedulePhoneMobileHeadlinesPosition(wrap);
+                window.requestAnimationFrame(() => {
+                    restorePageScroll(savedScrollTop);
+                    schedulePhoneMobileHeadlinesPosition(wrap);
+                    window.requestAnimationFrame(() => {
+                        restorePageScroll(savedScrollTop);
+                        schedulePhoneMobileHeadlinesPosition(wrap);
+                    });
+                });
             }
             updateHeadlinesHeading(wrap);
             window.requestAnimationFrame(() => {
                 if (usesTabletProHeadlinesPopup()) {
                     scheduleResponsiveHeadlinesPosition(wrap);
+                } else if (isPhoneMobileHeadlinesViewport()) {
+                    schedulePhoneMobileHeadlinesPosition(wrap);
                 }
                 updateHeadlinesHeading(wrap);
             });
@@ -1285,18 +1355,27 @@ _TOOLTIP_SCROLL_JS = """
             document.querySelector('[data-testid="stMainBlockContainer"]') ||
             document.querySelector('[data-testid="stAppViewContainer"]');
 
-        let left = viewLeft;
-        if (content) {
-            left = Math.max(viewLeft, content.getBoundingClientRect().left);
+        const centerHorizontally = isResponsiveHeadlinesViewport();
+
+        let widthBasisLeft = viewLeft;
+        if (!centerHorizontally && content) {
+            widthBasisLeft = Math.max(viewLeft, Math.round(content.getBoundingClientRect().left));
         }
 
-        const availableWidth = viewRight - left;
+        const availableWidth = viewRight - (centerHorizontally ? viewLeft : widthBasisLeft);
         const width = Math.round(
             Math.min(availableWidth, Math.max(280, window.innerWidth * 0.4))
         );
 
+        let left = centerHorizontally
+            ? Math.round(viewLeft + (viewRight - viewLeft - width) / 2)
+            : widthBasisLeft;
+
         if (left + width > viewRight) {
             left = Math.max(viewLeft, viewRight - width);
+        }
+        if (left < viewLeft) {
+            left = viewLeft;
         }
 
         return {
@@ -1305,6 +1384,79 @@ _TOOLTIP_SCROLL_JS = """
             width,
             maxHeight: Math.round(maxHeight),
         };
+    };
+
+    const getPhoneMobileHeadlinesSlot = () => {
+        const viewRight = window.innerWidth - VIEWPORT_PAD;
+        const viewLeft = VIEWPORT_PAD;
+        const top = MOBILE_HEADLINES_TOP_PAD;
+        const maxHeight = Math.round(window.innerHeight * MOBILE_HEADLINES_MAX_VIEWPORT_RATIO);
+        const width = Math.round(
+            Math.min(viewRight - viewLeft, Math.max(280, window.innerWidth - 2 * VIEWPORT_PAD))
+        );
+        return {
+            top,
+            left: viewLeft,
+            width,
+            maxHeight,
+        };
+    };
+
+    const applyPhoneMobileHeadlinesSlot = (wrap, slot, resetScroll = true) => {
+        const tip = wrap?.querySelector(":scope > .tip-text");
+        if (!tip || !slot) {
+            return;
+        }
+
+        tip.style.setProperty("--hl-fixed-top", `${slot.top}px`);
+        tip.style.setProperty("--hl-fixed-left", `${slot.left}px`);
+        tip.style.setProperty("--hl-fixed-width", `${slot.width}px`);
+        tip.style.setProperty("--hl-fixed-max-height", `${slot.maxHeight}px`);
+        tip.style.setProperty("position-anchor", "none");
+        tip.style.setProperty("height", "auto", "important");
+        tip.style.setProperty("bottom", "auto", "important");
+        tip.style.setProperty("display", "flex", "important");
+        tip.style.setProperty("flex-direction", "column", "important");
+        tip.style.setProperty("overflow", "hidden", "important");
+
+        if (resetScroll) {
+            const scroll = tip.querySelector(".headlines-tip-scroll");
+            if (scroll) {
+                scroll.scrollTop = 0;
+            }
+        }
+    };
+
+    const positionPhoneMobileHeadlinesTip = (wrap, preserveScroll = false) => {
+        if (!isPhoneMobileHeadlinesViewport() || !wrap) {
+            return;
+        }
+        const checkbox = wrap.querySelector(".hl-tip-cb");
+        if (!checkbox || !checkbox.checked) {
+            return;
+        }
+
+        applyPhoneMobileHeadlinesSlot(wrap, getPhoneMobileHeadlinesSlot(), !preserveScroll);
+        updateHeadlinesHeading(wrap);
+    };
+
+    const schedulePhoneMobileHeadlinesPosition = (wrap, preserveScroll = false) => {
+        positionPhoneMobileHeadlinesTip(wrap, preserveScroll);
+        window.requestAnimationFrame(() => positionPhoneMobileHeadlinesTip(wrap, preserveScroll));
+    };
+
+    const repositionOpenPhoneMobileHeadlines = () => {
+        if (!isPhoneMobileHeadlinesViewport()) {
+            return;
+        }
+        document
+            .querySelectorAll(".full-results-wrap .tip-wrap.headlines-tip .hl-tip-cb:checked")
+            .forEach((checkbox) => {
+                const wrap = checkbox.closest(".tip-wrap.headlines-tip");
+                if (wrap) {
+                    schedulePhoneMobileHeadlinesPosition(wrap, true);
+                }
+            });
     };
 
     const positionResponsiveHeadlinesTip = (wrap) => {
@@ -1399,15 +1551,18 @@ _TOOLTIP_SCROLL_JS = """
 
         window.__scoopDesktopHeadlinesResize = () => {
             window.__scoopDesktopHeadlinesApi?.repositionOpenDesktopHeadlines();
+            repositionOpenPhoneMobileHeadlines();
             repositionOpenResponsiveHeadlines();
         };
 
         window.__scoopDesktopHeadlinesWindowScroll = () => {
             window.__scoopDesktopHeadlinesApi?.repositionOpenDesktopHeadlines();
+            repositionOpenPhoneMobileHeadlines();
         };
 
         window.__scoopDesktopHeadlinesDocScroll = () => {
             window.__scoopDesktopHeadlinesApi?.repositionOpenDesktopHeadlines();
+            repositionOpenPhoneMobileHeadlines();
         };
 
         window.addEventListener("resize", window.__scoopDesktopHeadlinesResize);
@@ -1552,6 +1707,7 @@ def install_tooltip_scroll_handler() -> None:
         f"<style id='scoop-tablet-headlines-css'>{_TABLET_HEADLINES_POPUP_CSS}</style>"
         f"<style id='scoop-desktop-headlines-css'>{_DESKTOP_HEADLINES_CSS}</style>"
         f"<style id='scoop-ipad-mini-surface-duo-headlines-css'>{_IPAD_MINI_SURFACE_DUO_HEADLINES_CSS}</style>"
+        f"<style id='scoop-mobile-phone-headlines-fixed-css'>{_MOBILE_PHONE_HEADLINES_FIXED_CSS}</style>"
         f"<script>{_COMBINED_PAGE_JS}</script>",
         unsafe_allow_javascript=True,
     )
