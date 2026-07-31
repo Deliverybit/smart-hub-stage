@@ -427,6 +427,14 @@ TABLET_SCREENER_MOBILE_LAYOUT = (
             width: 100% !important;
             box-sizing: border-box !important;
         }
+        .stMarkdown .full-results-wrap .full-results-table {
+            display: block !important;
+            width: 100% !important;
+            border-collapse: separate !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody {
+            display: block !important;
+        }
         .stMarkdown .full-results-wrap .full-results-table thead {
             display: none !important;
         }
@@ -1284,5 +1292,80 @@ IPAD_MINI_PORTRAIT_LAYOUT = f"""
     /* ===== iPad Mini portrait (744px–768px) — overlay sidebar; phones/tablet/desktop unchanged ===== */
     @media (min-width: 744px) and (max-width: 768px) {{
 {SURFACE_DUO_SIDEBAR}
+    }}
+"""
+
+TABLET_SCREENER_INNER = f"""{TABLET_SIDEBAR}
+{OVERLAY_SIDEBAR_TOPBAR_LAYER}
+{TABLET_SCREENER_MOBILE_LAYOUT}"""
+
+TABLET_SEARCH_INNER = f"""{TABLET_SIDEBAR}
+{OVERLAY_SIDEBAR_TOPBAR_LAYER}
+{TABLET_SEARCH_MOBILE_LAYOUT}"""
+
+TABLET_TERMS_INNER = f"""{TABLET_SIDEBAR}
+{OVERLAY_SIDEBAR_TOPBAR_LAYER}
+{TABLET_TERMS_MOBILE_LAYOUT}"""
+
+_ZENBOOK_FOLDED_MEDIA = (
+    "(min-width: 849px) and (max-width: 857px) and (min-height: 1276px) and (max-height: 1284px),\n"
+    "           (min-width: 1276px) and (max-width: 1284px) and (min-height: 849px) and (max-height: 857px)"
+)
+
+# Unfolded Zenbook exceeds the 1367px desktop breakpoint at common OS scale factors
+# (e.g. 1920×1280 CSS px at 150% on 2880×1920 panel).
+_ZENBOOK_UNFOLDED_MEDIA = (
+    "(min-width: 1700px) and (max-width: 1714px) and (min-height: 1000px) and (max-height: 1120px),\n"
+    "           (min-width: 1910px) and (max-width: 1930px) and (min-height: 1270px) and (max-height: 1290px),\n"
+    "           (min-width: 1270px) and (max-width: 1290px) and (min-height: 1910px) and (max-height: 1930px)"
+)
+
+# iPad Mini portrait uses SURFACE_DUO_SIDEBAR + mobile card layout (≤768px).
+# Zenbook Fold reuses that overlay sidebar with the shared card-layout rules.
+_ZENBOOK_IPAD_MINI_SCREENER_INNER = f"""{SURFACE_DUO_SIDEBAR}
+{TABLET_SCREENER_MOBILE_LAYOUT}"""
+
+_ZENBOOK_IPAD_MINI_SEARCH_INNER = f"""{SURFACE_DUO_SIDEBAR}
+{TABLET_SEARCH_MOBILE_LAYOUT}"""
+
+_ZENBOOK_IPAD_MINI_TERMS_INNER = f"""{SURFACE_DUO_SIDEBAR}
+{TABLET_TERMS_MOBILE_LAYOUT}"""
+
+# Beat desktop split-sidebar when unfolded width exceeds 1366px.
+_ZENBOOK_DESKTOP_SIDEBAR_BEAT = IPAD_14_PRO_MAX_LANDSCAPE_OVERRIDE
+
+ASUS_ZENBOOK_FOLD_SCREENER_LAYOUT = f"""
+    /* ===== Asus Zenbook Fold only — iPad Mini-style overlay (folded) ===== */
+    @media {_ZENBOOK_FOLDED_MEDIA} {{
+{_ZENBOOK_IPAD_MINI_SCREENER_INNER}
+    }}
+    /* ===== Asus Zenbook Fold only — iPad Mini-style overlay (unfolded) ===== */
+    @media {_ZENBOOK_UNFOLDED_MEDIA} {{
+{_ZENBOOK_IPAD_MINI_SCREENER_INNER}
+{_ZENBOOK_DESKTOP_SIDEBAR_BEAT}
+    }}
+"""
+
+ASUS_ZENBOOK_FOLD_SEARCH_LAYOUT = f"""
+    /* ===== Asus Zenbook Fold only — iPad Mini-style overlay (folded) ===== */
+    @media {_ZENBOOK_FOLDED_MEDIA} {{
+{_ZENBOOK_IPAD_MINI_SEARCH_INNER}
+    }}
+    /* ===== Asus Zenbook Fold only — iPad Mini-style overlay (unfolded) ===== */
+    @media {_ZENBOOK_UNFOLDED_MEDIA} {{
+{_ZENBOOK_IPAD_MINI_SEARCH_INNER}
+{_ZENBOOK_DESKTOP_SIDEBAR_BEAT}
+    }}
+"""
+
+ASUS_ZENBOOK_FOLD_TERMS_LAYOUT = f"""
+    /* ===== Asus Zenbook Fold only — iPad Mini-style overlay (folded) ===== */
+    @media {_ZENBOOK_FOLDED_MEDIA} {{
+{_ZENBOOK_IPAD_MINI_TERMS_INNER}
+    }}
+    /* ===== Asus Zenbook Fold only — iPad Mini-style overlay (unfolded) ===== */
+    @media {_ZENBOOK_UNFOLDED_MEDIA} {{
+{_ZENBOOK_IPAD_MINI_TERMS_INNER}
+{_ZENBOOK_DESKTOP_SIDEBAR_BEAT}
     }}
 """

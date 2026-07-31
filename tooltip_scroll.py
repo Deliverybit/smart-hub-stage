@@ -87,7 +87,8 @@ _MOBILE_PHONE_HEADLINES_FIXED_CSS = """
 """
 
 _MOBILE_TABLET_CARD_ORDER_CSS = f"""
-@media (max-width: 1366px) {{
+@media (max-width: 1366px),
+       (min-width: 1700px) and (max-width: 1714px) and (min-height: 1000px) and (max-height: 1120px) {{
 {MOBILE_CARD_FIELD_ORDER}
 }}
 """
@@ -380,6 +381,16 @@ _IPAD_MINI_SURFACE_DUO_HEADLINES_CSS = f"""
 }}
 """
 
+_ASUS_ZENBOOK_FOLD_HEADLINES_CSS = f"""
+@media (min-width: 849px) and (max-width: 857px) and (min-height: 1276px) and (max-height: 1284px),
+       (min-width: 1276px) and (max-width: 1284px) and (min-height: 849px) and (max-height: 857px),
+       (min-width: 1700px) and (max-width: 1714px) and (min-height: 1000px) and (max-height: 1120px),
+       (min-width: 1910px) and (max-width: 1930px) and (min-height: 1270px) and (max-height: 1290px),
+       (min-width: 1270px) and (max-width: 1290px) and (min-height: 1910px) and (max-height: 1930px) {{
+{_TABLET_HEADLINES_POPUP_RULES}
+}}
+"""
+
 _RESPONSIVE_SIDEBAR_JS = """
 (() => {
     /* 744px = iPad Mini portrait; overlay sidebar through tablet/hub range. */
@@ -402,9 +413,26 @@ _RESPONSIVE_SIDEBAR_JS = """
             (w >= 1370 && w <= 1382 && h <= 1040)
         );
     };
+    const isAsusZenbookFoldViewport = () => {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const near853 = (value) => value >= 849 && value <= 857;
+        const near1280 = (value) => value >= 1276 && value <= 1284;
+        const near1707 = (value) => value >= 1700 && value <= 1714;
+        const near1920 = (value) => value >= 1910 && value <= 1930;
+        const near1280u = (value) => value >= 1270 && value <= 1290;
+        return (
+            (near853(w) && near1280(h)) ||
+            (near1280(w) && near853(h)) ||
+            (near1707(w) && h >= 1000 && h <= 1120) ||
+            (near1920(w) && near1280u(h)) ||
+            (near1280u(w) && near1920(h))
+        );
+    };
     const isResponsiveViewport = () =>
         isSurfaceDuoViewport() ||
         isIpad14ProMaxViewport() ||
+        isAsusZenbookFoldViewport() ||
         (window.innerWidth >= TABLET_MIN && window.innerWidth <= TABLET_MAX);
 
     const collapseSidebar = () => {
@@ -485,8 +513,26 @@ _RESPONSIVE_SIDEBAR_JS = """
     });
 
     let tabletBootstrapped = false;
+    const forceZenbookSidebarCollapsed = () => {
+        if (!isAsusZenbookFoldViewport()) {
+            return;
+        }
+        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+        if (!sidebar || sidebar.getAttribute("aria-expanded") !== "true") {
+            return;
+        }
+        collapseSidebar();
+        if (sidebar.getAttribute("aria-expanded") === "true") {
+            sidebar.setAttribute("aria-expanded", "false");
+        }
+    };
+
     const ensureInitialTabletCollapse = () => {
-        if (!isResponsiveViewport() || tabletBootstrapped) {
+        if (!isResponsiveViewport()) {
+            return;
+        }
+        forceZenbookSidebarCollapsed();
+        if (tabletBootstrapped) {
             return;
         }
         const sidebar = document.querySelector('section[data-testid="stSidebar"]');
@@ -514,6 +560,18 @@ _RESPONSIVE_SIDEBAR_JS = """
         ensureInitialTabletCollapse();
         removeLegacyCloseButton();
     }, 400);
+    setTimeout(() => {
+        forceZenbookSidebarCollapsed();
+        removeLegacyCloseButton();
+    }, 900);
+    if (isAsusZenbookFoldViewport()) {
+        [1500, 2500, 4000].forEach((delay) => {
+            setTimeout(() => {
+                forceZenbookSidebarCollapsed();
+                removeLegacyCloseButton();
+            }, delay);
+        });
+    }
 })();
 """
 
@@ -573,10 +631,31 @@ _TOOLTIP_SCROLL_JS = """
         );
     };
 
+    const isAsusZenbookFoldViewport = () => {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const near853 = (value) => value >= 849 && value <= 857;
+        const near1280 = (value) => value >= 1276 && value <= 1284;
+        const near1707 = (value) => value >= 1700 && value <= 1714;
+        const near1920 = (value) => value >= 1910 && value <= 1930;
+        const near1280u = (value) => value >= 1270 && value <= 1290;
+        return (
+            (near853(w) && near1280(h)) ||
+            (near1280(w) && near853(h)) ||
+            (near1707(w) && h >= 1000 && h <= 1120) ||
+            (near1920(w) && near1280u(h)) ||
+            (near1280u(w) && near1920(h))
+        );
+    };
+
+    const isDesktopLayoutViewport = () =>
+        window.innerWidth >= DESKTOP_MIN && !isAsusZenbookFoldViewport();
+
     const usesTabletProHeadlinesPopup = () =>
         isResponsiveHeadlinesViewport() ||
         isIpadMiniViewport() ||
-        isSurfaceDuoViewport();
+        isSurfaceDuoViewport() ||
+        isAsusZenbookFoldViewport();
 
     const isPhoneMobileHeadlinesViewport = () =>
         window.innerWidth <= MOBILE_MAX && !usesTabletProHeadlinesPopup();
@@ -586,7 +665,7 @@ _TOOLTIP_SCROLL_JS = """
         !!document.querySelector(".full-results-wrap .tip-wrap.headlines-tip .hl-tip-cb:checked");
 
     const isInsideDesktopHeadlinesPopup = (node) => {
-        if (window.innerWidth < DESKTOP_MIN || !node || !node.closest) {
+        if (!isDesktopLayoutViewport() || !node || !node.closest) {
             return false;
         }
         return !!node.closest(
@@ -595,7 +674,7 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const isDesktopHeadlinesSessionOpen = () =>
-        window.innerWidth >= DESKTOP_MIN &&
+        isDesktopLayoutViewport() &&
         !!document.querySelector(
             ".full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open, .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked)"
         );
@@ -880,7 +959,7 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const bindDesktopHeadlinesScrollWheel = (wrap) => {
-        if (window.innerWidth < DESKTOP_MIN || !wrap) {
+        if (!isDesktopLayoutViewport() || !wrap) {
             return;
         }
         const tip = wrap.querySelector(":scope > .tip-text");
@@ -1082,7 +1161,7 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const positionDesktopHeadlinesTip = (wrap, preserveScroll = false) => {
-        if (window.innerWidth < DESKTOP_MIN || !wrap) {
+        if (!isDesktopLayoutViewport() || !wrap) {
             return;
         }
         const tip = wrap.querySelector(":scope > .tip-text");
@@ -1149,7 +1228,7 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const getDesktopHeadlinesScrollEl = (node, event) => {
-        if (window.innerWidth < DESKTOP_MIN) {
+        if (!isDesktopLayoutViewport()) {
             return null;
         }
 
@@ -1204,7 +1283,7 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const showDesktopHeadlines = (wrap) => {
-        if (window.innerWidth < DESKTOP_MIN || !wrap) {
+        if (!isDesktopLayoutViewport() || !wrap) {
             return;
         }
         cancelDesktopHeadlinesHide(wrap);
@@ -1243,7 +1322,7 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const handleDesktopHeadlinesChange = (checkbox) => {
-        if (window.innerWidth < DESKTOP_MIN || !checkbox) {
+        if (!isDesktopLayoutViewport() || !checkbox) {
             return;
         }
         const wrap = checkbox.closest(".tip-wrap.headlines-tip");
@@ -1270,7 +1349,7 @@ _TOOLTIP_SCROLL_JS = """
         if (!wrap) {
             return;
         }
-        if (window.innerWidth >= DESKTOP_MIN) {
+        if (isDesktopLayoutViewport()) {
             handleDesktopHeadlinesChange(checkbox);
             return;
         }
@@ -1304,7 +1383,7 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const scrollDesktopHeadlinesFromWheel = (event, scrollEl) => {
-        if (window.innerWidth < DESKTOP_MIN || !scrollEl || !event) {
+        if (!isDesktopLayoutViewport() || !scrollEl || !event) {
             return false;
         }
         const delta = event.deltaY;
@@ -1322,7 +1401,7 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const handleDesktopHeadlinesWheel = (event) => {
-        if (window.innerWidth < DESKTOP_MIN) {
+        if (!isDesktopLayoutViewport()) {
             return;
         }
         if (!isDesktopHeadlinesSessionOpen()) {
@@ -1336,7 +1415,7 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const repositionOpenDesktopHeadlines = () => {
-        if (window.innerWidth < DESKTOP_MIN) {
+        if (!isDesktopLayoutViewport()) {
             return;
         }
         document
@@ -1584,8 +1663,8 @@ _TOOLTIP_SCROLL_JS = """
         document.addEventListener("mousemove", allowTooltip, { passive: true, capture: true });
     }
 
-    if (window.__scoopDesktopHeadlinesBindVersion !== 31) {
-        window.__scoopDesktopHeadlinesBindVersion = 31;
+    if (window.__scoopDesktopHeadlinesBindVersion !== 32) {
+        window.__scoopDesktopHeadlinesBindVersion = 32;
 
         if (window.__scoopDesktopHeadlinesMouseLeave) {
             document.removeEventListener("mouseleave", window.__scoopDesktopHeadlinesMouseLeave, true);
@@ -1648,7 +1727,7 @@ _TOOLTIP_SCROLL_JS = """
         });
 
         window.__scoopDesktopHeadlinesLabelClick = (event) => {
-            if (window.innerWidth < DESKTOP_MIN) {
+            if (!isDesktopLayoutViewport()) {
                 return;
             }
             if (!event.target.closest(".hl-tip-count")) {
@@ -1696,7 +1775,25 @@ _DESKTOP_SIDEBAR_JS = """
 (() => {
     const DESKTOP_MIN = 1367;
 
-    const isDesktopViewport = () => window.innerWidth >= DESKTOP_MIN;
+    const isAsusZenbookFoldViewport = () => {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        const near853 = (value) => value >= 849 && value <= 857;
+        const near1280 = (value) => value >= 1276 && value <= 1284;
+        const near1707 = (value) => value >= 1700 && value <= 1714;
+        const near1920 = (value) => value >= 1910 && value <= 1930;
+        const near1280u = (value) => value >= 1270 && value <= 1290;
+        return (
+            (near853(w) && near1280(h)) ||
+            (near1280(w) && near853(h)) ||
+            (near1707(w) && h >= 1000 && h <= 1120) ||
+            (near1920(w) && near1280u(h)) ||
+            (near1280u(w) && near1920(h))
+        );
+    };
+
+    const isDesktopViewport = () =>
+        window.innerWidth >= DESKTOP_MIN && !isAsusZenbookFoldViewport();
 
     const expandSidebarIfNeeded = () => {
         const sidebar = document.querySelector('section[data-testid="stSidebar"]');
@@ -1775,6 +1872,7 @@ def install_tooltip_scroll_handler() -> None:
         f"<style id='scoop-tablet-headlines-css'>{_TABLET_HEADLINES_POPUP_CSS}</style>"
         f"<style id='scoop-desktop-headlines-css'>{_DESKTOP_HEADLINES_CSS}</style>"
         f"<style id='scoop-ipad-mini-surface-duo-headlines-css'>{_IPAD_MINI_SURFACE_DUO_HEADLINES_CSS}</style>"
+        f"<style id='scoop-asus-zenbook-fold-headlines-css'>{_ASUS_ZENBOOK_FOLD_HEADLINES_CSS}</style>"
         f"<style id='scoop-mobile-phone-headlines-fixed-css'>{_MOBILE_PHONE_HEADLINES_FIXED_CSS}</style>"
         f"<script>{_COMBINED_PAGE_JS}</script>",
         unsafe_allow_javascript=True,

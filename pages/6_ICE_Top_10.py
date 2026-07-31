@@ -2434,6 +2434,1462 @@ st.markdown(
 
     }
 
+
+    /* ===== Asus Zenbook Fold only — iPad Mini-style overlay (folded) ===== */
+    @media (min-width: 849px) and (max-width: 857px) and (min-height: 1276px) and (max-height: 1284px),
+           (min-width: 1276px) and (max-width: 1284px) and (min-height: 849px) and (max-height: 857px) {
+
+        :root {
+            --scoop-sidebar-width: min(92vw, 36rem);
+            --footer-sidebar-width: 0px;
+        }
+
+        [data-testid="stAppViewContainer"] {
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+        }
+        [data-testid="stAppViewContainer"] > section.main,
+        [data-testid="stMainBlockContainer"],
+        section.main > div,
+        .block-container {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        section[data-testid="stSidebar"] {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100dvh !important;
+            min-height: 100dvh !important;
+            z-index: 999999 !important;
+            min-width: var(--scoop-sidebar-width) !important;
+            width: var(--scoop-sidebar-width) !important;
+            max-width: min(92vw, 36rem) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            box-shadow: 4px 0 28px rgba(15, 23, 42, 0.22) !important;
+            transform: translateX(-100vw) !important;
+            transition: transform 0.28s ease, visibility 0.28s ease !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            transform: translateX(0) !important;
+            pointer-events: auto !important;
+            visibility: visible !important;
+        }
+        section[data-testid="stSidebar"]:not([aria-expanded="true"]) {
+            transform: translateX(-100vw) !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+        }
+        [data-testid="stSidebar"] > div,
+        [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+            position: relative !important;
+            transform: none !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            box-shadow: none !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stSidebarBackdrop"] {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 999998 !important;
+            cursor: pointer !important;
+        }
+        [data-testid="stHeader"] {
+            z-index: 1000005 !important;
+        }
+
+        /* Mobile-style toggle: plain Streamlit arrows (no boxed chrome). */
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="collapsedControl"],
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {
+            position: static !important;
+            top: auto !important;
+            left: auto !important;
+            right: auto !important;
+            bottom: auto !important;
+            width: auto !important;
+            height: auto !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            transform: none !important;
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] button,
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"] button,
+        [data-testid="stHeader"] [data-testid="collapsedControl"] button,
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button {
+            width: auto !important;
+            height: auto !important;
+            min-width: 31.5px !important;
+            min-height: 31.5px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            font-size: 15.75px !important;
+            line-height: 1 !important;
+            color: #31333f !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        .scoop-responsive-sidebar-close {
+            display: none !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stAppViewContainer"]::before {
+            content: "" !important;
+            position: fixed !important;
+            inset: 0 !important;
+            background: rgba(15, 23, 42, 0.38) !important;
+            z-index: 999997 !important;
+            pointer-events: none !important;
+        }
+
+        section[data-testid="stSidebar"] {
+            top: 0 !important;
+            transform: translateX(-100vw) !important;
+            transition: transform 0.28s ease, visibility 0.28s ease !important;
+        }
+        section[data-testid="stSidebar"]:not([aria-expanded="true"]) {
+            transform: translateX(-100vw) !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            z-index: 1000010 !important;
+            transform: translateX(0) !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stSidebarBackdrop"] {
+            z-index: 1000009 !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stAppViewContainer"]::before {
+            z-index: 1000008 !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stHeader"] [data-testid="stToolbar"] {
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="collapsedControl"],
+        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] {
+            z-index: 1000012 !important;
+        }
+
+
+        .stApp { overflow-x: hidden !important; }
+
+        html, body, [class*="css"] {
+            font-size: clamp(21px, 2.35vw, 24px) !important;
+            line-height: 1.62 !important;
+        }
+        h1 { font-size: clamp(2.2rem, 5vw, 3.1rem) !important; line-height: 1.12 !important; }
+        h2 { font-size: clamp(1.85rem, 4.2vw, 2.6rem) !important; line-height: 1.18 !important; }
+        h3 { font-size: clamp(1.6rem, 3.6vw, 2.15rem) !important; line-height: 1.22 !important; }
+        h4 { font-size: clamp(1.4rem, 3.2vw, 1.85rem) !important; line-height: 1.28 !important; }
+
+        [data-testid="stMarkdownContainer"] p,
+        [data-testid="stMarkdownContainer"] li,
+        [data-testid="stMarkdownContainer"] span,
+        [data-testid="stMarkdownContainer"] div,
+        .stMarkdown p {
+            font-size: clamp(1.2rem, 2.6vw, 1.45rem) !important;
+            line-height: 1.65 !important;
+        }
+
+        .stAlert p, [data-testid="stAlert"] p,
+        .stSuccess p, .stWarning p, .stInfo p, .stError p {
+            font-size: clamp(1.2rem, 2.6vw, 1.45rem) !important;
+            line-height: 1.65 !important;
+        }
+
+        [data-testid="stMetricValue"] > div {
+            font-size: clamp(2.35rem, 5.2vw, 3.25rem) !important;
+        }
+        [data-testid="stMetricLabel"] > div > div > p,
+        [data-testid="stMetricLabel"] label {
+            font-size: clamp(1.15rem, 2.5vw, 1.38rem) !important;
+        }
+        [data-testid="stMetricDelta"] > div {
+            font-size: clamp(1.1rem, 2.3vw, 1.3rem) !important;
+        }
+
+        .stButton button {
+            font-size: clamp(1.15rem, 2.5vw, 1.38rem) !important;
+            padding: 0.95rem 1.35rem !important;
+            min-height: 3.1rem !important;
+        }
+        .stCaption p {
+            font-size: clamp(1.05rem, 2.2vw, 1.22rem) !important;
+        }
+
+        .disclaimer-footer {
+            font-size: clamp(0.88rem, 2vw, 1.02rem) !important;
+            line-height: 1.45 !important;
+        }
+        .disclaimer-footer strong {
+            font-size: clamp(0.9rem, 2.05vw, 1.04rem) !important;
+        }
+
+        [data-testid="stMainBlockContainer"],
+        section.main > div {
+            padding-left: var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem)) !important;
+            padding-right: var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem)) !important;
+            padding-top: calc(0.75rem + env(safe-area-inset-top, 0px) + 1.5rem) !important;
+            padding-bottom: 2.5rem !important;
+        }
+
+        [data-testid="stVerticalBlock"] { gap: 0.85rem !important; }
+        h1, h2, h3, h4 { margin-top: 0.4rem !important; margin-bottom: 0.5rem !important; }
+
+        [data-testid="stMarkdownContainer"],
+        [data-testid="stMarkdownContainer"] > div {
+            max-width: 100% !important;
+        }
+
+        div[data-testid="stCheckbox"] {
+            margin-bottom: 1.25rem !important;
+        }
+
+        .tip-wrap .tip-text {
+            position: fixed !important;
+            left: auto !important;
+            right: 0 !important;
+            top: 20vh !important;
+            bottom: auto !important;
+            transform: none !important;
+            width: min(34rem, 92vw) !important;
+            max-width: 92vw !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            font-size: clamp(1rem, 2.2vw, 1.2rem) !important;
+            line-height: 1.55 !important;
+            padding: 1rem 1.15rem !important;
+        }
+
+        .stMarkdown .full-results-wrap .full-results-table .fr-label {
+            display: inline-block !important;
+            font-weight: 800 !important;
+            color: #334155 !important;
+            font-size: clamp(1.1rem, 2.4vw, 1.32rem) !important;
+        }
+
+        [data-testid="stMarkdownContainer"] table th,
+        [data-testid="stMarkdownContainer"] table td,
+        [data-testid="stTable"] th,
+        [data-testid="stTable"] td {
+            padding-top: clamp(0.72rem, 1.8vw, 1rem) !important;
+            padding-bottom: clamp(0.72rem, 1.8vw, 1rem) !important;
+            line-height: 1.55 !important;
+            vertical-align: top !important;
+        }
+        [data-testid="stMarkdownContainer"] table td,
+        [data-testid="stMarkdownContainer"] table th {
+            font-size: clamp(1.08rem, 2.4vw, 1.28rem) !important;
+        }
+
+        [data-testid="stHorizontalBlock"] { flex-wrap: wrap !important; }
+        [data-testid="stHorizontalBlock"] > div {
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+        }
+
+        [data-testid="stHorizontalBlock"] > div:has([data-testid="stMetric"]) {
+            background: #ffffff !important;
+            border: 2px solid #cbd5e1 !important;
+            border-left: 6px solid #22c55e !important;
+            border-radius: 14px !important;
+            padding: 1rem 1.05rem 1.1rem 1.05rem !important;
+            margin: 0 0 1.15rem 0 !important;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.10) !important;
+        }
+        .stApp div[data-testid="metric-container"] {
+            margin: 0 !important;
+            padding: 0.85rem 0.95rem 0.75rem 0.95rem !important;
+            border: 1px solid #e2e8f0 !important;
+            border-bottom: none !important;
+            border-radius: 14px 14px 0 0 !important;
+            background: #ffffff !important;
+        }
+        .stApp div[data-testid="metric-container"] [data-testid="stMetricLabel"] p {
+            font-size: 1.35rem !important;
+        }
+        .stApp div[data-testid="metric-container"] [data-testid="stMetricValue"] > div {
+            font-size: 2.35rem !important;
+            line-height: 1.1 !important;
+        }
+        .stApp div[data-testid="metric-container"] [data-testid="stMetricDelta"] > div {
+            font-size: 1.25rem !important;
+        }
+        .stApp div[data-testid="metric-container"] + div[data-testid="stMarkdownContainer"] {
+            margin: 0 0 1.2rem 0 !important;
+            padding: 0.7rem 0.95rem 0.95rem 0.95rem !important;
+            border: 1px solid #e2e8f0 !important;
+            border-top: none !important;
+            border-radius: 0 0 14px 14px !important;
+            background: #ffffff !important;
+        }
+        .stApp div[data-testid="metric-container"] + div[data-testid="stMarkdownContainer"] div {
+            font-size: 1.3rem !important;
+            line-height: 1.58 !important;
+        }
+
+        .stMarkdown .full-results-mobile-legend {
+            display: block !important;
+            margin: 0 0 1.1rem 0 !important;
+            padding: 0.8rem 0.9rem !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 10px !important;
+            background: #f8fafc !important;
+            font-size: clamp(1.05rem, 2.2vw, 1.22rem) !important;
+        }
+        .stMarkdown .full-results-mobile-legend .fr-mobile-tip-row {
+            margin-bottom: 0.72rem !important;
+            padding-bottom: 0.72rem !important;
+            border-bottom: 1px solid #e5e7eb !important;
+        }
+        .stMarkdown .full-results-mobile-legend .fr-mobile-tip-row:last-child {
+            border-bottom: none !important;
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        .stMarkdown .full-results-mobile-legend p {
+            margin: 0.4rem 0 0 0 !important;
+            color: #334155 !important;
+            line-height: 1.5 !important;
+            font-size: clamp(1.02rem, 2.1vw, 1.18rem) !important;
+        }
+        .stMarkdown .full-results-mobile-legend strong {
+            color: #1e293b !important;
+            font-size: clamp(1.08rem, 2.25vw, 1.24rem) !important;
+        }
+
+        .stMarkdown .full-results-wrap {
+            margin-left: calc(-1 * var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem))) !important;
+            margin-right: calc(-1 * var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem))) !important;
+            width: calc(100% + 2 * var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem))) !important;
+            max-width: 100vw !important;
+            box-sizing: border-box !important;
+            padding: 0 var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem)) max(1rem, env(safe-area-inset-bottom)) !important;
+            overflow-x: visible !important;
+            overflow-y: visible !important;
+        }
+
+        /* Index banner cards: use full content width on tablet (desktop keeps inline 50%). */
+        [data-testid="stMarkdownContainer"] div[style*="max-width: 50%"] {
+            max-width: 100% !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table {
+            display: block !important;
+            width: 100% !important;
+            border-collapse: separate !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody {
+            display: block !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table thead {
+            display: none !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody tr {
+            display: block !important;
+            width: 100% !important;
+            margin: 0 0 1.2rem 0 !important;
+            padding: 0.85rem 1rem 0.95rem 1rem !important;
+            border: 2px solid #cbd5e1 !important;
+            border-left: 6px solid #22c55e !important;
+            border-radius: 14px !important;
+            background: #ffffff !important;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.10) !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td {
+            position: relative !important;
+            display: grid !important;
+            grid-template-columns: minmax(0, 42%) minmax(0, 58%) !important;
+            gap: 0.45rem 0.75rem !important;
+            align-items: start !important;
+            padding: 0.58rem 0 !important;
+            border: none !important;
+            border-bottom: 1px solid #e5e7eb !important;
+            font-size: clamp(1.12rem, 2.5vw, 1.38rem) !important;
+            line-height: 1.5 !important;
+            width: 100% !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody tr td:last-child {
+            border-bottom: none !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td::before {
+            content: "" !important;
+            display: none !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label {
+            font-weight: 700 !important;
+            color: #475569 !important;
+            min-width: 0 !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap {
+            display: inline-block !important;
+            max-width: 100% !important;
+            white-space: normal !important;
+            position: relative !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap {
+            position: relative !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val {
+            min-width: 0 !important;
+            text-align: right !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+
+        .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text {
+            position: absolute !important;
+            left: 0 !important;
+            right: auto !important;
+            top: auto !important;
+            bottom: calc(100% + 1.25rem) !important;
+            width: min(22rem, calc(100vw - 2rem)) !important;
+            min-width: 0 !important;
+            max-width: min(22rem, calc(100vw - 2rem)) !important;
+            max-height: min(72vh, 28rem) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            transform: none !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            word-break: break-word !important;
+            overflow-wrap: anywhere !important;
+            text-align: left !important;
+            z-index: 100001 !important;
+            pointer-events: none !important;
+            font-size: clamp(1rem, 2.2vw, 1.2rem) !important;
+            line-height: 1.55 !important;
+            padding: 0.95rem 1.05rem !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text {
+            left: auto !important;
+            right: 0 !important;
+        }
+
+        .stMarkdown .tip-wrap.headlines-tip { cursor: default !important; }
+        .stMarkdown .tip-wrap.headlines-tip .hl-tip-cb {
+            position: absolute !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            height: 0 !important;
+            margin: 0 !important;
+            pointer-events: none !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip .hl-tip-count {
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            -webkit-tap-highlight-color: rgba(34, 197, 94, 0.2) !important;
+            text-decoration: none !important;
+            font-size: clamp(1.08rem, 2.3vw, 1.28rem) !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip .hl-tip-backdrop { display: none !important; }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .hl-tip-backdrop {
+            display: block !important;
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 100001 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: rgba(15, 23, 42, 0.12) !important;
+            cursor: default !important;
+            pointer-events: auto !important;
+            touch-action: manipulation !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .hl-tip-backdrop span {
+            display: none !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:not(:has(.hl-tip-cb:checked)) .tip-text {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        .stMarkdown .full-results-wrap:has(.hl-tip-cb:checked) {
+            overflow: visible !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody tr:has(.hl-tip-cb:checked) {
+            position: relative !important;
+            z-index: 100003 !important;
+            overflow: visible !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody tr:has(.hl-tip-cb:checked) td {
+            position: static !important;
+        }
+        .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) {
+            position: static !important;
+        }
+        .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text {
+            display: flex !important;
+            flex-direction: column !important;
+            position: fixed !important;
+            top: var(--hl-fixed-top, 0.75rem) !important;
+            left: var(--hl-fixed-left, 0.75rem) !important;
+            right: auto !important;
+            bottom: auto !important;
+            width: var(--hl-fixed-width, 40vw) !important;
+            min-width: 0 !important;
+            max-width: var(--hl-fixed-width, 40vw) !important;
+            height: auto !important;
+            max-height: var(--hl-fixed-max-height, calc(100dvh - 1.5rem)) !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            text-align: left !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            touch-action: auto !important;
+            transform: none !important;
+            position-anchor: none !important;
+            anchor-name: none !important;
+            word-break: break-word !important;
+            overflow-wrap: anywhere !important;
+            background: #111827 !important;
+            border: 1px solid #334155 !important;
+            border-radius: 14px !important;
+            box-sizing: border-box !important;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.35) !important;
+            z-index: 100002 !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-heading {
+            flex: 0 0 auto !important;
+            flex-shrink: 0 !important;
+            display: block !important;
+            visibility: visible !important;
+            position: relative !important;
+            z-index: 2 !important;
+            text-align: left !important;
+            color: #ffffff !important;
+            padding: 0.55rem 0.75rem !important;
+            font-size: calc(1rem + 4pt) !important;
+            font-weight: 700 !important;
+            line-height: 1.2 !important;
+            background: #1e1e2f !important;
+            border-bottom: 1px solid #334155 !important;
+        }
+        .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            min-height: 0 !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            touch-action: pan-y !important;
+            overscroll-behavior-y: contain !important;
+            scrollbar-gutter: stable !important;
+            scrollbar-width: thin !important;
+            scrollbar-color: #94a3b8 #1e293b !important;
+            padding: 0.35rem 0.45rem 0.45rem 0.65rem !important;
+            text-align: left !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll::-webkit-scrollbar {
+            width: 8px !important;
+            -webkit-appearance: none !important;
+            display: block !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll::-webkit-scrollbar-track {
+            background: #1e293b !important;
+            border-radius: 4px !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll::-webkit-scrollbar-thumb {
+            background: #94a3b8 !important;
+            border-radius: 4px !important;
+            min-height: 28px !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-list {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.35rem !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            text-align: left !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-line {
+            display: block !important;
+            padding: 0.42rem 0.48rem !important;
+            margin: 0 !important;
+            border: 1px solid rgba(148, 163, 184, 0.28) !important;
+            border-radius: 5px !important;
+            background: rgba(15, 23, 42, 0.45) !important;
+            line-height: 1.35 !important;
+            font-size: calc(0.95rem + 4pt) !important;
+            min-width: 0 !important;
+            text-align: left !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-line a {
+            display: block !important;
+            color: #93c5fd !important;
+            font-size: calc(0.95rem + 4pt) !important;
+            text-align: left !important;
+            text-decoration: underline !important;
+            text-underline-offset: 0.12em !important;
+            word-break: break-word !important;
+            overflow-wrap: anywhere !important;
+            touch-action: manipulation !important;
+        }
+        .stMarkdown .tip-wrap:not(.headlines-tip):hover .tip-text,
+        .stMarkdown .tip-wrap:not(.headlines-tip):active .tip-text {
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        html.scoop-tooltip-scrolling .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text,
+        body.scoop-tooltip-scrolling .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text {
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        .stMarkdown .tip-wrap .tip-text::before,
+        .stMarkdown .tip-wrap .tip-text::after {
+            display: none !important;
+        }
+
+        /* Full Results card — reorder fields without changing card format/size */
+        .stMarkdown .full-results-wrap .full-results-table tbody tr {
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody tr td:last-child {
+            border-bottom: 1px solid #e5e7eb !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Headline Sentiment"] {
+            border-bottom: none !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="#"] {
+            order: 0 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"],
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"],
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] {
+            order: 1 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Ticker"] {
+            order: 2 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Price"] {
+            order: 3 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="52W Low"] {
+            order: 4 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="% Above Low"] {
+            order: 5 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="52W High"] {
+            order: 6 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Exchanges"] {
+            order: 7 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Headlines"] {
+            order: 8 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Market Mood"] {
+            order: 9 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Headline Sentiment"] {
+            order: 10 !important;
+        }
+
+    }
+    /* ===== Asus Zenbook Fold only — iPad Mini-style overlay (unfolded) ===== */
+    @media (min-width: 1700px) and (max-width: 1714px) and (min-height: 1000px) and (max-height: 1120px),
+           (min-width: 1910px) and (max-width: 1930px) and (min-height: 1270px) and (max-height: 1290px),
+           (min-width: 1270px) and (max-width: 1290px) and (min-height: 1910px) and (max-height: 1930px) {
+
+        :root {
+            --scoop-sidebar-width: min(92vw, 36rem);
+            --footer-sidebar-width: 0px;
+        }
+
+        [data-testid="stAppViewContainer"] {
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+        }
+        [data-testid="stAppViewContainer"] > section.main,
+        [data-testid="stMainBlockContainer"],
+        section.main > div,
+        .block-container {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        section[data-testid="stSidebar"] {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100dvh !important;
+            min-height: 100dvh !important;
+            z-index: 999999 !important;
+            min-width: var(--scoop-sidebar-width) !important;
+            width: var(--scoop-sidebar-width) !important;
+            max-width: min(92vw, 36rem) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            box-shadow: 4px 0 28px rgba(15, 23, 42, 0.22) !important;
+            transform: translateX(-100vw) !important;
+            transition: transform 0.28s ease, visibility 0.28s ease !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            transform: translateX(0) !important;
+            pointer-events: auto !important;
+            visibility: visible !important;
+        }
+        section[data-testid="stSidebar"]:not([aria-expanded="true"]) {
+            transform: translateX(-100vw) !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+        }
+        [data-testid="stSidebar"] > div,
+        [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+            position: relative !important;
+            transform: none !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            box-shadow: none !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stSidebarBackdrop"] {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 999998 !important;
+            cursor: pointer !important;
+        }
+        [data-testid="stHeader"] {
+            z-index: 1000005 !important;
+        }
+
+        /* Mobile-style toggle: plain Streamlit arrows (no boxed chrome). */
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="collapsedControl"],
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {
+            position: static !important;
+            top: auto !important;
+            left: auto !important;
+            right: auto !important;
+            bottom: auto !important;
+            width: auto !important;
+            height: auto !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            transform: none !important;
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] button,
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"] button,
+        [data-testid="stHeader"] [data-testid="collapsedControl"] button,
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button {
+            width: auto !important;
+            height: auto !important;
+            min-width: 31.5px !important;
+            min-height: 31.5px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            font-size: 15.75px !important;
+            line-height: 1 !important;
+            color: #31333f !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        .scoop-responsive-sidebar-close {
+            display: none !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stAppViewContainer"]::before {
+            content: "" !important;
+            position: fixed !important;
+            inset: 0 !important;
+            background: rgba(15, 23, 42, 0.38) !important;
+            z-index: 999997 !important;
+            pointer-events: none !important;
+        }
+
+        section[data-testid="stSidebar"] {
+            top: 0 !important;
+            transform: translateX(-100vw) !important;
+            transition: transform 0.28s ease, visibility 0.28s ease !important;
+        }
+        section[data-testid="stSidebar"]:not([aria-expanded="true"]) {
+            transform: translateX(-100vw) !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            z-index: 1000010 !important;
+            transform: translateX(0) !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stSidebarBackdrop"] {
+            z-index: 1000009 !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stAppViewContainer"]::before {
+            z-index: 1000008 !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stHeader"] [data-testid="stToolbar"] {
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="collapsedControl"],
+        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] {
+            z-index: 1000012 !important;
+        }
+
+
+        .stApp { overflow-x: hidden !important; }
+
+        html, body, [class*="css"] {
+            font-size: clamp(21px, 2.35vw, 24px) !important;
+            line-height: 1.62 !important;
+        }
+        h1 { font-size: clamp(2.2rem, 5vw, 3.1rem) !important; line-height: 1.12 !important; }
+        h2 { font-size: clamp(1.85rem, 4.2vw, 2.6rem) !important; line-height: 1.18 !important; }
+        h3 { font-size: clamp(1.6rem, 3.6vw, 2.15rem) !important; line-height: 1.22 !important; }
+        h4 { font-size: clamp(1.4rem, 3.2vw, 1.85rem) !important; line-height: 1.28 !important; }
+
+        [data-testid="stMarkdownContainer"] p,
+        [data-testid="stMarkdownContainer"] li,
+        [data-testid="stMarkdownContainer"] span,
+        [data-testid="stMarkdownContainer"] div,
+        .stMarkdown p {
+            font-size: clamp(1.2rem, 2.6vw, 1.45rem) !important;
+            line-height: 1.65 !important;
+        }
+
+        .stAlert p, [data-testid="stAlert"] p,
+        .stSuccess p, .stWarning p, .stInfo p, .stError p {
+            font-size: clamp(1.2rem, 2.6vw, 1.45rem) !important;
+            line-height: 1.65 !important;
+        }
+
+        [data-testid="stMetricValue"] > div {
+            font-size: clamp(2.35rem, 5.2vw, 3.25rem) !important;
+        }
+        [data-testid="stMetricLabel"] > div > div > p,
+        [data-testid="stMetricLabel"] label {
+            font-size: clamp(1.15rem, 2.5vw, 1.38rem) !important;
+        }
+        [data-testid="stMetricDelta"] > div {
+            font-size: clamp(1.1rem, 2.3vw, 1.3rem) !important;
+        }
+
+        .stButton button {
+            font-size: clamp(1.15rem, 2.5vw, 1.38rem) !important;
+            padding: 0.95rem 1.35rem !important;
+            min-height: 3.1rem !important;
+        }
+        .stCaption p {
+            font-size: clamp(1.05rem, 2.2vw, 1.22rem) !important;
+        }
+
+        .disclaimer-footer {
+            font-size: clamp(0.88rem, 2vw, 1.02rem) !important;
+            line-height: 1.45 !important;
+        }
+        .disclaimer-footer strong {
+            font-size: clamp(0.9rem, 2.05vw, 1.04rem) !important;
+        }
+
+        [data-testid="stMainBlockContainer"],
+        section.main > div {
+            padding-left: var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem)) !important;
+            padding-right: var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem)) !important;
+            padding-top: calc(0.75rem + env(safe-area-inset-top, 0px) + 1.5rem) !important;
+            padding-bottom: 2.5rem !important;
+        }
+
+        [data-testid="stVerticalBlock"] { gap: 0.85rem !important; }
+        h1, h2, h3, h4 { margin-top: 0.4rem !important; margin-bottom: 0.5rem !important; }
+
+        [data-testid="stMarkdownContainer"],
+        [data-testid="stMarkdownContainer"] > div {
+            max-width: 100% !important;
+        }
+
+        div[data-testid="stCheckbox"] {
+            margin-bottom: 1.25rem !important;
+        }
+
+        .tip-wrap .tip-text {
+            position: fixed !important;
+            left: auto !important;
+            right: 0 !important;
+            top: 20vh !important;
+            bottom: auto !important;
+            transform: none !important;
+            width: min(34rem, 92vw) !important;
+            max-width: 92vw !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            font-size: clamp(1rem, 2.2vw, 1.2rem) !important;
+            line-height: 1.55 !important;
+            padding: 1rem 1.15rem !important;
+        }
+
+        .stMarkdown .full-results-wrap .full-results-table .fr-label {
+            display: inline-block !important;
+            font-weight: 800 !important;
+            color: #334155 !important;
+            font-size: clamp(1.1rem, 2.4vw, 1.32rem) !important;
+        }
+
+        [data-testid="stMarkdownContainer"] table th,
+        [data-testid="stMarkdownContainer"] table td,
+        [data-testid="stTable"] th,
+        [data-testid="stTable"] td {
+            padding-top: clamp(0.72rem, 1.8vw, 1rem) !important;
+            padding-bottom: clamp(0.72rem, 1.8vw, 1rem) !important;
+            line-height: 1.55 !important;
+            vertical-align: top !important;
+        }
+        [data-testid="stMarkdownContainer"] table td,
+        [data-testid="stMarkdownContainer"] table th {
+            font-size: clamp(1.08rem, 2.4vw, 1.28rem) !important;
+        }
+
+        [data-testid="stHorizontalBlock"] { flex-wrap: wrap !important; }
+        [data-testid="stHorizontalBlock"] > div {
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+        }
+
+        [data-testid="stHorizontalBlock"] > div:has([data-testid="stMetric"]) {
+            background: #ffffff !important;
+            border: 2px solid #cbd5e1 !important;
+            border-left: 6px solid #22c55e !important;
+            border-radius: 14px !important;
+            padding: 1rem 1.05rem 1.1rem 1.05rem !important;
+            margin: 0 0 1.15rem 0 !important;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.10) !important;
+        }
+        .stApp div[data-testid="metric-container"] {
+            margin: 0 !important;
+            padding: 0.85rem 0.95rem 0.75rem 0.95rem !important;
+            border: 1px solid #e2e8f0 !important;
+            border-bottom: none !important;
+            border-radius: 14px 14px 0 0 !important;
+            background: #ffffff !important;
+        }
+        .stApp div[data-testid="metric-container"] [data-testid="stMetricLabel"] p {
+            font-size: 1.35rem !important;
+        }
+        .stApp div[data-testid="metric-container"] [data-testid="stMetricValue"] > div {
+            font-size: 2.35rem !important;
+            line-height: 1.1 !important;
+        }
+        .stApp div[data-testid="metric-container"] [data-testid="stMetricDelta"] > div {
+            font-size: 1.25rem !important;
+        }
+        .stApp div[data-testid="metric-container"] + div[data-testid="stMarkdownContainer"] {
+            margin: 0 0 1.2rem 0 !important;
+            padding: 0.7rem 0.95rem 0.95rem 0.95rem !important;
+            border: 1px solid #e2e8f0 !important;
+            border-top: none !important;
+            border-radius: 0 0 14px 14px !important;
+            background: #ffffff !important;
+        }
+        .stApp div[data-testid="metric-container"] + div[data-testid="stMarkdownContainer"] div {
+            font-size: 1.3rem !important;
+            line-height: 1.58 !important;
+        }
+
+        .stMarkdown .full-results-mobile-legend {
+            display: block !important;
+            margin: 0 0 1.1rem 0 !important;
+            padding: 0.8rem 0.9rem !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 10px !important;
+            background: #f8fafc !important;
+            font-size: clamp(1.05rem, 2.2vw, 1.22rem) !important;
+        }
+        .stMarkdown .full-results-mobile-legend .fr-mobile-tip-row {
+            margin-bottom: 0.72rem !important;
+            padding-bottom: 0.72rem !important;
+            border-bottom: 1px solid #e5e7eb !important;
+        }
+        .stMarkdown .full-results-mobile-legend .fr-mobile-tip-row:last-child {
+            border-bottom: none !important;
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        .stMarkdown .full-results-mobile-legend p {
+            margin: 0.4rem 0 0 0 !important;
+            color: #334155 !important;
+            line-height: 1.5 !important;
+            font-size: clamp(1.02rem, 2.1vw, 1.18rem) !important;
+        }
+        .stMarkdown .full-results-mobile-legend strong {
+            color: #1e293b !important;
+            font-size: clamp(1.08rem, 2.25vw, 1.24rem) !important;
+        }
+
+        .stMarkdown .full-results-wrap {
+            margin-left: calc(-1 * var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem))) !important;
+            margin-right: calc(-1 * var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem))) !important;
+            width: calc(100% + 2 * var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem))) !important;
+            max-width: 100vw !important;
+            box-sizing: border-box !important;
+            padding: 0 var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem)) max(1rem, env(safe-area-inset-bottom)) !important;
+            overflow-x: visible !important;
+            overflow-y: visible !important;
+        }
+
+        /* Index banner cards: use full content width on tablet (desktop keeps inline 50%). */
+        [data-testid="stMarkdownContainer"] div[style*="max-width: 50%"] {
+            max-width: 100% !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table {
+            display: block !important;
+            width: 100% !important;
+            border-collapse: separate !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody {
+            display: block !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table thead {
+            display: none !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody tr {
+            display: block !important;
+            width: 100% !important;
+            margin: 0 0 1.2rem 0 !important;
+            padding: 0.85rem 1rem 0.95rem 1rem !important;
+            border: 2px solid #cbd5e1 !important;
+            border-left: 6px solid #22c55e !important;
+            border-radius: 14px !important;
+            background: #ffffff !important;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.10) !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td {
+            position: relative !important;
+            display: grid !important;
+            grid-template-columns: minmax(0, 42%) minmax(0, 58%) !important;
+            gap: 0.45rem 0.75rem !important;
+            align-items: start !important;
+            padding: 0.58rem 0 !important;
+            border: none !important;
+            border-bottom: 1px solid #e5e7eb !important;
+            font-size: clamp(1.12rem, 2.5vw, 1.38rem) !important;
+            line-height: 1.5 !important;
+            width: 100% !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody tr td:last-child {
+            border-bottom: none !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td::before {
+            content: "" !important;
+            display: none !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label {
+            font-weight: 700 !important;
+            color: #475569 !important;
+            min-width: 0 !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap {
+            display: inline-block !important;
+            max-width: 100% !important;
+            white-space: normal !important;
+            position: relative !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap {
+            position: relative !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val {
+            min-width: 0 !important;
+            text-align: right !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+
+        .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text {
+            position: absolute !important;
+            left: 0 !important;
+            right: auto !important;
+            top: auto !important;
+            bottom: calc(100% + 1.25rem) !important;
+            width: min(22rem, calc(100vw - 2rem)) !important;
+            min-width: 0 !important;
+            max-width: min(22rem, calc(100vw - 2rem)) !important;
+            max-height: min(72vh, 28rem) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            transform: none !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            word-break: break-word !important;
+            overflow-wrap: anywhere !important;
+            text-align: left !important;
+            z-index: 100001 !important;
+            pointer-events: none !important;
+            font-size: clamp(1rem, 2.2vw, 1.2rem) !important;
+            line-height: 1.55 !important;
+            padding: 0.95rem 1.05rem !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text {
+            left: auto !important;
+            right: 0 !important;
+        }
+
+        .stMarkdown .tip-wrap.headlines-tip { cursor: default !important; }
+        .stMarkdown .tip-wrap.headlines-tip .hl-tip-cb {
+            position: absolute !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            height: 0 !important;
+            margin: 0 !important;
+            pointer-events: none !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip .hl-tip-count {
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            -webkit-tap-highlight-color: rgba(34, 197, 94, 0.2) !important;
+            text-decoration: none !important;
+            font-size: clamp(1.08rem, 2.3vw, 1.28rem) !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip .hl-tip-backdrop { display: none !important; }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .hl-tip-backdrop {
+            display: block !important;
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 100001 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: rgba(15, 23, 42, 0.12) !important;
+            cursor: default !important;
+            pointer-events: auto !important;
+            touch-action: manipulation !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .hl-tip-backdrop span {
+            display: none !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:not(:has(.hl-tip-cb:checked)) .tip-text {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        .stMarkdown .full-results-wrap:has(.hl-tip-cb:checked) {
+            overflow: visible !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody tr:has(.hl-tip-cb:checked) {
+            position: relative !important;
+            z-index: 100003 !important;
+            overflow: visible !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody tr:has(.hl-tip-cb:checked) td {
+            position: static !important;
+        }
+        .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) {
+            position: static !important;
+        }
+        .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text {
+            display: flex !important;
+            flex-direction: column !important;
+            position: fixed !important;
+            top: var(--hl-fixed-top, 0.75rem) !important;
+            left: var(--hl-fixed-left, 0.75rem) !important;
+            right: auto !important;
+            bottom: auto !important;
+            width: var(--hl-fixed-width, 40vw) !important;
+            min-width: 0 !important;
+            max-width: var(--hl-fixed-width, 40vw) !important;
+            height: auto !important;
+            max-height: var(--hl-fixed-max-height, calc(100dvh - 1.5rem)) !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            text-align: left !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            touch-action: auto !important;
+            transform: none !important;
+            position-anchor: none !important;
+            anchor-name: none !important;
+            word-break: break-word !important;
+            overflow-wrap: anywhere !important;
+            background: #111827 !important;
+            border: 1px solid #334155 !important;
+            border-radius: 14px !important;
+            box-sizing: border-box !important;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.35) !important;
+            z-index: 100002 !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-heading {
+            flex: 0 0 auto !important;
+            flex-shrink: 0 !important;
+            display: block !important;
+            visibility: visible !important;
+            position: relative !important;
+            z-index: 2 !important;
+            text-align: left !important;
+            color: #ffffff !important;
+            padding: 0.55rem 0.75rem !important;
+            font-size: calc(1rem + 4pt) !important;
+            font-weight: 700 !important;
+            line-height: 1.2 !important;
+            background: #1e1e2f !important;
+            border-bottom: 1px solid #334155 !important;
+        }
+        .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            min-height: 0 !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            touch-action: pan-y !important;
+            overscroll-behavior-y: contain !important;
+            scrollbar-gutter: stable !important;
+            scrollbar-width: thin !important;
+            scrollbar-color: #94a3b8 #1e293b !important;
+            padding: 0.35rem 0.45rem 0.45rem 0.65rem !important;
+            text-align: left !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll::-webkit-scrollbar {
+            width: 8px !important;
+            -webkit-appearance: none !important;
+            display: block !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll::-webkit-scrollbar-track {
+            background: #1e293b !important;
+            border-radius: 4px !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll::-webkit-scrollbar-thumb {
+            background: #94a3b8 !important;
+            border-radius: 4px !important;
+            min-height: 28px !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-list {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.35rem !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            text-align: left !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-line {
+            display: block !important;
+            padding: 0.42rem 0.48rem !important;
+            margin: 0 !important;
+            border: 1px solid rgba(148, 163, 184, 0.28) !important;
+            border-radius: 5px !important;
+            background: rgba(15, 23, 42, 0.45) !important;
+            line-height: 1.35 !important;
+            font-size: calc(0.95rem + 4pt) !important;
+            min-width: 0 !important;
+            text-align: left !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+        }
+        .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-line a {
+            display: block !important;
+            color: #93c5fd !important;
+            font-size: calc(0.95rem + 4pt) !important;
+            text-align: left !important;
+            text-decoration: underline !important;
+            text-underline-offset: 0.12em !important;
+            word-break: break-word !important;
+            overflow-wrap: anywhere !important;
+            touch-action: manipulation !important;
+        }
+        .stMarkdown .tip-wrap:not(.headlines-tip):hover .tip-text,
+        .stMarkdown .tip-wrap:not(.headlines-tip):active .tip-text {
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        html.scoop-tooltip-scrolling .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text,
+        body.scoop-tooltip-scrolling .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text {
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        .stMarkdown .tip-wrap .tip-text::before,
+        .stMarkdown .tip-wrap .tip-text::after {
+            display: none !important;
+        }
+
+        /* Full Results card — reorder fields without changing card format/size */
+        .stMarkdown .full-results-wrap .full-results-table tbody tr {
+            display: flex !important;
+            flex-direction: column !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody tr td:last-child {
+            border-bottom: 1px solid #e5e7eb !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Headline Sentiment"] {
+            border-bottom: none !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="#"] {
+            order: 0 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"],
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"],
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] {
+            order: 1 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Ticker"] {
+            order: 2 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Price"] {
+            order: 3 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="52W Low"] {
+            order: 4 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="% Above Low"] {
+            order: 5 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="52W High"] {
+            order: 6 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Exchanges"] {
+            order: 7 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Headlines"] {
+            order: 8 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Market Mood"] {
+            order: 9 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Headline Sentiment"] {
+            order: 10 !important;
+        }
+
+
+        /* Beat desktop (1367px) split-sidebar rules — same specificity, later cascade. */
+        section[data-testid="stSidebar"],
+        section[data-testid="stSidebar"][aria-expanded="false"],
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100dvh !important;
+            min-height: 100dvh !important;
+            margin-left: 0 !important;
+            display: block !important;
+            opacity: 1 !important;
+            box-shadow: 4px 0 28px rgba(15, 23, 42, 0.22) !important;
+            min-width: var(--scoop-sidebar-width) !important;
+            width: var(--scoop-sidebar-width) !important;
+            max-width: min(92vw, 36rem) !important;
+            transition: transform 0.28s ease, visibility 0.28s ease !important;
+        }
+        section[data-testid="stSidebar"],
+        section[data-testid="stSidebar"][aria-expanded="false"] {
+            transform: translateX(-100vw) !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            z-index: 999999 !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            transform: translateX(0) !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+            z-index: 1000010 !important;
+        }
+        [data-testid="stSidebar"] > div,
+        [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+            position: relative !important;
+            transform: none !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            height: auto !important;
+            min-height: 100% !important;
+            pointer-events: auto !important;
+            box-shadow: none !important;
+        }
+        [data-testid="stSidebarBackdrop"] {
+            display: block !important;
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 1000009 !important;
+            cursor: pointer !important;
+        }
+        [data-testid="stExpandSidebarButton"],
+        [data-testid="stSidebarCollapseButton"],
+        [data-testid="collapsedControl"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+        [data-testid="stHeader"] [data-testid="collapsedControl"] {
+            display: flex !important;
+        }
+        [data-testid="stAppViewContainer"] {
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+        }
+
+    }
+
+
     </style>
     """,
     unsafe_allow_html=True,

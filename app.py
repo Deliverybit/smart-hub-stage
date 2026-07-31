@@ -1613,6 +1613,624 @@ st.markdown(
 
     }
 
+
+    /* ===== Asus Zenbook Fold only — iPad Mini-style overlay (folded) ===== */
+    @media (min-width: 849px) and (max-width: 857px) and (min-height: 1276px) and (max-height: 1284px),
+           (min-width: 1276px) and (max-width: 1284px) and (min-height: 849px) and (max-height: 857px) {
+
+        :root {
+            --scoop-sidebar-width: min(92vw, 36rem);
+            --footer-sidebar-width: 0px;
+        }
+
+        [data-testid="stAppViewContainer"] {
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+        }
+        [data-testid="stAppViewContainer"] > section.main,
+        [data-testid="stMainBlockContainer"],
+        section.main > div,
+        .block-container {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        section[data-testid="stSidebar"] {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100dvh !important;
+            min-height: 100dvh !important;
+            z-index: 999999 !important;
+            min-width: var(--scoop-sidebar-width) !important;
+            width: var(--scoop-sidebar-width) !important;
+            max-width: min(92vw, 36rem) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            box-shadow: 4px 0 28px rgba(15, 23, 42, 0.22) !important;
+            transform: translateX(-100vw) !important;
+            transition: transform 0.28s ease, visibility 0.28s ease !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            transform: translateX(0) !important;
+            pointer-events: auto !important;
+            visibility: visible !important;
+        }
+        section[data-testid="stSidebar"]:not([aria-expanded="true"]) {
+            transform: translateX(-100vw) !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+        }
+        [data-testid="stSidebar"] > div,
+        [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+            position: relative !important;
+            transform: none !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            box-shadow: none !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stSidebarBackdrop"] {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 999998 !important;
+            cursor: pointer !important;
+        }
+        [data-testid="stHeader"] {
+            z-index: 1000005 !important;
+        }
+
+        /* Mobile-style toggle: plain Streamlit arrows (no boxed chrome). */
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="collapsedControl"],
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {
+            position: static !important;
+            top: auto !important;
+            left: auto !important;
+            right: auto !important;
+            bottom: auto !important;
+            width: auto !important;
+            height: auto !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            transform: none !important;
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] button,
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"] button,
+        [data-testid="stHeader"] [data-testid="collapsedControl"] button,
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button {
+            width: auto !important;
+            height: auto !important;
+            min-width: 31.5px !important;
+            min-height: 31.5px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            font-size: 15.75px !important;
+            line-height: 1 !important;
+            color: #31333f !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        .scoop-responsive-sidebar-close {
+            display: none !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stAppViewContainer"]::before {
+            content: "" !important;
+            position: fixed !important;
+            inset: 0 !important;
+            background: rgba(15, 23, 42, 0.38) !important;
+            z-index: 999997 !important;
+            pointer-events: none !important;
+        }
+
+        section[data-testid="stSidebar"] {
+            top: 0 !important;
+            transform: translateX(-100vw) !important;
+            transition: transform 0.28s ease, visibility 0.28s ease !important;
+        }
+        section[data-testid="stSidebar"]:not([aria-expanded="true"]) {
+            transform: translateX(-100vw) !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            z-index: 1000010 !important;
+            transform: translateX(0) !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stSidebarBackdrop"] {
+            z-index: 1000009 !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stAppViewContainer"]::before {
+            z-index: 1000008 !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stHeader"] [data-testid="stToolbar"] {
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="collapsedControl"],
+        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] {
+            z-index: 1000012 !important;
+        }
+
+
+        .stApp { overflow-x: hidden !important; }
+
+        html, body, [class*="css"] {
+            font-size: clamp(21px, 2.35vw, 24px) !important;
+            line-height: 1.62 !important;
+        }
+        h1 { font-size: clamp(2.2rem, 5vw, 3.1rem) !important; line-height: 1.12 !important; }
+        h2 { font-size: clamp(1.85rem, 4.2vw, 2.6rem) !important; line-height: 1.18 !important; }
+        h3 { font-size: clamp(1.6rem, 3.6vw, 2.15rem) !important; line-height: 1.22 !important; }
+        h4 { font-size: clamp(1.4rem, 3.2vw, 1.85rem) !important; line-height: 1.28 !important; }
+
+        [data-testid="stMarkdownContainer"] p,
+        [data-testid="stMarkdownContainer"] li,
+        [data-testid="stMarkdownContainer"] span,
+        [data-testid="stMarkdownContainer"] div,
+        .stMarkdown p {
+            font-size: clamp(1.2rem, 2.6vw, 1.45rem) !important;
+            line-height: 1.65 !important;
+        }
+
+        .stAlert p, [data-testid="stAlert"] p,
+        .stSuccess p, .stWarning p, .stInfo p, .stError p {
+            font-size: clamp(1.2rem, 2.6vw, 1.45rem) !important;
+            line-height: 1.65 !important;
+        }
+
+        [data-testid="stMetricValue"] > div {
+            font-size: clamp(2.35rem, 5.2vw, 3.25rem) !important;
+        }
+        [data-testid="stMetricLabel"] > div > div > p,
+        [data-testid="stMetricLabel"] label {
+            font-size: clamp(1.15rem, 2.5vw, 1.38rem) !important;
+        }
+        [data-testid="stMetricDelta"] > div {
+            font-size: clamp(1.1rem, 2.3vw, 1.3rem) !important;
+        }
+
+        .stButton button {
+            font-size: clamp(1.15rem, 2.5vw, 1.38rem) !important;
+            padding: 0.95rem 1.35rem !important;
+            min-height: 3.1rem !important;
+        }
+        .stCaption p {
+            font-size: clamp(1.05rem, 2.2vw, 1.22rem) !important;
+        }
+
+        .disclaimer-footer {
+            font-size: clamp(0.88rem, 2vw, 1.02rem) !important;
+            line-height: 1.45 !important;
+        }
+        .disclaimer-footer strong {
+            font-size: clamp(0.9rem, 2.05vw, 1.04rem) !important;
+        }
+
+        [data-testid="stMainBlockContainer"],
+        section.main > div {
+            padding-left: var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem)) !important;
+            padding-right: var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem)) !important;
+            padding-top: calc(0.75rem + env(safe-area-inset-top, 0px) + 1.5rem) !important;
+            padding-bottom: 2.5rem !important;
+        }
+
+        [data-testid="stVerticalBlock"] { gap: 0.85rem !important; }
+        h1, h2, h3, h4 { margin-top: 0.4rem !important; margin-bottom: 0.5rem !important; }
+
+        [data-testid="stMarkdownContainer"],
+        [data-testid="stMarkdownContainer"] > div {
+            max-width: 100% !important;
+        }
+
+        div[data-testid="stCheckbox"] {
+            margin-bottom: 1.25rem !important;
+        }
+
+        h3.search-price-chart-heading { margin-bottom: 0.25rem !important; }
+        h3.search-52week-range-heading { margin-bottom: 0.35rem !important; }
+        hr.search-52w-range-divider { margin: 0.1rem 0 !important; }
+
+        .mood-column { margin-top: 0 !important; }
+        .mood-feed {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+            margin-bottom: 0 !important;
+            padding-bottom: 0.25rem !important;
+            font-size: clamp(1.15rem, 2.5vw, 1.38rem) !important;
+            line-height: 1.62 !important;
+        }
+
+        [data-testid="stHorizontalBlock"] { flex-wrap: wrap !important; }
+        [data-testid="stHorizontalBlock"] > div {
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+        }
+
+        .tip-wrap .tip-text {
+            position: fixed !important;
+            left: 50% !important;
+            right: auto !important;
+            top: 20vh !important;
+            bottom: auto !important;
+            transform: translateX(-50%) !important;
+            width: min(34rem, 92vw) !important;
+            max-width: 92vw !important;
+            margin: 0 !important;
+            font-size: clamp(1rem, 2.2vw, 1.2rem) !important;
+            line-height: 1.55 !important;
+            padding: 1rem 1.15rem !important;
+        }
+
+    }
+    /* ===== Asus Zenbook Fold only — iPad Mini-style overlay (unfolded) ===== */
+    @media (min-width: 1700px) and (max-width: 1714px) and (min-height: 1000px) and (max-height: 1120px),
+           (min-width: 1910px) and (max-width: 1930px) and (min-height: 1270px) and (max-height: 1290px),
+           (min-width: 1270px) and (max-width: 1290px) and (min-height: 1910px) and (max-height: 1930px) {
+
+        :root {
+            --scoop-sidebar-width: min(92vw, 36rem);
+            --footer-sidebar-width: 0px;
+        }
+
+        [data-testid="stAppViewContainer"] {
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+        }
+        [data-testid="stAppViewContainer"] > section.main,
+        [data-testid="stMainBlockContainer"],
+        section.main > div,
+        .block-container {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        section[data-testid="stSidebar"] {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100dvh !important;
+            min-height: 100dvh !important;
+            z-index: 999999 !important;
+            min-width: var(--scoop-sidebar-width) !important;
+            width: var(--scoop-sidebar-width) !important;
+            max-width: min(92vw, 36rem) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            box-shadow: 4px 0 28px rgba(15, 23, 42, 0.22) !important;
+            transform: translateX(-100vw) !important;
+            transition: transform 0.28s ease, visibility 0.28s ease !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            transform: translateX(0) !important;
+            pointer-events: auto !important;
+            visibility: visible !important;
+        }
+        section[data-testid="stSidebar"]:not([aria-expanded="true"]) {
+            transform: translateX(-100vw) !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+        }
+        [data-testid="stSidebar"] > div,
+        [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+            position: relative !important;
+            transform: none !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            box-shadow: none !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stSidebarBackdrop"] {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 999998 !important;
+            cursor: pointer !important;
+        }
+        [data-testid="stHeader"] {
+            z-index: 1000005 !important;
+        }
+
+        /* Mobile-style toggle: plain Streamlit arrows (no boxed chrome). */
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="collapsedControl"],
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] {
+            position: static !important;
+            top: auto !important;
+            left: auto !important;
+            right: auto !important;
+            bottom: auto !important;
+            width: auto !important;
+            height: auto !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            transform: none !important;
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] button,
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"] button,
+        [data-testid="stHeader"] [data-testid="collapsedControl"] button,
+        section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button {
+            width: auto !important;
+            height: auto !important;
+            min-width: 31.5px !important;
+            min-height: 31.5px !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            font-size: 15.75px !important;
+            line-height: 1 !important;
+            color: #31333f !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        .scoop-responsive-sidebar-close {
+            display: none !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stAppViewContainer"]::before {
+            content: "" !important;
+            position: fixed !important;
+            inset: 0 !important;
+            background: rgba(15, 23, 42, 0.38) !important;
+            z-index: 999997 !important;
+            pointer-events: none !important;
+        }
+
+        section[data-testid="stSidebar"] {
+            top: 0 !important;
+            transform: translateX(-100vw) !important;
+            transition: transform 0.28s ease, visibility 0.28s ease !important;
+        }
+        section[data-testid="stSidebar"]:not([aria-expanded="true"]) {
+            transform: translateX(-100vw) !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            z-index: 1000010 !important;
+            transform: translateX(0) !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+        }
+        [data-testid="stSidebarBackdrop"] {
+            z-index: 1000009 !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stAppViewContainer"]::before {
+            z-index: 1000008 !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stHeader"] [data-testid="stToolbar"] {
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="collapsedControl"],
+        section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"] {
+            z-index: 1000012 !important;
+        }
+
+
+        .stApp { overflow-x: hidden !important; }
+
+        html, body, [class*="css"] {
+            font-size: clamp(21px, 2.35vw, 24px) !important;
+            line-height: 1.62 !important;
+        }
+        h1 { font-size: clamp(2.2rem, 5vw, 3.1rem) !important; line-height: 1.12 !important; }
+        h2 { font-size: clamp(1.85rem, 4.2vw, 2.6rem) !important; line-height: 1.18 !important; }
+        h3 { font-size: clamp(1.6rem, 3.6vw, 2.15rem) !important; line-height: 1.22 !important; }
+        h4 { font-size: clamp(1.4rem, 3.2vw, 1.85rem) !important; line-height: 1.28 !important; }
+
+        [data-testid="stMarkdownContainer"] p,
+        [data-testid="stMarkdownContainer"] li,
+        [data-testid="stMarkdownContainer"] span,
+        [data-testid="stMarkdownContainer"] div,
+        .stMarkdown p {
+            font-size: clamp(1.2rem, 2.6vw, 1.45rem) !important;
+            line-height: 1.65 !important;
+        }
+
+        .stAlert p, [data-testid="stAlert"] p,
+        .stSuccess p, .stWarning p, .stInfo p, .stError p {
+            font-size: clamp(1.2rem, 2.6vw, 1.45rem) !important;
+            line-height: 1.65 !important;
+        }
+
+        [data-testid="stMetricValue"] > div {
+            font-size: clamp(2.35rem, 5.2vw, 3.25rem) !important;
+        }
+        [data-testid="stMetricLabel"] > div > div > p,
+        [data-testid="stMetricLabel"] label {
+            font-size: clamp(1.15rem, 2.5vw, 1.38rem) !important;
+        }
+        [data-testid="stMetricDelta"] > div {
+            font-size: clamp(1.1rem, 2.3vw, 1.3rem) !important;
+        }
+
+        .stButton button {
+            font-size: clamp(1.15rem, 2.5vw, 1.38rem) !important;
+            padding: 0.95rem 1.35rem !important;
+            min-height: 3.1rem !important;
+        }
+        .stCaption p {
+            font-size: clamp(1.05rem, 2.2vw, 1.22rem) !important;
+        }
+
+        .disclaimer-footer {
+            font-size: clamp(0.88rem, 2vw, 1.02rem) !important;
+            line-height: 1.45 !important;
+        }
+        .disclaimer-footer strong {
+            font-size: clamp(0.9rem, 2.05vw, 1.04rem) !important;
+        }
+
+        [data-testid="stMainBlockContainer"],
+        section.main > div {
+            padding-left: var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem)) !important;
+            padding-right: var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem)) !important;
+            padding-top: calc(0.75rem + env(safe-area-inset-top, 0px) + 1.5rem) !important;
+            padding-bottom: 2.5rem !important;
+        }
+
+        [data-testid="stVerticalBlock"] { gap: 0.85rem !important; }
+        h1, h2, h3, h4 { margin-top: 0.4rem !important; margin-bottom: 0.5rem !important; }
+
+        [data-testid="stMarkdownContainer"],
+        [data-testid="stMarkdownContainer"] > div {
+            max-width: 100% !important;
+        }
+
+        div[data-testid="stCheckbox"] {
+            margin-bottom: 1.25rem !important;
+        }
+
+        h3.search-price-chart-heading { margin-bottom: 0.25rem !important; }
+        h3.search-52week-range-heading { margin-bottom: 0.35rem !important; }
+        hr.search-52w-range-divider { margin: 0.1rem 0 !important; }
+
+        .mood-column { margin-top: 0 !important; }
+        .mood-feed {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+            margin-bottom: 0 !important;
+            padding-bottom: 0.25rem !important;
+            font-size: clamp(1.15rem, 2.5vw, 1.38rem) !important;
+            line-height: 1.62 !important;
+        }
+
+        [data-testid="stHorizontalBlock"] { flex-wrap: wrap !important; }
+        [data-testid="stHorizontalBlock"] > div {
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+        }
+
+        .tip-wrap .tip-text {
+            position: fixed !important;
+            left: 50% !important;
+            right: auto !important;
+            top: 20vh !important;
+            bottom: auto !important;
+            transform: translateX(-50%) !important;
+            width: min(34rem, 92vw) !important;
+            max-width: 92vw !important;
+            margin: 0 !important;
+            font-size: clamp(1rem, 2.2vw, 1.2rem) !important;
+            line-height: 1.55 !important;
+            padding: 1rem 1.15rem !important;
+        }
+
+
+        /* Beat desktop (1367px) split-sidebar rules — same specificity, later cascade. */
+        section[data-testid="stSidebar"],
+        section[data-testid="stSidebar"][aria-expanded="false"],
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            height: 100dvh !important;
+            min-height: 100dvh !important;
+            margin-left: 0 !important;
+            display: block !important;
+            opacity: 1 !important;
+            box-shadow: 4px 0 28px rgba(15, 23, 42, 0.22) !important;
+            min-width: var(--scoop-sidebar-width) !important;
+            width: var(--scoop-sidebar-width) !important;
+            max-width: min(92vw, 36rem) !important;
+            transition: transform 0.28s ease, visibility 0.28s ease !important;
+        }
+        section[data-testid="stSidebar"],
+        section[data-testid="stSidebar"][aria-expanded="false"] {
+            transform: translateX(-100vw) !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            z-index: 999999 !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="true"] {
+            transform: translateX(0) !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+            z-index: 1000010 !important;
+        }
+        [data-testid="stSidebar"] > div,
+        [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+            position: relative !important;
+            transform: none !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            height: auto !important;
+            min-height: 100% !important;
+            pointer-events: auto !important;
+            box-shadow: none !important;
+        }
+        [data-testid="stSidebarBackdrop"] {
+            display: block !important;
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 1000009 !important;
+            cursor: pointer !important;
+        }
+        [data-testid="stExpandSidebarButton"],
+        [data-testid="stSidebarCollapseButton"],
+        [data-testid="collapsedControl"],
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+        [data-testid="stHeader"] [data-testid="collapsedControl"] {
+            display: flex !important;
+        }
+        [data-testid="stAppViewContainer"] {
+            margin-left: 0 !important;
+            padding-left: 0 !important;
+            width: 100% !important;
+            max-width: 100vw !important;
+        }
+
+    }
+
+
     </style>
     """,
     unsafe_allow_html=True,
