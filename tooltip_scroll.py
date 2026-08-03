@@ -1,13 +1,9 @@
-import sys
-from pathlib import Path
-
 import streamlit as st
 
-_ADMIN = Path(__file__).resolve().parent / "admin_tools"
-if str(_ADMIN) not in sys.path:
-    sys.path.insert(0, str(_ADMIN))
-
-from tablet_mobile_layout_css import MOBILE_CARD_FIELD_ORDER, MOBILE_HEADLINES_CARD_OVERLAY  # noqa: E402
+from admin_tools.tablet_mobile_layout_css import (
+    MOBILE_CARD_FIELD_ORDER,
+    MOBILE_HEADLINES_CARD_OVERLAY,
+)
 
 _MOBILE_HEADLINES_CSS = f"""
 @media (max-width: 768px) {{
@@ -873,10 +869,10 @@ _TOOLTIP_SCROLL_JS = """
         if (tipWrap) {
             const clone = tipWrap.cloneNode(true);
             clone.querySelectorAll(".tip-text").forEach((node) => node.remove());
-            return (clone.textContent || "").replace(/\s+/g, " ").trim();
+            return (clone.textContent || "").replace(/\\s+/g, " ").trim();
         }
 
-        return (valueCell.textContent || "").replace(/\s+/g, " ").trim();
+        return (valueCell.textContent || "").replace(/\\s+/g, " ").trim();
     };
 
     const updateHeadlinesHeading = (wrap) => {
