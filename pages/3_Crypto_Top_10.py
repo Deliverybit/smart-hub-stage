@@ -1536,6 +1536,14 @@ st.markdown(
             width: 100% !important;
             box-sizing: border-box !important;
         }
+        .stMarkdown .full-results-wrap .full-results-table {
+            display: block !important;
+            width: 100% !important;
+            border-collapse: separate !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody {
+            display: block !important;
+        }
         .stMarkdown .full-results-wrap .full-results-table thead {
             display: none !important;
         }

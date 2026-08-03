@@ -15,11 +15,16 @@
 
 .EXAMPLE
   .\launch.ps1 -RecreateVenv
+
+.EXAMPLE
+  .\launch.ps1 -SkipSmokeTest
 #>
 param(
     [int]$Port = 8501,
     [switch]$SkipInstall,
-    [switch]$RecreateVenv
+    [switch]$RecreateVenv,
+    [switch]$SkipSmokeTest,
+    [switch]$QuickSmokeTest
 )
 
 $ErrorActionPreference = "Stop"
@@ -126,6 +131,20 @@ if (-not (Test-Path $secretsPath)) {
 }
 
 $env:APP_ENV = "staging"
+
+if (-not $SkipSmokeTest) {
+    Write-Host ""
+    Write-Host "Running pre-launch smoke tests ..."
+    $smokeArgs = @("admin_tools/smoke_test.py")
+    if ($QuickSmokeTest) {
+        $smokeArgs += "--quick"
+    }
+    & $venvPython @smokeArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "Smoke tests failed (exit $LASTEXITCODE). Fix issues or use -SkipSmokeTest to bypass."
+    }
+    Write-Host "Smoke tests passed."
+}
 
 Write-Host ""
 Write-Host "Starting Smart Hub Stage (APP_ENV=staging) at http://localhost:$Port"

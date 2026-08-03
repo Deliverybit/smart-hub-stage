@@ -1563,6 +1563,14 @@ st.markdown(
             width: 100% !important;
             box-sizing: border-box !important;
         }
+        .stMarkdown .full-results-wrap .full-results-table {
+            display: block !important;
+            width: 100% !important;
+            border-collapse: separate !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table tbody {
+            display: block !important;
+        }
         .stMarkdown .full-results-wrap .full-results-table thead {
             display: none !important;
         }
@@ -4258,7 +4266,7 @@ else:
                 f'<span class="tip-text"{tip_style}>{tooltip}</span></span>'
             )
 
-        def _headlines_tip(count_display, hl_pairs: list, row_idx: int) -> str:
+        def _headlines_tip(count_display, hl_pairs: list, row_idx: int, commodity_name: str = "") -> str:
             aid = f"--hl-r{int(row_idx)}"
             rows_inner = []
             for title, url in hl_pairs:
@@ -4273,6 +4281,11 @@ else:
                     rows_inner.append(f'<div class="hl-tip-line">{stitle}</div>')
             list_html = "".join(rows_inner)
             cb_id = f"hl-cb-r{int(row_idx)}"
+            heading = (
+                f"Headlines - {html.escape(str(commodity_name).strip())}"
+                if str(commodity_name).strip()
+                else "Headlines"
+            )
             return (
                 f'<span class="tip-wrap headlines-tip" style="anchor-name: {aid};">'
                 f'<input type="checkbox" id="{cb_id}" class="hl-tip-cb" aria-hidden="true">'
@@ -4281,7 +4294,7 @@ else:
                 f'<label class="hl-tip-backdrop" for="{cb_id}" aria-hidden="true">'
                 f"<span>&nbsp;</span></label>"
                 f'<span class="tip-text" style="position-anchor: {aid};">'
-                f'<span class="hl-tip-heading">Headlines</span>'
+                f'<span class="hl-tip-heading">{heading}</span>'
                 f'<div class="headlines-tip-scroll">'
                 f'<div class="headlines-tip-list">{list_html}</div>'
                 f"</div>"
@@ -4328,7 +4341,11 @@ else:
                     elif c == "Headlines":
                         hl_pairs = headline_map.get(r["Ticker"], [])
                         if hl_pairs:
-                            cells += _td(c, _headlines_tip(val, hl_pairs, idx_row), COLUMN_TIPS.get(c, ""))
+                            cells += _td(
+                                c,
+                                _headlines_tip(val, hl_pairs, idx_row, str(r.get("Commodity", ""))),
+                                COLUMN_TIPS.get(c, ""),
+                            )
                         else:
                             cells += _td(c, str(val), COLUMN_TIPS.get(c, ""))
                     else:

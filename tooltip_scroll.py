@@ -858,9 +858,13 @@ _TOOLTIP_SCROLL_JS = """
             return "";
         }
 
+        const inCommodityResults = !!wrap.closest(".commodity-results");
         const valueCell =
             row.querySelector('td[data-label="Company"] .fr-val') ||
-            row.querySelector('td[data-label="Name"] .fr-val');
+            row.querySelector('td[data-label="Name"] .fr-val') ||
+            (inCommodityResults
+                ? row.querySelector('td[data-label="Commodity"] .fr-val')
+                : null);
         if (!valueCell) {
             return "";
         }
