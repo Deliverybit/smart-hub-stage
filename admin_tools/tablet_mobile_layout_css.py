@@ -1287,6 +1287,14 @@ TABLET_SEARCH_MOBILE_LAYOUT = (
 
 TABLET_TERMS_MOBILE_LAYOUT = TABLET_TYPE
 
+# Phone portrait (≤743px): full off-screen sidebar retract (iPhone, etc.); tablet/desktop unchanged.
+PHONE_SIDEBAR_LAYOUT = f"""
+    /* ===== Phone mobile (≤743px) — overlay sidebar full off-screen retract; tablet/desktop unchanged ===== */
+    @media (max-width: 743px) {{
+{SURFACE_DUO_SIDEBAR}
+    }}
+"""
+
 # iPad Mini portrait (744–768px): overlay above Deploy bar, plain arrows like Surface Duo.
 IPAD_MINI_PORTRAIT_LAYOUT = f"""
     /* ===== iPad Mini portrait (744px–768px) — overlay sidebar; phones/tablet/desktop unchanged ===== */

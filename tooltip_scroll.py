@@ -389,9 +389,11 @@ _ASUS_ZENBOOK_FOLD_HEADLINES_CSS = f"""
 
 _RESPONSIVE_SIDEBAR_JS = """
 (() => {
-    /* 744px = iPad Mini portrait; overlay sidebar through tablet/hub range. */
+    /* ≤743px = phone; 744px = iPad Mini portrait; overlay sidebar through tablet/hub range. */
+    const PHONE_MAX = 743;
     const TABLET_MIN = 744;
     const TABLET_MAX = 1366;
+    const isPhoneViewport = () => window.innerWidth <= PHONE_MAX;
     const isSurfaceDuoViewport = () => {
         const w = window.innerWidth;
         const h = window.innerHeight;
@@ -426,6 +428,7 @@ _RESPONSIVE_SIDEBAR_JS = """
         );
     };
     const isResponsiveViewport = () =>
+        isPhoneViewport() ||
         isSurfaceDuoViewport() ||
         isIpad14ProMaxViewport() ||
         isAsusZenbookFoldViewport() ||
