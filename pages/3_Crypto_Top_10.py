@@ -12,6 +12,7 @@ from textblob import TextBlob
 from datetime import datetime
 from legal_consent_logger import ensure_timezone_cookie, log_terms_acceptance
 from branding import logo_path_str, render_environment_banner
+from theme_mode import install_theme_support, render_dark_mode_toggle
 from market_data import MarketData
 from app_config import get_screener_symbol_limit, SCREENER_CACHE_VERSION
 from screener_headlines import enrich_headline_sentiment
@@ -33,6 +34,7 @@ st.set_page_config(
     layout="wide",
 )
 render_environment_banner(st)
+install_theme_support()
 
 
 @st.cache_resource
@@ -4051,6 +4053,9 @@ st.sidebar.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+render_dark_mode_toggle()
+st.sidebar.markdown("---")
 st.sidebar.page_link("pages/1_NYSE_Top_10.py", label="📊 NYSE 10")
 st.sidebar.page_link("pages/2_NASDAQ_Top_10.py", label="💹 NASDAQ 10")
 st.sidebar.page_link("pages/3_Crypto_Top_10.py", label="🪙 Crypto 10")

@@ -16,7 +16,17 @@ from market_data import MarketData
 from sentiment_engine import SentimentEngine
 from legal_consent_logger import ensure_timezone_cookie, log_terms_acceptance
 from branding import logo_path_str, render_environment_banner
-from tooltip_scroll import install_responsive_sidebar_handler
+from theme_mode import (
+    chart_axis_colors,
+    chart_hoverlabel,
+    chart_paper_bgcolor,
+    chart_plot_bgcolor,
+    chart_template,
+    inject_dark_mode_styles,
+    install_theme_support,
+    render_dark_mode_toggle,
+)
+from tooltip_scroll import install_responsive_sidebar_handler, install_tooltip_scroll_handler
 
 # Search price chart: axis tick/title sizes (px in Plotly). Mobile matches existing UI.
 _SEARCH_CHART_AXIS_TICK_MOBILE = 26
@@ -91,8 +101,12 @@ def _build_search_price_figure(
     axis_title: int,
     margin_top: int,
 ) -> go.Figure:
-    tick_kw = dict(size=axis_tick, color="#111827")
-    title_kw = dict(size=axis_title, color="#111827")
+    tick_kw, title_kw = chart_axis_colors()
+    hover = chart_hoverlabel()
+    layout_bg = dict(
+        paper_bgcolor=chart_paper_bgcolor(),
+        plot_bgcolor=chart_plot_bgcolor(),
+    )
     if has_compare and comp_df is not None:
         fig = go.Figure()
         fig.add_trace(
@@ -115,7 +129,7 @@ def _build_search_price_figure(
         )
         fig.update_layout(
             yaxis_title="Change from start (%)",
-            template="plotly_dark",
+            template=chart_template(),
             height=500,
             margin=dict(l=60, r=20, t=margin_top, b=60),
             legend=dict(
@@ -128,22 +142,20 @@ def _build_search_price_figure(
             ),
             font=dict(size=20),
             xaxis=dict(
-                tickfont=tick_kw,
-                title_font=title_kw,
+                tickfont=dict(size=axis_tick, **tick_kw),
+                title_font=dict(size=axis_title, **title_kw),
                 showspikes=False,
                 unifiedhovertitle=dict(text="%{x|%b %d, %Y}"),
             ),
-            yaxis=dict(tickfont=tick_kw, title_font=title_kw),
+            yaxis=dict(
+                tickfont=dict(size=axis_tick, **tick_kw),
+                title_font=dict(size=axis_title, **title_kw),
+            ),
             hovermode="x unified",
             hoverdistance=200,
             spikedistance=-1,
-            hoverlabel=dict(
-                bgcolor="#ffffff",
-                bordercolor="#cbd5e1",
-                font=dict(color="#111827", size=26),
-                align="left",
-                namelength=-1,
-            ),
+            hoverlabel=hover,
+            **layout_bg,
         )
     else:
         fig = go.Figure()
@@ -159,27 +171,25 @@ def _build_search_price_figure(
         )
         fig.update_layout(
             yaxis_title="Price (USD)",
-            template="plotly_dark",
+            template=chart_template(),
             height=500,
             margin=dict(l=60, r=20, t=margin_top, b=60),
             font=dict(size=20),
             xaxis=dict(
-                tickfont=tick_kw,
-                title_font=title_kw,
+                tickfont=dict(size=axis_tick, **tick_kw),
+                title_font=dict(size=axis_title, **title_kw),
                 showspikes=False,
                 unifiedhovertitle=dict(text="%{x|%b %d, %Y}"),
             ),
-            yaxis=dict(tickfont=tick_kw, title_font=title_kw),
+            yaxis=dict(
+                tickfont=dict(size=axis_tick, **tick_kw),
+                title_font=dict(size=axis_title, **title_kw),
+            ),
             hovermode="x unified",
             hoverdistance=200,
             spikedistance=-1,
-            hoverlabel=dict(
-                bgcolor="#ffffff",
-                bordercolor="#cbd5e1",
-                font=dict(color="#111827", size=26),
-                align="left",
-                namelength=-1,
-            ),
+            hoverlabel=hover,
+            **layout_bg,
         )
     return fig
 
@@ -192,6 +202,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 render_environment_banner(st)
+install_theme_support()
 install_responsive_sidebar_handler()
 
 # ── Global responsive styling ─────────────────────────────────────────
@@ -2506,6 +2517,8 @@ st.sidebar.markdown(
     """,
     unsafe_allow_html=True,
 )
+render_dark_mode_toggle()
+st.sidebar.markdown("---")
 st.sidebar.page_link("pages/1_NYSE_Top_10.py", label="📊 NYSE 10")
 st.sidebar.page_link("pages/2_NASDAQ_Top_10.py", label="💹 NASDAQ 10")
 st.sidebar.page_link("pages/3_Crypto_Top_10.py", label="🪙 Crypto 10")
@@ -2580,7 +2593,7 @@ def _render_search_dashboard(ticker: str, compare_ticker: str) -> None:
     asset_name = _search_asset_display_name(ticker)
     st.markdown(
         f"""
-        <div style="
+        <div class="scoop-selected-asset-card" style="
             border:1px solid #cbd5e1;
             border-left:6px solid #2563eb;
             border-radius:12px;
@@ -2588,13 +2601,13 @@ def _render_search_dashboard(ticker: str, compare_ticker: str) -> None:
             margin:0 0 1rem 0;
             background:#f8fafc;
         ">
-            <div style="font-size:1rem;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">
+            <div class="scoop-muted" style="font-size:1rem;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;">
                 Selected Asset
             </div>
-            <div style="font-size:2rem;line-height:1.25;font-weight:800;color:#0f172a;">
+            <div class="scoop-title-text" style="font-size:2rem;line-height:1.25;font-weight:800;color:#0f172a;">
                 {html.escape(asset_name)}
             </div>
-            <div style="font-size:1.15rem;color:#475569;font-weight:700;margin-top:0.2rem;">
+            <div class="scoop-subtitle-text" style="font-size:1.15rem;color:#475569;font-weight:700;margin-top:0.2rem;">
                 Ticker: {html.escape(ticker)}
             </div>
         </div>
@@ -2751,14 +2764,14 @@ def _render_search_dashboard(ticker: str, compare_ticker: str) -> None:
         )
         st.markdown(
             f"""
-            <div style="
+            <div class="scoop-mood-summary" style="
                 border:1px solid #334155;
                 border-radius:10px;
                 padding:0.8rem 1rem;
                 margin-bottom:0.7rem;
                 background:#0f172a08;
             ">
-                <div style="display:flex;align-items:center;gap:0.6rem;font-weight:700;color:#0f172a;">
+                <div class="scoop-mood-label" style="display:flex;align-items:center;gap:0.6rem;font-weight:700;color:#0f172a;">
                     <span>Market Mood</span>
                     <span style="
                         display:inline-block;
@@ -2769,7 +2782,7 @@ def _render_search_dashboard(ticker: str, compare_ticker: str) -> None:
                         box-shadow:0 0 0 2px {mood_color}33;
                     "></span>
                 </div>
-                <div style="margin-top:0.45rem;color:#334155;">
+                <div class="scoop-mood-detail" style="margin-top:0.45rem;color:#334155;">
                     Current Mood: <b>{sentiment_label.capitalize()}</b> &nbsp;|&nbsp; Score: <b>{sentiment_score:+.4f}</b>
                 </div>
             </div>
@@ -2965,3 +2978,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+inject_dark_mode_styles()
+install_tooltip_scroll_handler()

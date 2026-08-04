@@ -3,6 +3,7 @@ import streamlit as st
 from admin_tools.tablet_mobile_layout_css import (
     MOBILE_CARD_FIELD_ORDER,
     MOBILE_HEADLINES_CARD_OVERLAY,
+    RESPONSIVE_GENERIC_TOOLTIP_LAYOUT,
 )
 
 _MOBILE_HEADLINES_CSS = f"""
@@ -87,6 +88,54 @@ _MOBILE_TABLET_CARD_ORDER_CSS = f"""
        (min-width: 1700px) and (max-width: 1714px) and (min-height: 1000px) and (max-height: 1120px) {{
 {MOBILE_CARD_FIELD_ORDER}
 }}
+"""
+
+_RESPONSIVE_GENERIC_TOOLTIP_CSS = f"""
+@media (max-width: 1366px) {{
+{RESPONSIVE_GENERIC_TOOLTIP_LAYOUT}
+}}
+"""
+
+_DARK_RESPONSIVE_TIP_UNDERLINE_CSS = """
+@media (max-width: 1366px) {
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap:not(.headlines-tip),
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip),
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip),
+html[data-scoop-theme="dark"] .stMarkdown [data-testid="stMarkdownContainer"] .tip-wrap:not(.headlines-tip),
+html[data-scoop-theme="dark"] .stMarkdown div .tip-wrap:not(.headlines-tip) {
+    border-bottom: 2px dashed #ffffff !important;
+}
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip {
+    border-bottom: none !important;
+}
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .hl-tip-count {
+    border-bottom: 2px dashed #ffffff !important;
+    display: inline-block !important;
+    text-decoration: none !important;
+}
+}
+"""
+
+_DARK_POPUP_OUTLINE_CSS = """
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap .tip-text,
+html[data-scoop-theme="dark"] .tip-wrap .tip-text {
+    border: 2px solid #ffffff !important;
+}
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .tip-text,
+html[data-scoop-theme="dark"] .full-results-wrap .tip-wrap.headlines-tip .tip-text {
+    border: 2px solid #ffffff !important;
+}
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .tip-text .hl-tip-heading,
+html[data-scoop-theme="dark"] .full-results-wrap .tip-wrap.headlines-tip .tip-text .hl-tip-heading {
+    border: 2px solid #ffffff !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.45) !important;
+}
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll,
+html[data-scoop-theme="dark"] .full-results-wrap .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll {
+    border-left: 2px solid #ffffff !important;
+    border-right: 2px solid #ffffff !important;
+    border-bottom: 2px solid #ffffff !important;
+}
 """
 
 _DESKTOP_HEADLINES_CSS = """
@@ -1655,6 +1704,95 @@ _TOOLTIP_SCROLL_JS = """
             });
     };
 
+    const getGenericTooltipSlot = () => {
+        const header = document.querySelector('[data-testid="stHeader"]');
+        const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+        let viewLeft = VIEWPORT_PAD;
+        const viewRight = window.innerWidth - VIEWPORT_PAD;
+        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+        if (sidebar && sidebar.getAttribute("aria-expanded") === "true") {
+            const sidebarRight = sidebar.getBoundingClientRect().right;
+            viewLeft = Math.max(viewLeft, Math.round(sidebarRight + VIEWPORT_PAD));
+        }
+        const viewTop = Math.max(VIEWPORT_PAD, Math.round(headerBottom + VIEWPORT_PAD));
+        const bottomPad =
+            window.innerWidth <= MOBILE_MAX ? MOBILE_HEADLINES_BOTTOM_TAP_PAD : VIEWPORT_PAD;
+        const viewBottom = window.innerHeight - bottomPad;
+        const width = Math.round(
+            Math.min(viewRight - viewLeft, Math.max(280, window.innerWidth - 2 * VIEWPORT_PAD))
+        );
+        const left = Math.round(viewLeft + Math.max(0, (viewRight - viewLeft - width) / 2));
+        const top = viewTop;
+        const maxHeight = Math.max(120, viewBottom - top);
+        return { top, left, width, maxHeight };
+    };
+
+    const positionGenericTooltip = (wrap) => {
+        if (isDesktopLayoutViewport() || !wrap) {
+            return;
+        }
+        const tip = wrap.querySelector(":scope > .tip-text");
+        if (!tip) {
+            return;
+        }
+        const slot = getGenericTooltipSlot();
+        tip.style.setProperty("--tip-fixed-top", `${slot.top}px`);
+        tip.style.setProperty("--tip-fixed-left", `${slot.left}px`);
+        tip.style.setProperty("--tip-fixed-width", `${slot.width}px`);
+        tip.style.setProperty("--tip-fixed-max-height", `${slot.maxHeight}px`);
+        tip.style.setProperty("right", "auto", "important");
+        tip.style.setProperty("bottom", "auto", "important");
+        tip.style.setProperty("transform", "none", "important");
+    };
+
+    const scheduleGenericTooltipPosition = (wrap) => {
+        positionGenericTooltip(wrap);
+        window.requestAnimationFrame(() => positionGenericTooltip(wrap));
+    };
+
+    const repositionVisibleGenericTooltips = () => {
+        if (isDesktopLayoutViewport()) {
+            return;
+        }
+        document.querySelectorAll(".tip-wrap:not(.headlines-tip)").forEach((wrap) => {
+            const tip = wrap.querySelector(":scope > .tip-text");
+            if (!tip) {
+                return;
+            }
+            const styles = getComputedStyle(tip);
+            if (styles.visibility !== "hidden" && styles.opacity !== "0") {
+                scheduleGenericTooltipPosition(wrap);
+            }
+        });
+    };
+
+    const handleGenericTooltipInteraction = (event) => {
+        if (isDesktopLayoutViewport()) {
+            return;
+        }
+        const wrap = event.target?.closest?.(".tip-wrap:not(.headlines-tip)");
+        if (!wrap) {
+            return;
+        }
+        scheduleGenericTooltipPosition(wrap);
+    };
+
+    if (!window.__scoopGenericTooltipBound) {
+        window.__scoopGenericTooltipBound = true;
+        document.addEventListener("mouseover", handleGenericTooltipInteraction, true);
+        document.addEventListener("touchstart", handleGenericTooltipInteraction, {
+            passive: true,
+            capture: true,
+        });
+        window.addEventListener("resize", repositionVisibleGenericTooltips, { passive: true });
+        const genericTooltipSidebarObserver = new MutationObserver(repositionVisibleGenericTooltips);
+        genericTooltipSidebarObserver.observe(document.documentElement, {
+            attributes: true,
+            subtree: true,
+            attributeFilter: ["aria-expanded"],
+        });
+    }
+
     if (!window.__scoopTooltipScrollBound) {
         window.__scoopTooltipScrollBound = true;
 
@@ -1703,6 +1841,7 @@ _TOOLTIP_SCROLL_JS = """
             window.__scoopDesktopHeadlinesApi?.repositionOpenDesktopHeadlines();
             repositionOpenPhoneMobileHeadlines();
             repositionOpenResponsiveHeadlines();
+            repositionVisibleGenericTooltips();
         };
 
         window.__scoopDesktopHeadlinesWindowScroll = () => {
@@ -1877,6 +2016,12 @@ def install_tooltip_scroll_handler() -> None:
         f"<style id='scoop-ipad-mini-surface-duo-headlines-css'>{_IPAD_MINI_SURFACE_DUO_HEADLINES_CSS}</style>"
         f"<style id='scoop-asus-zenbook-fold-headlines-css'>{_ASUS_ZENBOOK_FOLD_HEADLINES_CSS}</style>"
         f"<style id='scoop-mobile-phone-headlines-fixed-css'>{_MOBILE_PHONE_HEADLINES_FIXED_CSS}</style>"
+        f"<style id='scoop-responsive-generic-tooltip-css'>{_RESPONSIVE_GENERIC_TOOLTIP_CSS}</style>"
+        f"<style id='scoop-dark-responsive-tip-underline-css'>{_DARK_RESPONSIVE_TIP_UNDERLINE_CSS}</style>"
+        f"<style id='scoop-dark-popup-outline-css'>{_DARK_POPUP_OUTLINE_CSS}</style>"
         f"<script>{_COMBINED_PAGE_JS}</script>",
         unsafe_allow_javascript=True,
     )
+    from theme_mode import inject_dark_mode_styles
+
+    inject_dark_mode_styles()

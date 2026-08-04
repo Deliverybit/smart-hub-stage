@@ -1,0 +1,349 @@
+"""Color-only dark mode overrides (layout/s sizing unchanged)."""
+
+DARK_MODE_CSS = """
+html,
+html body {
+    background-color: #0b1220 !important;
+    color: #e2e8f0 !important;
+}
+
+html [data-testid="stApp"],
+html .stApp,
+html [data-testid="stAppViewContainer"],
+html [data-testid="stMainBlockContainer"],
+html section.main {
+    background-color: #0b1220 !important;
+    color: #e2e8f0 !important;
+}
+
+html[data-scoop-theme="dark"] [data-testid="stHeader"],
+html[data-scoop-theme="dark"] [data-testid="stToolbar"] {
+    background-color: #0f172a !important;
+}
+
+html[data-scoop-theme="dark"] [data-testid="stSidebar"],
+html[data-scoop-theme="dark"] [data-testid="stSidebar"] > div,
+html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+    background-color: #111827 !important;
+    color: #e2e8f0 !important;
+}
+
+html[data-scoop-theme="dark"] h1,
+html[data-scoop-theme="dark"] h2,
+html[data-scoop-theme="dark"] h3,
+html[data-scoop-theme="dark"] h4,
+html[data-scoop-theme="dark"] h5,
+html[data-scoop-theme="dark"] h6,
+html[data-scoop-theme="dark"] p,
+html[data-scoop-theme="dark"] li,
+html[data-scoop-theme="dark"] span,
+html[data-scoop-theme="dark"] label,
+html[data-scoop-theme="dark"] [data-testid="stMarkdownContainer"] p,
+html[data-scoop-theme="dark"] [data-testid="stMarkdownContainer"] li,
+html[data-scoop-theme="dark"] [data-testid="stMarkdownContainer"] span,
+html[data-scoop-theme="dark"] [data-testid="stMarkdownContainer"] div,
+html[data-scoop-theme="dark"] .stMarkdown p,
+html[data-scoop-theme="dark"] .stCaption p {
+    color: #e2e8f0 !important;
+}
+
+html[data-scoop-theme="dark"] .sidebar-brand,
+html[data-scoop-theme="dark"] [data-testid="stSidebar"] .sidebar-brand {
+    background: #111827 !important;
+    color: #f1f5f9 !important;
+}
+
+html[data-scoop-theme="dark"] .sidebar-brand-text,
+html[data-scoop-theme="dark"] #scoop-title,
+html[data-scoop-theme="dark"] [data-testid="stSidebar"] .sidebar-brand-text,
+html[data-scoop-theme="dark"] [data-testid="stSidebar"] #scoop-title {
+    color: #f1f5f9 !important;
+    text-decoration-color: #94a3b8 !important;
+}
+
+html[data-scoop-theme="dark"] [data-testid="stSidebar"] h1,
+html[data-scoop-theme="dark"] [data-testid="stSidebar"] p,
+html[data-scoop-theme="dark"] [data-testid="stSidebar"] label,
+html[data-scoop-theme="dark"] [data-testid="stSidebar"] span,
+html[data-scoop-theme="dark"] [data-testid="stSidebar"] a,
+html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"] a,
+html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"] span,
+html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"] p {
+    color: #f1f5f9 !important;
+}
+
+html[data-scoop-theme="dark"] [data-testid="stMetricLabel"] p,
+html[data-scoop-theme="dark"] [data-testid="stMetricLabel"] div {
+    color: #cbd5e1 !important;
+}
+
+html[data-scoop-theme="dark"] [data-testid="stMetricValue"] > div {
+    color: #f8fafc !important;
+}
+
+html[data-scoop-theme="dark"] [data-testid="stTextInput"] label p,
+html[data-scoop-theme="dark"] [data-testid="stTextInput"] input,
+html[data-scoop-theme="dark"] div[data-baseweb="input"] input {
+    color: #f1f5f9 !important;
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+}
+
+html[data-scoop-theme="dark"] div[data-baseweb="input"] > div {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+}
+
+html[data-scoop-theme="dark"] .stAlert,
+html[data-scoop-theme="dark"] [data-testid="stAlert"],
+html[data-scoop-theme="dark"] .stInfo,
+html[data-scoop-theme="dark"] .stSuccess,
+html[data-scoop-theme="dark"] .stWarning,
+html[data-scoop-theme="dark"] .stError {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: #475569 !important;
+}
+
+html[data-scoop-theme="dark"] [data-testid="stMarkdownContainer"] table,
+html[data-scoop-theme="dark"] [data-testid="stTable"],
+html[data-scoop-theme="dark"] .stMarkdown table {
+    background-color: #111827 !important;
+    color: #e2e8f0 !important;
+}
+
+html[data-scoop-theme="dark"] [data-testid="stMarkdownContainer"] table th,
+html[data-scoop-theme="dark"] [data-testid="stMarkdownContainer"] table td,
+html[data-scoop-theme="dark"] [data-testid="stTable"] th,
+html[data-scoop-theme="dark"] [data-testid="stTable"] td,
+html[data-scoop-theme="dark"] .stMarkdown table th,
+html[data-scoop-theme="dark"] .stMarkdown table td {
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+}
+
+html[data-scoop-theme="dark"] .stMarkdown table tr:hover {
+    background-color: rgba(148, 163, 184, 0.12) !important;
+}
+
+html[data-scoop-theme="dark"] .stMarkdown .full-results-table .fr-label,
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table .fr-label,
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label,
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap {
+    color: #cbd5e1 !important;
+}
+
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val,
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap {
+    color: #e2e8f0 !important;
+}
+
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap {
+    color: #e2e8f0 !important;
+}
+
+@media (min-width: 1367px) {
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap:not(.headlines-tip) {
+    border-bottom-color: #64748b !important;
+}
+}
+
+@media (max-width: 1366px) {
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap:not(.headlines-tip),
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip),
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip),
+html[data-scoop-theme="dark"] .stMarkdown [data-testid="stMarkdownContainer"] .tip-wrap:not(.headlines-tip),
+html[data-scoop-theme="dark"] .stMarkdown div .tip-wrap:not(.headlines-tip) {
+    border-bottom: 2px dashed #ffffff !important;
+}
+
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip {
+    border-bottom: none !important;
+}
+
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .hl-tip-count {
+    border-bottom: 2px dashed #ffffff !important;
+    display: inline-block !important;
+    text-decoration: none !important;
+}
+}
+
+html[data-scoop-theme="dark"] [data-testid="stHorizontalBlock"] > div:has([data-testid="stMetric"]),
+html[data-scoop-theme="dark"] .stApp div[data-testid="metric-container"],
+html[data-scoop-theme="dark"] .stApp div[data-testid="metric-container"] + div[data-testid="stMarkdownContainer"],
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table tbody tr,
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table tbody td,
+html[data-scoop-theme="dark"] .stMarkdown .top-picks-wrap .top-picks-table tbody tr,
+html[data-scoop-theme="dark"] .stMarkdown .top-picks-wrap .top-picks-table tbody td {
+    background: #1e293b !important;
+    border-color: #475569 !important;
+    color: #e2e8f0 !important;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22) !important;
+}
+
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table tbody td {
+    border-bottom-color: #334155 !important;
+}
+
+html[data-scoop-theme="dark"] .stMarkdown .full-results-mobile-legend {
+    background: #1e293b !important;
+    border-color: #475569 !important;
+}
+
+html[data-scoop-theme="dark"] .stMarkdown .full-results-mobile-legend .fr-mobile-tip-row {
+    border-bottom-color: #334155 !important;
+}
+
+html[data-scoop-theme="dark"] .stMarkdown .full-results-mobile-legend p {
+    color: #cbd5e1 !important;
+}
+
+html[data-scoop-theme="dark"] .stMarkdown .full-results-mobile-legend strong {
+    color: #f1f5f9 !important;
+}
+
+html[data-scoop-theme="dark"] .tip-wrap .tip-count,
+html[data-scoop-theme="dark"] .tip-wrap .hl-tip-count {
+    color: #93c5fd !important;
+}
+
+html[data-scoop-theme="dark"] .tip-wrap .tip-text,
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text,
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap .tip-text {
+    background: #0f172a !important;
+    color: #e5e7eb !important;
+    border: 2px solid #ffffff !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
+}
+
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text,
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .tip-text {
+    background-color: #111827 !important;
+    color: #f1f5f9 !important;
+    border: 2px solid #ffffff !important;
+}
+
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text .hl-tip-heading,
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .tip-text .hl-tip-heading {
+    background-color: #111827 !important;
+    color: #f1f5f9 !important;
+    border: 2px solid #ffffff !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.45) !important;
+}
+
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll,
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll {
+    border-left: 2px solid #ffffff !important;
+    border-right: 2px solid #ffffff !important;
+    border-bottom: 2px solid #ffffff !important;
+}
+
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll,
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll li,
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll a {
+    color: #e2e8f0 !important;
+}
+
+html[data-scoop-theme="dark"] div[data-testid="stCheckbox"] {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+}
+
+html[data-scoop-theme="dark"] div[data-testid="stCheckbox"] label p {
+    color: #e2e8f0 !important;
+}
+
+html[data-scoop-theme="dark"] .disclaimer-footer,
+html[data-scoop-theme="dark"] .disclaimer-footer p,
+html[data-scoop-theme="dark"] .disclaimer-footer strong,
+html[data-scoop-theme="dark"] .disclaimer-footer a {
+    background-color: #0f172a !important;
+    color: #cbd5e1 !important;
+    border-color: #334155 !important;
+}
+
+html[data-scoop-theme="dark"] .scoop-selected-asset-card {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+    border-left-color: #60a5fa !important;
+}
+
+html[data-scoop-theme="dark"] .scoop-selected-asset-card .scoop-muted {
+    color: #cbd5e1 !important;
+}
+
+html[data-scoop-theme="dark"] .scoop-selected-asset-card .scoop-title-text {
+    color: #f8fafc !important;
+}
+
+html[data-scoop-theme="dark"] .scoop-selected-asset-card .scoop-subtitle-text {
+    color: #cbd5e1 !important;
+}
+
+html[data-scoop-theme="dark"] .scoop-mood-summary {
+    background-color: #1e293b !important;
+    border-color: #475569 !important;
+}
+
+html[data-scoop-theme="dark"] .scoop-mood-summary .scoop-mood-label {
+    color: #f1f5f9 !important;
+}
+
+html[data-scoop-theme="dark"] .scoop-mood-summary .scoop-mood-detail {
+    color: #cbd5e1 !important;
+}
+
+html[data-scoop-theme="dark"] .mood-feed {
+    background-color: #111827 !important;
+    border-color: #475569 !important;
+}
+
+html[data-scoop-theme="dark"] .mood-feed table th,
+html[data-scoop-theme="dark"] .mood-feed table td,
+html[data-scoop-theme="dark"] .mood-feed table a {
+    color: #e2e8f0 !important;
+    border-color: #475569 !important;
+}
+
+html[data-scoop-theme="dark"] a {
+    color: #93c5fd !important;
+}
+
+html[data-scoop-theme="dark"] hr.search-52w-range-divider {
+    border-color: #475569 !important;
+    background-color: #475569 !important;
+}
+
+html[data-scoop-theme="dark"] [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] button,
+html[data-scoop-theme="dark"] [data-testid="stHeader"] [data-testid="stExpandSidebarButton"] button,
+html[data-scoop-theme="dark"] [data-testid="stHeader"] [data-testid="collapsedControl"] button {
+    color: #e2e8f0 !important;
+}
+
+html[data-scoop-theme="dark"] .js-plotly-plot .plotly .bg {
+    fill: #111827 !important;
+}
+
+html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p,
+html[data-scoop-theme="dark"] [data-testid="stSidebar"] .stCheckbox label p {
+    color: #e2e8f0 !important;
+}
+
+html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-baseweb="switch"] {
+    background-color: #334155 !important;
+}
+
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table tbody td,
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table tbody td a,
+html[data-scoop-theme="dark"] .stMarkdown .top-picks-wrap .top-picks-table tbody td,
+html[data-scoop-theme="dark"] .stMarkdown .top-picks-wrap .top-picks-table tbody td a {
+    color: #e2e8f0 !important;
+}
+
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table thead th,
+html[data-scoop-theme="dark"] .stMarkdown .top-picks-wrap .top-picks-table thead th {
+    background-color: #0f172a !important;
+    color: #f1f5f9 !important;
+    border-color: #475569 !important;
+}
+"""

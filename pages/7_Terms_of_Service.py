@@ -4,6 +4,7 @@ Terms of Service & Financial Disclaimer
 
 import streamlit as st
 from branding import logo_path_str, render_environment_banner
+from theme_mode import install_theme_support, render_dark_mode_toggle, inject_dark_mode_styles
 from tooltip_scroll import install_responsive_sidebar_handler
 
 st.set_page_config(
@@ -12,6 +13,7 @@ st.set_page_config(
     layout="wide",
 )
 render_environment_banner(st)
+install_theme_support()
 install_responsive_sidebar_handler()
 
 # ── Global responsive styling (shared with other pages) ───────────────
@@ -1916,6 +1918,9 @@ st.sidebar.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+render_dark_mode_toggle()
+st.sidebar.markdown("---")
 st.sidebar.page_link("pages/1_NYSE_Top_10.py", label="📊 NYSE 10")
 st.sidebar.page_link("pages/2_NASDAQ_Top_10.py", label="💹 NASDAQ 10")
 st.sidebar.page_link("pages/3_Crypto_Top_10.py", label="🪙 Crypto 10")
@@ -2094,3 +2099,5 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+inject_dark_mode_styles()

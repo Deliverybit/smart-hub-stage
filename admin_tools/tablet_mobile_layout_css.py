@@ -290,28 +290,45 @@ MOBILE_CARD_FIELD_ORDER = """
         }
 """
 
+# Mobile/tablet: keep generic field tooltips (Name, % Above Low, Market Mood, etc.) in viewport.
+RESPONSIVE_GENERIC_TOOLTIP_LAYOUT = """
+        .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text,
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip) .tip-text,
+        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text {
+            position: fixed !important;
+            left: var(--tip-fixed-left, 0.75rem) !important;
+            right: auto !important;
+            top: var(--tip-fixed-top, 4.5rem) !important;
+            bottom: auto !important;
+            transform: none !important;
+            width: var(--tip-fixed-width, calc(100vw - 1.5rem)) !important;
+            min-width: 0 !important;
+            max-width: var(--tip-fixed-width, calc(100vw - 1.5rem)) !important;
+            max-height: var(--tip-fixed-max-height, min(60dvh, calc(100dvh - 6rem))) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            word-break: break-word !important;
+            overflow-wrap: anywhere !important;
+            text-align: left !important;
+            z-index: 100001 !important;
+            pointer-events: auto !important;
+            font-size: clamp(1rem, 2.2vw, 1.2rem) !important;
+            line-height: 1.55 !important;
+            padding: 0.95rem 1.05rem !important;
+        }
+"""
+
 # Shared mobile card layout for screener Full Results + Top Picks + tooltips/headlines.
 TABLET_SCREENER_MOBILE_LAYOUT = (
     """
         .stApp { overflow-x: hidden !important; }
 """
     + TABLET_TYPE
+    + RESPONSIVE_GENERIC_TOOLTIP_LAYOUT
     + """
-        .tip-wrap .tip-text {
-            position: fixed !important;
-            left: auto !important;
-            right: 0 !important;
-            top: 20vh !important;
-            bottom: auto !important;
-            transform: none !important;
-            width: min(34rem, 92vw) !important;
-            max-width: 92vw !important;
-            min-width: 0 !important;
-            margin: 0 !important;
-            font-size: clamp(1rem, 2.2vw, 1.2rem) !important;
-            line-height: 1.55 !important;
-            padding: 1rem 1.15rem !important;
-        }
 
         .stMarkdown .full-results-wrap .full-results-table .fr-label {
             display: inline-block !important;
@@ -492,36 +509,6 @@ TABLET_SCREENER_MOBILE_LAYOUT = (
             text-align: right !important;
             overflow-wrap: anywhere !important;
             word-break: break-word !important;
-        }
-
-        .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text {
-            position: absolute !important;
-            left: 0 !important;
-            right: auto !important;
-            top: auto !important;
-            bottom: calc(100% + 1.25rem) !important;
-            width: min(22rem, calc(100vw - 2rem)) !important;
-            min-width: 0 !important;
-            max-width: min(22rem, calc(100vw - 2rem)) !important;
-            max-height: min(72vh, 28rem) !important;
-            overflow-x: hidden !important;
-            overflow-y: auto !important;
-            -webkit-overflow-scrolling: touch !important;
-            transform: none !important;
-            margin: 0 !important;
-            box-sizing: border-box !important;
-            word-break: break-word !important;
-            overflow-wrap: anywhere !important;
-            text-align: left !important;
-            z-index: 100001 !important;
-            pointer-events: none !important;
-            font-size: clamp(1rem, 2.2vw, 1.2rem) !important;
-            line-height: 1.55 !important;
-            padding: 0.95rem 1.05rem !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text {
-            left: auto !important;
-            right: 0 !important;
         }
 
         .stMarkdown .tip-wrap.headlines-tip { cursor: default !important; }
@@ -1268,21 +1255,8 @@ TABLET_SEARCH_MOBILE_LAYOUT = (
             min-width: 100% !important;
         }
 
-        .tip-wrap .tip-text {
-            position: fixed !important;
-            left: 50% !important;
-            right: auto !important;
-            top: 20vh !important;
-            bottom: auto !important;
-            transform: translateX(-50%) !important;
-            width: min(34rem, 92vw) !important;
-            max-width: 92vw !important;
-            margin: 0 !important;
-            font-size: clamp(1rem, 2.2vw, 1.2rem) !important;
-            line-height: 1.55 !important;
-            padding: 1rem 1.15rem !important;
-        }
 """
+    + RESPONSIVE_GENERIC_TOOLTIP_LAYOUT
 )
 
 TABLET_TERMS_MOBILE_LAYOUT = TABLET_TYPE
