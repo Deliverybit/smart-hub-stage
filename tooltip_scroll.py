@@ -1,6 +1,7 @@
 import streamlit as st
 
 from admin_tools.tablet_mobile_layout_css import (
+    DESKTOP_SIDEBAR_LAYOUT,
     MOBILE_CARD_FIELD_ORDER,
     MOBILE_HEADLINES_CARD_OVERLAY,
     RESPONSIVE_GENERIC_TOOLTIP_LAYOUT,
@@ -1951,11 +1952,46 @@ _DESKTOP_SIDEBAR_JS = """
         }
     };
 
+    const applyDesktopSidebarLayout = () => {
+        if (!isDesktopViewport()) {
+            return;
+        }
+        const view = document.querySelector('[data-testid="stAppViewContainer"]');
+        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+        if (!view || !sidebar) {
+            return;
+        }
+        view.style.setProperty("display", "flex", "important");
+        view.style.setProperty("flex-direction", "row", "important");
+        view.style.setProperty("position", "relative", "important");
+        sidebar.style.setProperty("flex", "0 0 var(--scoop-sidebar-width)", "important");
+        sidebar.style.setProperty("position", "relative", "important");
+        sidebar.style.setProperty("transform", "none", "important");
+        sidebar.style.setProperty("visibility", "visible", "important");
+        sidebar.style.setProperty("overflow", "visible", "important");
+        sidebar.style.setProperty("z-index", "2", "important");
+        sidebar.style.setProperty("height", "100vh", "important");
+        sidebar.style.setProperty("max-height", "100vh", "important");
+        const inner = sidebar.querySelector('[data-testid="stSidebarContent"]') || sidebar.firstElementChild;
+        if (inner) {
+            inner.style.setProperty("overflow-x", "visible", "important");
+            inner.style.setProperty("overflow-y", "auto", "important");
+            inner.style.setProperty("height", "100vh", "important");
+            inner.style.setProperty("max-height", "100vh", "important");
+        }
+        const mainWrap = view.querySelector(':scope > div:not([data-testid="stSidebar"])');
+        if (mainWrap) {
+            mainWrap.style.setProperty("flex", "1 1 auto", "important");
+            mainWrap.style.setProperty("min-width", "0", "important");
+        }
+    };
+
     const ensureDesktopSidebarOpen = () => {
         if (!isDesktopViewport()) {
             return;
         }
         expandSidebarIfNeeded();
+        applyDesktopSidebarLayout();
     };
 
     if (window.__scoopDesktopSidebarBound) {
@@ -2000,6 +2036,7 @@ _COMBINED_PAGE_JS = _TOOLTIP_SCROLL_JS + _RESPONSIVE_SIDEBAR_JS + _DESKTOP_SIDEB
 def install_responsive_sidebar_handler() -> None:
     """Responsive sidebar close (tablet) + always-open sidebar (desktop)."""
     st.html(
+        f"<style id='scoop-desktop-sidebar-layout-css'>{DESKTOP_SIDEBAR_LAYOUT}</style>"
         f"<script>{_RESPONSIVE_SIDEBAR_JS}</script>"
         f"<script>{_DESKTOP_SIDEBAR_JS}</script>",
         unsafe_allow_javascript=True,
@@ -2019,6 +2056,7 @@ def install_tooltip_scroll_handler() -> None:
         f"<style id='scoop-responsive-generic-tooltip-css'>{_RESPONSIVE_GENERIC_TOOLTIP_CSS}</style>"
         f"<style id='scoop-dark-responsive-tip-underline-css'>{_DARK_RESPONSIVE_TIP_UNDERLINE_CSS}</style>"
         f"<style id='scoop-dark-popup-outline-css'>{_DARK_POPUP_OUTLINE_CSS}</style>"
+        f"<style id='scoop-desktop-sidebar-layout-css'>{DESKTOP_SIDEBAR_LAYOUT}</style>"
         f"<script>{_COMBINED_PAGE_JS}</script>",
         unsafe_allow_javascript=True,
     )

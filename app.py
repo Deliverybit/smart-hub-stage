@@ -2404,6 +2404,13 @@ st.markdown(
 
     }
 
+    @media (min-width: 1367px) {
+        .sidebar-brand {
+            width: 100% !important;
+            margin: 0.15rem 0 1rem 0 !important;
+            white-space: normal !important;
+        }
+    }
 
     </style>
     """,

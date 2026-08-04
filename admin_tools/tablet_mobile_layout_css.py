@@ -1228,6 +1228,99 @@ DESKTOP_SIDEBAR = """
         }
 """
 
+# Injected last on every page — beats tablet overlay rules and fixes desktop clipping.
+DESKTOP_SIDEBAR_LAYOUT = """
+@media (min-width: 1367px) {
+    /* Desktop: flex split sidebar + main; sidebar always visible, no horizontal clip. */
+    [data-testid="stAppViewContainer"] {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: stretch !important;
+        position: relative !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+    }
+    section[data-testid="stSidebar"],
+    section[data-testid="stSidebar"][aria-expanded="false"],
+    section[data-testid="stSidebar"][aria-expanded="true"] {
+        flex: 0 0 var(--scoop-sidebar-width) !important;
+        align-self: flex-start !important;
+        position: relative !important;
+        transform: none !important;
+        translate: none !important;
+        transition: none !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        overflow: visible !important;
+        z-index: 2 !important;
+        min-width: var(--scoop-sidebar-width) !important;
+        width: var(--scoop-sidebar-width) !important;
+        max-width: min(92vw, 36rem) !important;
+        box-shadow: none !important;
+        left: auto !important;
+        top: auto !important;
+        height: 100vh !important;
+        min-height: 100vh !important;
+        max-height: 100vh !important;
+    }
+    [data-testid="stSidebar"] > div,
+    [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+        overflow-x: visible !important;
+        overflow-y: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        box-sizing: border-box !important;
+    }
+    [data-testid="stAppViewContainer"] > div:not([data-testid="stSidebar"]) {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        width: auto !important;
+        max-width: none !important;
+    }
+    [data-testid="stSidebarBackdrop"] {
+        display: none !important;
+    }
+    [data-testid="stExpandSidebarButton"],
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="collapsedControl"],
+    [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+    [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+    [data-testid="stHeader"] [data-testid="collapsedControl"] {
+        display: none !important;
+    }
+    .stApp:has(section[data-testid="stSidebar"]) [data-testid="stAppViewContainer"]::before {
+        display: none !important;
+        content: none !important;
+    }
+    .sidebar-brand {
+        width: 100% !important;
+        margin: 0.15rem 0 1rem 0 !important;
+        padding: 0.7rem 1rem !important;
+        box-sizing: border-box !important;
+        white-space: normal !important;
+    }
+    .sidebar-brand-text,
+    [data-testid="stSidebar"] #scoop-title {
+        white-space: normal !important;
+        overflow-wrap: break-word !important;
+        word-break: normal !important;
+        max-width: 100% !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stCheckbox"],
+    [data-testid="stSidebar"] [data-testid="stTextInput"],
+    [data-testid="stSidebar"] [data-testid="stPageLink"],
+    [data-testid="stSidebar"] [data-testid="element-container"] {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+}
+"""
+
 TABLET_SEARCH_MOBILE_LAYOUT = (
     """
         .stApp { overflow-x: hidden !important; }
