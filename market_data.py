@@ -13,6 +13,7 @@ class MarketData:
         self.base_url = "https://www.alphavantage.co/query"
         self.session = requests.Session()
         self._daily_cache: dict[tuple[str, str], pd.DataFrame] = {}
+        self._news_cache: dict[tuple[str, bool], list] = {}
 
     _CRYPTO_SYMBOLS = {
         "BTC", "ETH", "DOGE", "SOL", "ADA", "SHIB", "XRP", "BNB", "AVAX",
@@ -46,8 +47,8 @@ class MarketData:
     }
 
     _INDEX_SYMBOLS = {
-        "^IXIC": "IXIC",
-        "^NYA": "NYA",
+        "^IXIC": "QQQ",   # NASDAQ Composite not on AV; QQQ ETF proxy
+        "^NYA": "DIA",    # NYSE Composite not on AV; Dow ETF proxy
         "^GSPC": "SPY",
         "^DJI": "DIA",
     }
@@ -155,9 +156,15 @@ class MarketData:
         except (TypeError, ValueError):
             return None
 
+    def _daily_cache_key(self, ticker: str, outputsize: str) -> tuple:
+        symbol = self._format_ticker(ticker)
+        if self._is_crypto(ticker):
+            return (symbol, "digital")
+        return (symbol, outputsize)
+
     def _daily_history_frame(self, ticker: str, outputsize: str = "full") -> pd.DataFrame:
         symbol = self._format_ticker(ticker)
-        cache_key = (symbol, outputsize)
+        cache_key = self._daily_cache_key(ticker, outputsize)
         if cache_key in self._daily_cache:
             return self._daily_cache[cache_key].copy()
 
@@ -240,6 +247,53 @@ class MarketData:
             return latest, 0.0
         return latest, ((latest - previous) / previous) * 100
 
+    def get_analyze_price_bundle(self, ticker: str, days=30) -> dict | None:
+        """Single-pass price history + 52-week stats for Analyze (one API call for crypto)."""
+        df = self._daily_history_frame(ticker, outputsize="full")
+        if df.empty:
+            return None
+
+        year_df = df.tail(365)
+        low_series = year_df["low"].dropna()
+        high_series = year_df["high"].dropna()
+
+        latest_price = float(df["price"].iloc[-1])
+        week52_low = float(low_series.min()) if not low_series.empty else None
+        week52_high = float(high_series.max()) if not high_series.empty else None
+
+        low_date = high_date = None
+        if not low_series.empty:
+            low_date = year_df.loc[year_df["low"].idxmin(), "date"].strftime("%b %d, %Y")
+        if not high_series.empty:
+            high_date = year_df.loc[year_df["high"].idxmax(), "date"].strftime("%b %d, %Y")
+
+        if days == "max":
+            chart_df = df
+        else:
+            try:
+                chart_df = df.tail(int(days))
+            except (TypeError, ValueError):
+                chart_df = df
+
+        chart_df = chart_df.copy()
+        chart_df["change_pct"] = chart_df["price"].pct_change()
+        history = []
+        for _, row in chart_df.iterrows():
+            history.append({
+                "date": row["date"].strftime("%Y-%m-%d"),
+                "price": row["price"],
+                "change_pct": row["change_pct"] if not pd.isna(row["change_pct"]) else 0,
+            })
+
+        return {
+            "history": history,
+            "latest_price": latest_price,
+            "week52_low": week52_low,
+            "week52_high": week52_high,
+            "low_date": low_date,
+            "high_date": high_date,
+        }
+
     def get_market_snapshot(self, ticker):
         """Return current price plus 52-week low/high values for screeners."""
         df = self._daily_history_frame(ticker, outputsize="full").tail(365)
@@ -289,7 +343,11 @@ class MarketData:
         """Pulls headline + source URL pairs for the specific asset."""
         symbol = self._format_ticker(ticker)
         is_crypto = self._is_crypto(ticker)
-        params = {"function": "NEWS_SENTIMENT", "limit": 50 if is_crypto else 10}
+        cache_key = (symbol, is_crypto)
+        if cache_key in self._news_cache:
+            return [dict(item) for item in self._news_cache[cache_key]]
+
+        params = {"function": "NEWS_SENTIMENT", "limit": 10}
         if is_crypto:
             params["tickers"] = f"CRYPTO:{symbol}"
         elif symbol:
@@ -345,4 +403,6 @@ class MarketData:
             if len(headlines) >= 10:
                 break
 
-        return headlines[:10] if headlines else [{"title": f"No current news found for {symbol}", "url": ""}]
+        result = headlines[:10] if headlines else [{"title": f"No current news found for {symbol}", "url": ""}]
+        self._news_cache[cache_key] = [dict(item) for item in result]
+        return [dict(item) for item in result]

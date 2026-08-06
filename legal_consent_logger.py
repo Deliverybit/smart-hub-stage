@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import ipaddress
 import hashlib
+import json
 import os
 import sqlite3
 import uuid
@@ -24,6 +25,7 @@ from vpn_detection import detect_vpn_proxy
 
 _SQLITE_PATH = Path(__file__).resolve().parent / "legal_consents.db"
 _DEFAULT_TIMEZONE = os.getenv("CONSENT_DEFAULT_TIMEZONE", "America/Chicago").strip()
+TERMS_STORAGE_KEY = "scoop-terms"
 
 
 def _postgres_url() -> str:
@@ -571,4 +573,104 @@ def log_terms_acceptance(
     except Exception:
         # Never block user flow on logging failures.
         pass
+
+
+def terms_accepted(st_module, accepted_key: str) -> bool:
+    """Return whether the user accepted terms for this page/session flag."""
+    return bool(st_module.session_state.get(accepted_key, False))
+
+
+def _terms_from_cookie(headers: dict[str, str], consent_key: str) -> bool:
+    raw = _cookie_value(headers, TERMS_STORAGE_KEY)
+    if not raw:
+        return False
+    try:
+        data = json.loads(raw)
+        return bool(data.get(consent_key))
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return False
+
+
+def persist_terms_to_browser(consent_key: str) -> None:
+    """Remember terms acceptance in a cookie + localStorage (survives full navigations)."""
+    import streamlit as st
+
+    ck = json.dumps(consent_key)
+    storage = json.dumps(TERMS_STORAGE_KEY)
+    st.components.v1.html(
+        f"""
+<script>
+(function() {{
+    try {{
+        const storageKey = {storage};
+        const consentKey = {ck};
+        const read = document.cookie.split(";").map(function(s) {{ return s.trim(); }})
+            .find(function(s) {{ return s.indexOf(storageKey + "=") === 0; }});
+        let data = {{}};
+        if (read) {{
+            try {{
+                data = JSON.parse(decodeURIComponent(read.split("=")[1]));
+            }} catch (e) {{}}
+        }}
+        data[consentKey] = true;
+        const encoded = encodeURIComponent(JSON.stringify(data));
+        document.cookie = storageKey + "=" + encoded + "; path=/; max-age=31536000; samesite=lax";
+        localStorage.setItem(storageKey, JSON.stringify(data));
+    }} catch (e) {{}}
+}})();
+</script>
+""",
+        height=0,
+    )
+
+
+def restore_terms_from_browser(
+    st_module,
+    consent_key: str,
+    *,
+    session_flag: str | None = None,
+) -> bool:
+    """Hydrate session terms flags from the scoop-terms cookie when present."""
+    flag = session_flag or consent_key
+    if terms_accepted(st_module, flag):
+        return True
+
+    if _terms_from_cookie(_normalized_headers(st_module), consent_key):
+        st_module.session_state[flag] = True
+        return True
+
+    return True
+
+
+def render_terms_gate(
+    st_module,
+    consent_key: str,
+    checkbox_label: str,
+    *,
+    accepted_key: str | None = None,
+    warning_text: str = "Please agree to the **Disclaimer & Terms of Service** to view results.",
+) -> bool:
+    """Show the terms gate when needed; persist acceptance across reruns."""
+    flag = accepted_key or consent_key
+    if terms_accepted(st_module, flag):
+        persisted_key = f"_scoop_terms_persisted::{consent_key}"
+        if not st_module.session_state.get(persisted_key):
+            persist_terms_to_browser(consent_key)
+            st_module.session_state[persisted_key] = True
+        return True
+    if not restore_terms_from_browser(st_module, consent_key, session_flag=flag):
+        return False
+    if terms_accepted(st_module, flag):
+        persisted_key = f"_scoop_terms_persisted::{consent_key}"
+        if not st_module.session_state.get(persisted_key):
+            persist_terms_to_browser(consent_key)
+            st_module.session_state[persisted_key] = True
+        return True
+    st_module.warning(warning_text)
+    if st_module.checkbox(checkbox_label, key=f"{consent_key}__widget"):
+        st_module.session_state[flag] = True
+        persist_terms_to_browser(consent_key)
+        log_terms_acceptance(st_module, consent_key=consent_key)
+        st_module.rerun()
+    return False
 

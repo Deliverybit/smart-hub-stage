@@ -10,12 +10,12 @@ import streamlit as st
 import pandas as pd
 from textblob import TextBlob
 from datetime import datetime
-from legal_consent_logger import ensure_timezone_cookie, log_terms_acceptance
+from legal_consent_logger import ensure_timezone_cookie, log_terms_acceptance, render_terms_gate, terms_accepted
 from branding import logo_path_str, render_environment_banner
 from theme_mode import install_theme_support, render_dark_mode_toggle
 from market_data import MarketData
 from app_config import get_screener_symbol_limit, SCREENER_CACHE_VERSION
-from screener_headlines import enrich_headline_sentiment
+from screener_headlines import display_results_need_headlines, enrich_headline_sentiment
 from screener_page_data import load_screener_page_data
 from screener_selection import (
     MAX_PAD_CAP_PCT,
@@ -24,6 +24,7 @@ from screener_selection import (
     proximity_how_it_works,
     selection_status_message,
 )
+from screener_table import ANALYZE_COLUMN_TIP, analyze_link_html, build_source_ticker_map
 from tooltip_scroll import install_tooltip_scroll_handler
 import html
 
@@ -4061,10 +4062,9 @@ st.sidebar.page_link("pages/2_NASDAQ_Top_10.py", label="💹 NASDAQ 10")
 st.sidebar.page_link("pages/3_Crypto_Top_10.py", label="🪙 Crypto 10")
 st.sidebar.page_link("pages/5_CME_Top_10.py", label="🌾 CME Commodities 10")
 st.sidebar.page_link("pages/6_ICE_Top_10.py", label="🛢️ ICE Commodities 10")
-st.sidebar.page_link("app.py", label="🔎 Search")
 st.sidebar.markdown("---")
 st.sidebar.page_link("pages/7_Terms_of_Service.py", label="📜 Terms of Service")
-agreed = st.session_state.get("agree_terms_crypto_top10", False)
+agreed = terms_accepted(st, "agree_terms_crypto_top10")
 ensure_timezone_cookie(st)
 if agreed:
     log_terms_acceptance(st, consent_key="agree_terms_crypto_top10")
@@ -4347,14 +4347,12 @@ def _run_screen(_cache_version: int = SCREENER_CACHE_VERSION):
             results.append(row)
     return results, datetime.now().strftime("%b %d, %Y  %I:%M %p")
 
-if not agreed:
-    st.warning("Please agree to the **Disclaimer & Terms of Service** to view results.")
-    agreed = st.checkbox(
-        "I agree to the [Disclaimer & Terms](/Terms_of_Service)",
-        key="agree_terms_crypto_top10",
-    )
-    if agreed:
-        log_terms_acceptance(st, consent_key="agree_terms_crypto_top10")
+if not render_terms_gate(
+    st,
+    "agree_terms_crypto_top10",
+    "I agree to the [Disclaimer & Terms](/Terms_of_Service)",
+):
+    pass
 else:
     loaded = load_screener_page_data(
         "CRYPTO",
@@ -4392,7 +4390,7 @@ else:
     else:
         df = pd.DataFrame(results)
         df = df.sort_values("% Above Low", ascending=True).reset_index(drop=True)
-        if not loaded.headlines_enriched:
+        if not loaded.headlines_enriched and display_results_need_headlines(results):
             df = enrich_headline_sentiment(df, get_market_data())
         df["Headlines"] = df["Headlines"].clip(upper=10)
         df["_headline_texts"] = df["_headline_texts"].apply(lambda items: items[:10])
@@ -4466,12 +4464,15 @@ else:
             urls = r.get("_headline_urls", [])
             headline_map[r["Ticker"]] = list(zip(texts, urls))
 
+        source_ticker_map = build_source_ticker_map(df)
+
         display_df = df.drop(columns=["_source_ticker", "_headline_texts", "_headline_urls"], errors="ignore").copy()
         display_df["Price"] = display_df["Price"].apply(_format_crypto_price)
         display_df["52W Low"] = display_df["52W Low"].apply(_format_crypto_price)
         display_df["52W High"] = display_df["52W High"].apply(_format_crypto_price)
         display_df["% Above Low"] = display_df["% Above Low"].apply(lambda x: f"{x:.2f}%")
         display_df["Headline Sentiment"] = display_df["Headline Sentiment"].apply(lambda x: f"{x:+.3f}")
+        display_df["Analyze"] = ""
         display_df = display_df[order_full_results_columns(display_df.columns)]
 
         COLUMN_TIPS = {
@@ -4480,6 +4481,7 @@ else:
             "Headlines": "Number of recent news headlines found for this crypto. More headlines give a more reliable sentiment reading.",
             "Market Mood": MARKET_MOOD_TIP,
             "% Above Low": "How far the current price is above the 52-week low, expressed as a percentage. Lower is closer to the floor.",
+            "Analyze": ANALYZE_COLUMN_TIP,
         }
 
         def _tip(text, tooltip, anchor_id: str = ""):
@@ -4561,6 +4563,9 @@ else:
                             cells += _td(c, _headlines_tip(val, hl_pairs, idx_row), COLUMN_TIPS.get(c, ""))
                         else:
                             cells += _td(c, str(val), COLUMN_TIPS.get(c, ""))
+                    elif c == "Analyze":
+                        src = source_ticker_map.get(r["Ticker"], r["Ticker"])
+                        cells += _td(c, analyze_link_html(src), COLUMN_TIPS.get(c, ""))
                     else:
                         cells += _td(c, str(val), COLUMN_TIPS.get(c, ""))
                 rows_html += f"<tr>{cells}</tr>"
@@ -4591,7 +4596,7 @@ else:
             |-----------|-------|
             | **Near 52-week low** | Price is within 30% of the lowest price in the past year (15% preferred) |
             | **No scandal headlines** | Recent news contains no keywords related to fraud, scams, rug-pulls, or hacks |
-            | **Headline context** | Detailed headline sentiment is available on the Search page |
+            | **Headline context** | Click **Analyze** for detailed headline sentiment and charts |
             | **Coinbase listed** | All cryptos in this screen are available for purchase on Coinbase |
 
             > **Disclaimer:** This is an automated screen — not financial advice.

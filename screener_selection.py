@@ -151,6 +151,7 @@ _FULL_RESULTS_COLUMN_ORDER = (
     "Headlines",
     "Market Mood",
     "Headline Sentiment",
+    "Analyze",
 )
 
 

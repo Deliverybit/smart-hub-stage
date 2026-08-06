@@ -1,3 +1,5 @@
+import json
+
 import streamlit as st
 
 from admin_tools.tablet_mobile_layout_css import (
@@ -5,6 +7,7 @@ from admin_tools.tablet_mobile_layout_css import (
     MOBILE_CARD_FIELD_ORDER,
     MOBILE_HEADLINES_CARD_OVERLAY,
     RESPONSIVE_GENERIC_TOOLTIP_LAYOUT,
+    RESPONSIVE_SIDEBAR_BOOTSTRAP,
     SIDEBAR_NAV_COMPACT,
 )
 
@@ -438,16 +441,50 @@ _ASUS_ZENBOOK_FOLD_HEADLINES_CSS = f"""
 }}
 """
 
-_RESPONSIVE_SIDEBAR_JS = """
+_RESPONSIVE_DOC_HELPER_JS = """
+const __scoopGetAppDoc = () => {
+    try {
+        const parentDoc = window.parent && window.parent.document;
+        if (parentDoc && parentDoc.querySelector('[data-testid="stAppViewContainer"]')) {
+            return parentDoc;
+        }
+    } catch (e) {}
+    return document;
+};
+const __scoopGetAppWin = () => __scoopGetAppDoc().defaultView || window;
+const __scoopViewportWidth = () => __scoopGetAppWin().innerWidth || window.innerWidth;
+const __scoopViewportHeight = () => __scoopGetAppWin().innerHeight || window.innerHeight;
+const __scoopIsAnalyzePage = () => {
+    try {
+        return /Analyze/i.test(__scoopGetAppWin().location.pathname || "");
+    } catch (e) {
+        return false;
+    }
+};
+"""
+
+_RESPONSIVE_LAYOUT_CORE_JS = (
+    """
 (() => {
-    /* ≤743px = phone; 744px = iPad Mini portrait; overlay sidebar through tablet/hub range. */
+"""
+    + _RESPONSIVE_DOC_HELPER_JS
+    + """
+    const appWin = __scoopGetAppWin();
+    const doc = __scoopGetAppDoc();
+
+    if (appWin.__scoopLayout) {
+        return;
+    }
+
     const PHONE_MAX = 743;
     const TABLET_MIN = 744;
     const TABLET_MAX = 1366;
-    const isPhoneViewport = () => window.innerWidth <= PHONE_MAX;
+    const DESKTOP_MIN = 1367;
+
+    const isPhoneViewport = () => __scoopViewportWidth() <= PHONE_MAX;
     const isSurfaceDuoViewport = () => {
-        const w = window.innerWidth;
-        const h = window.innerHeight;
+        const w = __scoopViewportWidth();
+        const h = __scoopViewportHeight();
         return (
             w === 540 ||
             (w === 720 && h <= 541) ||
@@ -455,16 +492,16 @@ _RESPONSIVE_SIDEBAR_JS = """
         );
     };
     const isIpad14ProMaxViewport = () => {
-        const w = window.innerWidth;
-        const h = window.innerHeight;
+        const w = __scoopViewportWidth();
+        const h = __scoopViewportHeight();
         return (
             (w >= 1028 && w <= 1036 && h >= 1370) ||
             (w >= 1370 && w <= 1382 && h <= 1040)
         );
     };
     const isAsusZenbookFoldViewport = () => {
-        const w = window.innerWidth;
-        const h = window.innerHeight;
+        const w = __scoopViewportWidth();
+        const h = __scoopViewportHeight();
         const near853 = (value) => value >= 849 && value <= 857;
         const near1280 = (value) => value >= 1276 && value <= 1284;
         const near1707 = (value) => value >= 1700 && value <= 1714;
@@ -483,7 +520,278 @@ _RESPONSIVE_SIDEBAR_JS = """
         isSurfaceDuoViewport() ||
         isIpad14ProMaxViewport() ||
         isAsusZenbookFoldViewport() ||
-        (window.innerWidth >= TABLET_MIN && window.innerWidth <= TABLET_MAX);
+        (__scoopViewportWidth() >= TABLET_MIN && __scoopViewportWidth() <= TABLET_MAX);
+    const isDesktopViewport = () =>
+        __scoopViewportWidth() >= DESKTOP_MIN && !isAsusZenbookFoldViewport();
+
+    const DESKTOP_INLINE_PROPS = {
+        view: ["display", "flex-direction", "position", "width", "max-width", "margin-left", "padding-left"],
+        sidebar: [
+            "flex", "position", "transform", "translate", "transition", "visibility", "opacity",
+            "overflow", "z-index", "height", "max-height", "min-height", "min-width", "width",
+            "max-width", "left", "top", "box-shadow", "pointer-events", "align-self",
+        ],
+        inner: ["overflow-x", "overflow-y", "height", "max-height", "width", "max-width"],
+        mainWrap: ["flex", "min-width", "width", "max-width"],
+        mainSection: ["width", "max-width"],
+    };
+
+    const clearInlineProps = (node, props) => {
+        if (!node) {
+            return;
+        }
+        props.forEach((prop) => node.style.removeProperty(prop));
+    };
+
+    const clearDesktopInlineLayout = () => {
+        const view = doc.querySelector('[data-testid="stAppViewContainer"]');
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+        clearInlineProps(view, DESKTOP_INLINE_PROPS.view);
+        clearInlineProps(sidebar, DESKTOP_INLINE_PROPS.sidebar);
+        const inner =
+            sidebar?.querySelector('[data-testid="stSidebarContent"]') ||
+            sidebar?.firstElementChild;
+        clearInlineProps(inner, DESKTOP_INLINE_PROPS.inner);
+        const mainWrap = view?.querySelector(':scope > div:not([data-testid="stSidebar"])');
+        clearInlineProps(mainWrap, DESKTOP_INLINE_PROPS.mainWrap);
+        clearInlineProps(view?.querySelector("section.main"), DESKTOP_INLINE_PROPS.mainSection);
+    };
+
+    const applyResponsiveSidebarLayout = () => {
+        if (!isResponsiveViewport()) {
+            return;
+        }
+        clearDesktopInlineLayout();
+        const view = doc.querySelector('[data-testid="stAppViewContainer"]');
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+        if (!view || !sidebar) {
+            return;
+        }
+
+        view.style.setProperty("display", "block", "important");
+        view.style.setProperty("width", "100%", "important");
+        view.style.setProperty("max-width", "100vw", "important");
+        view.style.setProperty("margin-left", "0", "important");
+        view.style.setProperty("padding-left", "0", "important");
+
+        const expanded = sidebar.getAttribute("aria-expanded") === "true";
+        sidebar.style.setProperty("position", "fixed", "important");
+        sidebar.style.setProperty("top", "0", "important");
+        sidebar.style.setProperty("left", "0", "important");
+        sidebar.style.setProperty("height", "100dvh", "important");
+        sidebar.style.setProperty("min-height", "100dvh", "important");
+        sidebar.style.setProperty("z-index", "1000010", "important");
+        sidebar.style.setProperty("width", "min(92vw, 36rem)", "important");
+        sidebar.style.setProperty("max-width", "min(92vw, 36rem)", "important");
+        sidebar.style.setProperty(
+            "transform",
+            expanded ? "translateX(0)" : "translateX(-100vw)",
+            "important"
+        );
+        sidebar.style.setProperty("visibility", expanded ? "visible" : "hidden", "important");
+        sidebar.style.setProperty("pointer-events", expanded ? "auto" : "none", "important");
+
+        const mainSection = view.querySelector("section.main");
+        if (mainSection) {
+            mainSection.style.setProperty("width", "100%", "important");
+            mainSection.style.setProperty("max-width", "100vw", "important");
+        }
+        const mainWrap = view.querySelector(':scope > div:not([data-testid="stSidebar"])');
+        if (mainWrap) {
+            mainWrap.style.setProperty("width", "100%", "important");
+            mainWrap.style.setProperty("max-width", "100vw", "important");
+        }
+    };
+
+    const applyDesktopSidebarLayout = () => {
+        if (!isDesktopViewport()) {
+            return;
+        }
+        const view = doc.querySelector('[data-testid="stAppViewContainer"]');
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+        if (!view || !sidebar) {
+            return;
+        }
+        view.style.setProperty("display", "flex", "important");
+        view.style.setProperty("flex-direction", "row", "important");
+        view.style.setProperty("position", "relative", "important");
+        sidebar.style.setProperty("flex", "0 0 var(--scoop-sidebar-width)", "important");
+        sidebar.style.setProperty("position", "relative", "important");
+        sidebar.style.setProperty("transform", "none", "important");
+        sidebar.style.setProperty("visibility", "visible", "important");
+        sidebar.style.setProperty("overflow", "visible", "important");
+        sidebar.style.setProperty("z-index", "2", "important");
+        sidebar.style.setProperty("height", "100vh", "important");
+        sidebar.style.setProperty("max-height", "100vh", "important");
+        const inner =
+            sidebar.querySelector('[data-testid="stSidebarContent"]') ||
+            sidebar.firstElementChild;
+        if (inner) {
+            inner.style.setProperty("overflow-x", "visible", "important");
+            inner.style.setProperty("overflow-y", "auto", "important");
+            inner.style.setProperty("height", "100vh", "important");
+            inner.style.setProperty("max-height", "100vh", "important");
+        }
+        const mainWrap = view.querySelector(':scope > div:not([data-testid="stSidebar"])');
+        if (mainWrap) {
+            mainWrap.style.setProperty("flex", "1 1 auto", "important");
+            mainWrap.style.setProperty("min-width", "0", "important");
+        }
+    };
+
+    const syncSidebarLayout = () => {
+        if (isDesktopViewport()) {
+            applyDesktopSidebarLayout();
+            return;
+        }
+        if (isResponsiveViewport()) {
+            applyResponsiveSidebarLayout();
+            return;
+        }
+        clearDesktopInlineLayout();
+    };
+
+    appWin.__scoopLayout = {
+        isResponsiveViewport,
+        isDesktopViewport,
+        isAnalyzePage: __scoopIsAnalyzePage,
+        applyResponsiveSidebarLayout,
+        applyDesktopSidebarLayout,
+        clearDesktopInlineLayout,
+        syncSidebarLayout,
+    };
+})();
+"""
+)
+
+_RESPONSIVE_LAYOUT_SYNC_JS = (
+    """
+(() => {
+"""
+    + _RESPONSIVE_DOC_HELPER_JS
+    + """
+    const doc = __scoopGetAppDoc();
+    const appWin = __scoopGetAppWin();
+    const sync = () => appWin.__scoopLayout?.syncSidebarLayout();
+    const schedule = () => {
+        sync();
+        appWin.requestAnimationFrame(sync);
+    };
+    schedule();
+    if (doc.readyState === "loading") {
+        doc.addEventListener("DOMContentLoaded", schedule, { once: true });
+    }
+    if (!appWin.__scoopLayoutResizeBound) {
+        appWin.__scoopLayoutResizeBound = true;
+        appWin.addEventListener("resize", schedule);
+    }
+    if (!appWin.__scoopLayoutObserver) {
+        appWin.__scoopLayoutObserver = new MutationObserver(schedule);
+        appWin.__scoopLayoutObserver.observe(doc.documentElement, {
+            subtree: true,
+            attributes: true,
+            attributeFilter: ["aria-expanded", "class"],
+            childList: true,
+        });
+    }
+})();
+"""
+)
+
+_ANALYZE_RETURN_NAV_JS = (
+    """
+(() => {
+"""
+    + _RESPONSIVE_DOC_HELPER_JS
+    + """
+    const doc = __scoopGetAppDoc();
+    const appWin = __scoopGetAppWin();
+    const RETURN_KEY = "scoop-return-from-analyze";
+    const SUPPRESS_MS = 10000;
+
+    const markAnalyzeReturn = () => {
+        try {
+            appWin.sessionStorage.setItem(RETURN_KEY, "1");
+            appWin.__scoopSuppressSidebarExpand = Date.now() + SUPPRESS_MS;
+            if (typeof appWin.__scoopClearResponsiveExpandTimers === "function") {
+                appWin.__scoopClearResponsiveExpandTimers();
+            }
+        } catch (e) {}
+    };
+
+    const shouldForceScreenerMainView = () => {
+        if (__scoopIsAnalyzePage()) {
+            return false;
+        }
+        const layout = appWin.__scoopLayout;
+        if (!layout?.isResponsiveViewport?.()) {
+            return false;
+        }
+        try {
+            if (appWin.sessionStorage.getItem(RETURN_KEY) === "1") {
+                return true;
+            }
+        } catch (e) {}
+        return !!(appWin.__scoopSuppressSidebarExpand && Date.now() < appWin.__scoopSuppressSidebarExpand);
+    };
+
+    const forceScreenerMainView = () => {
+        if (!shouldForceScreenerMainView()) {
+            return;
+        }
+        try {
+            if (appWin.sessionStorage.getItem(RETURN_KEY) === "1") {
+                appWin.sessionStorage.removeItem(RETURN_KEY);
+            }
+        } catch (e) {}
+        appWin.__scoopSuppressSidebarExpand = Date.now() + SUPPRESS_MS;
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+        if (sidebar) {
+            sidebar.setAttribute("aria-expanded", "false");
+        }
+        const layout = appWin.__scoopLayout;
+        if (typeof layout?.collapseSidebar === "function") {
+            layout.collapseSidebar();
+        }
+        layout?.syncSidebarLayout?.();
+    };
+
+    const scheduleForceScreenerMainView = () => {
+        forceScreenerMainView();
+        appWin.requestAnimationFrame(forceScreenerMainView);
+        [50, 150, 400, 900, 1600, 2500, 4000, 6000].forEach((delay) => {
+            appWin.setTimeout(forceScreenerMainView, delay);
+        });
+    };
+
+    if (!appWin.__scoopAnalyzeReturnNavBound) {
+        appWin.__scoopAnalyzeReturnNavBound = true;
+        doc.addEventListener(
+            "click",
+            (event) => {
+                if (event.target.closest("a.scoop-analyze-back")) {
+                    markAnalyzeReturn();
+                }
+            },
+            true
+        );
+    }
+
+    scheduleForceScreenerMainView();
+})();
+"""
+)
+
+_RESPONSIVE_SIDEBAR_JS = (
+    """
+(() => {
+"""
+    + _RESPONSIVE_DOC_HELPER_JS
+    + """
+    const doc = __scoopGetAppDoc();
+    const appWin = __scoopGetAppWin();
+    const layout = () => appWin.__scoopLayout;
+    const isResponsiveViewport = () => layout()?.isResponsiveViewport() ?? false;
 
     const collapseSidebar = () => {
         const selectors = [
@@ -496,15 +804,17 @@ _RESPONSIVE_SIDEBAR_JS = """
             '[data-testid="collapsedControl"]',
         ];
         for (const selector of selectors) {
-            const node = document.querySelector(selector);
+            const node = doc.querySelector(selector);
             if (node) {
                 node.click();
+                layout()?.syncSidebarLayout();
                 return true;
             }
         }
-        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
         if (sidebar && sidebar.getAttribute("aria-expanded") === "true") {
             sidebar.setAttribute("aria-expanded", "false");
+            layout()?.syncSidebarLayout();
             return true;
         }
         return false;
@@ -518,23 +828,25 @@ _RESPONSIVE_SIDEBAR_JS = """
             '[data-testid="collapsedControl"]',
         ];
         for (const selector of selectors) {
-            const node = document.querySelector(selector);
+            const node = doc.querySelector(selector);
             if (node) {
                 node.click();
+                layout()?.syncSidebarLayout();
                 return true;
             }
         }
-        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
         if (sidebar && sidebar.getAttribute("aria-expanded") === "false") {
             sidebar.setAttribute("aria-expanded", "true");
+            layout()?.syncSidebarLayout();
             return true;
         }
         return false;
     };
 
     const removeLegacyCloseButton = () => {
-        document.getElementById("scoop-responsive-sidebar-close")?.remove();
-        document.querySelectorAll(".scoop-responsive-sidebar-close").forEach((node) => {
+        doc.getElementById("scoop-responsive-sidebar-close")?.remove();
+        doc.querySelectorAll(".scoop-responsive-sidebar-close").forEach((node) => {
             if (node.id !== "scoop-responsive-sidebar-close") {
                 return;
             }
@@ -546,7 +858,7 @@ _RESPONSIVE_SIDEBAR_JS = """
         if (!isResponsiveViewport()) {
             return false;
         }
-        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
         if (!sidebar || sidebar.getAttribute("aria-expanded") !== "true") {
             return false;
         }
@@ -562,13 +874,68 @@ _RESPONSIVE_SIDEBAR_JS = """
         return event.target.closest('[data-testid="stAppViewContainer"]') != null;
     };
 
-    if (window.__scoopResponsiveSidebarBound) {
+    let tabletBootstrapped = false;
+    const ANALYZE_RETURN_KEY = "scoop-return-from-analyze";
+
+    const isReturningFromAnalyze = () => {
+        try {
+            return appWin.sessionStorage.getItem(ANALYZE_RETURN_KEY) === "1";
+        } catch (e) {
+            return false;
+        }
+    };
+
+    const clearReturningFromAnalyze = () => {
+        try {
+            appWin.sessionStorage.removeItem(ANALYZE_RETURN_KEY);
+        } catch (e) {}
+    };
+
+    const ensureScreenerContentVisible = () => {
+        if (!isResponsiveViewport() || __scoopIsAnalyzePage()) {
+            return;
+        }
+        const suppressed =
+            appWin.__scoopSuppressSidebarExpand &&
+            Date.now() < appWin.__scoopSuppressSidebarExpand;
+        if (!isReturningFromAnalyze() && !suppressed) {
+            return;
+        }
+        if (isReturningFromAnalyze()) {
+            clearReturningFromAnalyze();
+        }
+        appWin.__scoopSuppressSidebarExpand = Date.now() + 10000;
+        tabletBootstrapped = true;
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+        if (sidebar) {
+            sidebar.setAttribute("aria-expanded", "false");
+        }
+        collapseSidebar();
+        layout()?.syncSidebarLayout();
+        removeLegacyCloseButton();
+    };
+
+    const scheduleCollapseAfterAnalyzeReturn = () => {
+        ensureScreenerContentVisible();
+        appWin.requestAnimationFrame(ensureScreenerContentVisible);
+        [50, 150, 400, 900, 1600, 2500, 4000].forEach((delay) => {
+            appWin.setTimeout(ensureScreenerContentVisible, delay);
+        });
+    };
+
+    if (appWin.__scoopResponsiveSidebarBound) {
+        scheduleCollapseAfterAnalyzeReturn();
         return;
     }
-    window.__scoopResponsiveSidebarBound = true;
+    appWin.__scoopResponsiveSidebarBound = true;
     removeLegacyCloseButton();
 
-    document.addEventListener(
+    if (appWin.__scoopLayout) {
+        appWin.__scoopLayout.collapseSidebar = collapseSidebar;
+        appWin.__scoopLayout.expandSidebar = expandSidebar;
+    }
+
+    doc.addEventListener(
         "click",
         (event) => {
             if (shouldCloseSidebar(event)) {
@@ -578,55 +945,120 @@ _RESPONSIVE_SIDEBAR_JS = """
         true
     );
 
-    document.addEventListener("keydown", (event) => {
+    doc.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && isResponsiveViewport()) {
             collapseSidebar();
         }
     });
 
-    let tabletBootstrapped = false;
+    const ensureAnalyzeSidebarCollapsed = () => {
+        if (!isResponsiveViewport() || !__scoopIsAnalyzePage()) {
+            return;
+        }
+        if (appWin.__scoopAnalyzeSidebarUserOpened) {
+            layout()?.syncSidebarLayout();
+            return;
+        }
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+        if (sidebar && sidebar.getAttribute("aria-expanded") === "true") {
+            collapseSidebar();
+        }
+        layout()?.syncSidebarLayout();
+        removeLegacyCloseButton();
+    };
+
+    const scheduleAnalyzeSidebarCollapse = () => {
+        if (!__scoopIsAnalyzePage() || !isResponsiveViewport()) {
+            return;
+        }
+        appWin.__scoopAnalyzeSidebarUserOpened = false;
+        ensureAnalyzeSidebarCollapsed();
+        appWin.requestAnimationFrame(ensureAnalyzeSidebarCollapsed);
+        [50, 150, 400, 900, 1600, 2500, 4000].forEach((delay) => {
+            appWin.setTimeout(ensureAnalyzeSidebarCollapsed, delay);
+        });
+    };
+
+    doc.addEventListener(
+        "click",
+        (event) => {
+            if (!__scoopIsAnalyzePage() || !isResponsiveViewport()) {
+                return;
+            }
+            if (
+                event.target.closest(
+                    '[data-testid="stExpandSidebarButton"], [data-testid="collapsedControl"]'
+                )
+            ) {
+                appWin.__scoopAnalyzeSidebarUserOpened = true;
+            }
+        },
+        true
+    );
 
     const ensureInitialResponsiveExpand = () => {
         if (!isResponsiveViewport()) {
+            layout()?.syncSidebarLayout();
+            return;
+        }
+        layout()?.syncSidebarLayout();
+        if (__scoopIsAnalyzePage()) {
+            if (!tabletBootstrapped) {
+                tabletBootstrapped = true;
+                scheduleAnalyzeSidebarCollapse();
+            }
+            return;
+        }
+        if (
+            isReturningFromAnalyze() ||
+            (appWin.__scoopSuppressSidebarExpand &&
+                Date.now() < appWin.__scoopSuppressSidebarExpand)
+        ) {
+            scheduleCollapseAfterAnalyzeReturn();
             return;
         }
         if (tabletBootstrapped) {
             return;
         }
-        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
         if (!sidebar) {
             return;
         }
         if (sidebar.getAttribute("aria-expanded") === "true") {
             tabletBootstrapped = true;
+            layout()?.syncSidebarLayout();
             removeLegacyCloseButton();
             return;
         }
         if (expandSidebar()) {
             tabletBootstrapped = true;
+            layout()?.syncSidebarLayout();
             removeLegacyCloseButton();
         }
     };
 
     ensureInitialResponsiveExpand();
-    requestAnimationFrame(() => {
+    appWin.__scoopResponsiveExpandTimers = appWin.__scoopResponsiveExpandTimers || [];
+    appWin.__scoopClearResponsiveExpandTimers = () => {
+        (appWin.__scoopResponsiveExpandTimers || []).forEach((timerId) => {
+            appWin.clearTimeout(timerId);
+        });
+        appWin.__scoopResponsiveExpandTimers = [];
+    };
+    appWin.requestAnimationFrame(() => {
         ensureInitialResponsiveExpand();
         removeLegacyCloseButton();
     });
-    setTimeout(() => {
-        ensureInitialResponsiveExpand();
-        removeLegacyCloseButton();
-    }, 100);
-    setTimeout(() => {
-        ensureInitialResponsiveExpand();
-        removeLegacyCloseButton();
-    }, 400);
-    setTimeout(() => {
-        ensureInitialResponsiveExpand();
-        removeLegacyCloseButton();
-    }, 900);
+    [100, 400, 900, 1600].forEach((delay) => {
+        const timerId = appWin.setTimeout(() => {
+            ensureInitialResponsiveExpand();
+            removeLegacyCloseButton();
+        }, delay);
+        appWin.__scoopResponsiveExpandTimers.push(timerId);
+    });
 })();
 """
+)
 
 _TOOLTIP_SCROLL_JS = """
 (() => {
@@ -1918,98 +2350,50 @@ _TOOLTIP_SCROLL_JS = """
 """
 
 
-_DESKTOP_SIDEBAR_JS = """
+_DESKTOP_SIDEBAR_JS = (
+    """
 (() => {
-    const DESKTOP_MIN = 1367;
-
-    const isAsusZenbookFoldViewport = () => {
-        const w = window.innerWidth;
-        const h = window.innerHeight;
-        const near853 = (value) => value >= 849 && value <= 857;
-        const near1280 = (value) => value >= 1276 && value <= 1284;
-        const near1707 = (value) => value >= 1700 && value <= 1714;
-        const near1920 = (value) => value >= 1910 && value <= 1930;
-        const near1280u = (value) => value >= 1270 && value <= 1290;
-        return (
-            (near853(w) && near1280(h)) ||
-            (near1280(w) && near853(h)) ||
-            (near1707(w) && h >= 1000 && h <= 1120) ||
-            (near1920(w) && near1280u(h)) ||
-            (near1280u(w) && near1920(h))
-        );
-    };
-
-    const isDesktopViewport = () =>
-        window.innerWidth >= DESKTOP_MIN && !isAsusZenbookFoldViewport();
+"""
+    + _RESPONSIVE_DOC_HELPER_JS
+    + """
+    const doc = __scoopGetAppDoc();
+    const appWin = __scoopGetAppWin();
+    const layout = () => appWin.__scoopLayout;
 
     const expandSidebarIfNeeded = () => {
-        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
         if (!sidebar || sidebar.getAttribute("aria-expanded") !== "false") {
             return;
         }
         const expand =
-            document.querySelector('[data-testid="stExpandSidebarButton"]') ||
-            document.querySelector('[data-testid="collapsedControl"] button') ||
-            document.querySelector('[data-testid="collapsedControl"]');
+            doc.querySelector('[data-testid="stExpandSidebarButton"]') ||
+            doc.querySelector('[data-testid="collapsedControl"] button') ||
+            doc.querySelector('[data-testid="collapsedControl"]');
         if (expand) {
             expand.click();
         }
     };
 
-    const applyDesktopSidebarLayout = () => {
-        if (!isDesktopViewport()) {
-            return;
-        }
-        const view = document.querySelector('[data-testid="stAppViewContainer"]');
-        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-        if (!view || !sidebar) {
-            return;
-        }
-        view.style.setProperty("display", "flex", "important");
-        view.style.setProperty("flex-direction", "row", "important");
-        view.style.setProperty("position", "relative", "important");
-        sidebar.style.setProperty("flex", "0 0 var(--scoop-sidebar-width)", "important");
-        sidebar.style.setProperty("position", "relative", "important");
-        sidebar.style.setProperty("transform", "none", "important");
-        sidebar.style.setProperty("visibility", "visible", "important");
-        sidebar.style.setProperty("overflow", "visible", "important");
-        sidebar.style.setProperty("z-index", "2", "important");
-        sidebar.style.setProperty("height", "100vh", "important");
-        sidebar.style.setProperty("max-height", "100vh", "important");
-        const inner = sidebar.querySelector('[data-testid="stSidebarContent"]') || sidebar.firstElementChild;
-        if (inner) {
-            inner.style.setProperty("overflow-x", "visible", "important");
-            inner.style.setProperty("overflow-y", "auto", "important");
-            inner.style.setProperty("height", "100vh", "important");
-            inner.style.setProperty("max-height", "100vh", "important");
-        }
-        const mainWrap = view.querySelector(':scope > div:not([data-testid="stSidebar"])');
-        if (mainWrap) {
-            mainWrap.style.setProperty("flex", "1 1 auto", "important");
-            mainWrap.style.setProperty("min-width", "0", "important");
-        }
-    };
-
     const ensureDesktopSidebarOpen = () => {
-        if (!isDesktopViewport()) {
+        if (!layout()?.isDesktopViewport()) {
+            layout()?.syncSidebarLayout();
             return;
         }
         expandSidebarIfNeeded();
-        applyDesktopSidebarLayout();
+        layout()?.syncSidebarLayout();
     };
 
-    if (window.__scoopDesktopSidebarBound) {
+    if (appWin.__scoopDesktopSidebarBound) {
         return;
     }
-    window.__scoopDesktopSidebarBound = true;
+    appWin.__scoopDesktopSidebarBound = true;
 
     ensureDesktopSidebarOpen();
-    window.addEventListener("resize", ensureDesktopSidebarOpen);
 
-    document.addEventListener(
+    doc.addEventListener(
         "click",
         (event) => {
-            if (!isDesktopViewport()) {
+            if (!layout()?.isDesktopViewport()) {
                 return;
             }
             const collapseTarget = event.target.closest(
@@ -2022,28 +2406,119 @@ _DESKTOP_SIDEBAR_JS = """
         },
         true
     );
-
-    const observer = new MutationObserver(() => {
-        ensureDesktopSidebarOpen();
-    });
-    observer.observe(document.documentElement, {
-        attributes: true,
-        subtree: true,
-        attributeFilter: ["aria-expanded"],
-    });
 })();
 """
+)
 
-_COMBINED_PAGE_JS = _TOOLTIP_SCROLL_JS + _RESPONSIVE_SIDEBAR_JS + _DESKTOP_SIDEBAR_JS
+_COMBINED_PAGE_JS = (
+    _TOOLTIP_SCROLL_JS
+    + _RESPONSIVE_LAYOUT_CORE_JS
+    + _RESPONSIVE_LAYOUT_SYNC_JS
+    + _RESPONSIVE_SIDEBAR_JS
+    + _ANALYZE_RETURN_NAV_JS
+    + _DESKTOP_SIDEBAR_JS
+)
+
+_RESPONSIVE_LAYOUT_SCRIPTS = (
+    f"<script>{_RESPONSIVE_LAYOUT_CORE_JS}</script>"
+    f"<script>{_RESPONSIVE_LAYOUT_SYNC_JS}</script>"
+    f"<script>{_RESPONSIVE_SIDEBAR_JS}</script>"
+    f"<script>{_ANALYZE_RETURN_NAV_JS}</script>"
+    f"<script>{_DESKTOP_SIDEBAR_JS}</script>"
+)
+
+
+def _inject_responsive_bootstrap_css() -> str:
+    css_json = json.dumps(RESPONSIVE_SIDEBAR_BOOTSTRAP)
+    return f"""
+<script>
+(function() {{
+    const css = {css_json};
+    const id = "scoop-responsive-sidebar-bootstrap-css";
+    function apply(targetDoc) {{
+        if (!targetDoc || !targetDoc.documentElement) {{
+            return;
+        }}
+        let el = targetDoc.getElementById(id);
+        if (!el) {{
+            el = targetDoc.createElement("style");
+            el.id = id;
+            (targetDoc.head || targetDoc.documentElement).appendChild(el);
+        }}
+        el.textContent = css;
+    }}
+    const parentDoc = window.parent && window.parent.document ? window.parent.document : null;
+    const appDoc = parentDoc || document;
+    apply(appDoc);
+    if (parentDoc && parentDoc !== document) {{
+        apply(document);
+    }}
+
+    const appWin = appDoc.defaultView || window;
+    if (!appWin.__scoopAnalyzeLinksBound) {{
+        appWin.__scoopAnalyzeLinksBound = true;
+        appDoc.addEventListener(
+            "click",
+            (event) => {{
+                const link = event.target.closest("a.fr-analyze-link");
+                if (!link) {{
+                    return;
+                }}
+                const ticker = (link.getAttribute("data-ticker") || "").trim();
+                if (!ticker) {{
+                    return;
+                }}
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                let theme = "light";
+                try {{
+                    const stored = localStorage.getItem("scoop-theme");
+                    if (stored === "dark" || stored === "light") {{
+                        theme = stored;
+                    }} else if (appDoc.documentElement.classList.contains("scoop-dark")) {{
+                        theme = "dark";
+                    }} else if (appDoc.documentElement.getAttribute("data-scoop-theme") === "dark") {{
+                        theme = "dark";
+                    }}
+                    localStorage.setItem("scoop-theme", theme);
+                }} catch (e) {{}}
+                try {{
+                    appWin.__scoopAnalyzeSidebarUserOpened = false;
+                    appWin.__scoopLayout?.collapseSidebar?.();
+                }} catch (e) {{}}
+                appWin.location.href =
+                    "/Analyze?ticker="
+                    + encodeURIComponent(ticker)
+                    + "&theme="
+                    + encodeURIComponent(theme)
+                    + "&from="
+                    + encodeURIComponent(appWin.location.pathname || "/NYSE_Top_10");
+            }},
+            true
+        );
+    }}
+}})();
+</script>
+"""
+
+
+def install_responsive_layout_bootstrap() -> None:
+    """Early CSS + layout sync so mobile/tablet first paint uses overlay sidebar."""
+    st.html(
+        _inject_responsive_bootstrap_css()
+        + f"<script>{_RESPONSIVE_LAYOUT_CORE_JS}</script>"
+        + f"<script>{_RESPONSIVE_LAYOUT_SYNC_JS}</script>",
+        unsafe_allow_javascript=True,
+    )
 
 
 def install_responsive_sidebar_handler() -> None:
     """Responsive sidebar close (tablet) + always-open sidebar (desktop)."""
     st.html(
-        f"<style id='scoop-desktop-sidebar-layout-css'>{DESKTOP_SIDEBAR_LAYOUT}</style>"
-        f"<style id='scoop-sidebar-nav-compact-css'>{SIDEBAR_NAV_COMPACT}</style>"
-        f"<script>{_RESPONSIVE_SIDEBAR_JS}</script>"
-        f"<script>{_DESKTOP_SIDEBAR_JS}</script>",
+        _inject_responsive_bootstrap_css()
+        + f"<style id='scoop-desktop-sidebar-layout-css'>{DESKTOP_SIDEBAR_LAYOUT}</style>"
+        + f"<style id='scoop-sidebar-nav-compact-css'>{SIDEBAR_NAV_COMPACT}</style>"
+        + _RESPONSIVE_LAYOUT_SCRIPTS,
         unsafe_allow_javascript=True,
     )
 
@@ -2061,9 +2536,10 @@ def install_tooltip_scroll_handler() -> None:
         f"<style id='scoop-responsive-generic-tooltip-css'>{_RESPONSIVE_GENERIC_TOOLTIP_CSS}</style>"
         f"<style id='scoop-dark-responsive-tip-underline-css'>{_DARK_RESPONSIVE_TIP_UNDERLINE_CSS}</style>"
         f"<style id='scoop-dark-popup-outline-css'>{_DARK_POPUP_OUTLINE_CSS}</style>"
-        f"<style id='scoop-desktop-sidebar-layout-css'>{DESKTOP_SIDEBAR_LAYOUT}</style>"
-        f"<style id='scoop-sidebar-nav-compact-css'>{SIDEBAR_NAV_COMPACT}</style>"
-        f"<script>{_COMBINED_PAGE_JS}</script>",
+        + _inject_responsive_bootstrap_css()
+        + f"<style id='scoop-desktop-sidebar-layout-css'>{DESKTOP_SIDEBAR_LAYOUT}</style>"
+        + f"<style id='scoop-sidebar-nav-compact-css'>{SIDEBAR_NAV_COMPACT}</style>"
+        + f"<script>{_COMBINED_PAGE_JS}</script>",
         unsafe_allow_javascript=True,
     )
     from theme_mode import inject_dark_mode_styles

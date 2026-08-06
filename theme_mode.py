@@ -11,37 +11,77 @@ from admin_tools.dark_mode_css import DARK_MODE_CSS
 SESSION_KEY = "scoop_dark_mode"
 TOGGLE_KEY = "scoop_dark_mode_toggle"
 STORAGE_KEY = "scoop-theme"
-HYDRATED_KEY = "_scoop_theme_hydrated"
+SYNC_PENDING_KEY = "_scoop_theme_sync_pending"
+SYNC_DONE_KEY = "_scoop_theme_sync_done"
+THEME_PAGE_KEY = "_scoop_theme_page_id"
 
 
 def is_dark_mode() -> bool:
-    """Read toggle widget state first (same rerun), then session/localStorage hydrate."""
+    """Read toggle widget state first (same rerun), then session fallback."""
     if TOGGLE_KEY in st.session_state:
         return bool(st.session_state[TOGGLE_KEY])
     return bool(st.session_state.get(SESSION_KEY, False))
 
 
-def _hydrate_from_storage() -> None:
-    if st.session_state.get(HYDRATED_KEY):
+def _theme_known_in_session() -> bool:
+    return TOGGLE_KEY in st.session_state or SESSION_KEY in st.session_state
+
+
+def _set_theme_session(dark: bool, *, touch_toggle_key: bool = False) -> None:
+    st.session_state[SESSION_KEY] = dark
+    if touch_toggle_key:
+        st.session_state[TOGGLE_KEY] = dark
+
+
+def _calling_page_id() -> str:
+    """Identify the active Streamlit page script (changes on sidebar navigation)."""
+    import inspect
+
+    for frame in inspect.stack():
+        path = frame.filename.replace("\\", "/")
+        if "/pages/" in path or path.endswith("/app.py"):
+            return path
+    return "unknown"
+
+
+def _reset_theme_for_page_change() -> None:
+    """Drop stale widget/session theme when navigating to another page."""
+    page = _calling_page_id()
+    if st.session_state.get(THEME_PAGE_KEY) == page:
         return
+    st.session_state[THEME_PAGE_KEY] = page
+    for key in (SESSION_KEY, TOGGLE_KEY, SYNC_PENDING_KEY, SYNC_DONE_KEY):
+        st.session_state.pop(key, None)
+
+
+def _sync_theme_from_storage() -> bool:
+    """Load theme from localStorage into session state. False = js_eval not ready yet."""
+    if st.session_state.get(SYNC_DONE_KEY) and _theme_known_in_session():
+        return True
+
     try:
         from streamlit_js_eval import streamlit_js_eval
     except ImportError:
-        st.session_state[HYDRATED_KEY] = True
-        return
+        st.session_state[SYNC_DONE_KEY] = True
+        return True
+
+    if not st.session_state.get(SYNC_PENDING_KEY):
+        st.session_state[SYNC_PENDING_KEY] = True
+
     stored = streamlit_js_eval(
-        js_expressions=f"localStorage.getItem('{STORAGE_KEY}')",
-        key="scoop_theme_hydrate",
+        js_expressions=f"localStorage.getItem('{STORAGE_KEY}') || ''",
+        key="scoop_theme_sync",
         want_output=True,
         height=0,
     )
-    if stored == "dark":
-        st.session_state[SESSION_KEY] = True
-        st.session_state[TOGGLE_KEY] = True
-    elif stored == "light":
-        st.session_state[SESSION_KEY] = False
-        st.session_state[TOGGLE_KEY] = False
-    st.session_state[HYDRATED_KEY] = True
+    if stored is None:
+        return False
+
+    _set_theme_session(str(stored).strip().lower() == "dark", touch_toggle_key=True)
+    if not st.session_state.get(SYNC_DONE_KEY):
+        st.session_state[SYNC_DONE_KEY] = True
+        st.rerun()
+    return True
 
 
 def _session_dark_css() -> str:
@@ -106,23 +146,96 @@ def inject_dark_mode_styles() -> None:
     )
 
 
+def _early_theme_bootstrap_script() -> None:
+    """Apply localStorage theme to <html> before first paint on every page load."""
+    storage = json.dumps(STORAGE_KEY)
+    st.html(
+        f"""
+<script>
+(function() {{
+    const doc = window.parent && window.parent.document ? window.parent.document : document;
+    const root = doc.documentElement;
+    let theme = "light";
+    try {{
+        const stored = localStorage.getItem({storage});
+        if (stored === "dark" || stored === "light") {{
+            theme = stored;
+        }} else if (root.classList.contains("scoop-dark")) {{
+            theme = "dark";
+        }} else if (root.getAttribute("data-scoop-theme") === "dark") {{
+            theme = "dark";
+        }}
+    }} catch (e) {{}}
+    root.setAttribute("data-scoop-theme", theme);
+    root.classList.toggle("scoop-dark", theme === "dark");
+}})();
+</script>
+""",
+        unsafe_allow_javascript=True,
+    )
+
+
+def apply_theme_from_query_param() -> None:
+    """Honor ?theme=dark|light once when landing from Analyze links, then drop it."""
+    if "theme" not in st.query_params:
+        return
+    raw = st.query_params.get("theme", "")
+    if isinstance(raw, list):
+        raw = raw[0] if raw else ""
+    theme = str(raw).strip().lower()
+    if theme == "dark":
+        _set_theme_session(True, touch_toggle_key=TOGGLE_KEY not in st.session_state)
+        st.session_state[SYNC_DONE_KEY] = True
+    elif theme == "light":
+        _set_theme_session(False, touch_toggle_key=TOGGLE_KEY not in st.session_state)
+        st.session_state[SYNC_DONE_KEY] = True
+    try:
+        del st.query_params["theme"]
+    except Exception:
+        pass
+
+
+def apply_theme_early() -> None:
+    """Inject theme CSS/scripts before main page content renders."""
+    _reset_theme_for_page_change()
+    apply_theme_from_query_param()
+    if not _theme_known_in_session() and not _sync_theme_from_storage():
+        return
+    dark = is_dark_mode()
+    st.session_state[SESSION_KEY] = dark
+    if TOGGLE_KEY not in st.session_state:
+        st.session_state[TOGGLE_KEY] = dark
+    if _theme_known_in_session():
+        theme = "dark" if dark else "light"
+        _persist_theme_script(theme)
+    inject_dark_mode_styles()
+
+
 def install_theme_support() -> None:
     """Hydrate saved preference early; CSS is injected last via inject_dark_mode_styles()."""
-    if SESSION_KEY not in st.session_state:
-        st.session_state[SESSION_KEY] = False
-    _hydrate_from_storage()
+    _early_theme_bootstrap_script()
+    apply_theme_early()
+    from tooltip_scroll import install_responsive_layout_bootstrap
+
+    install_responsive_layout_bootstrap()
 
 
 def render_dark_mode_toggle() -> None:
     """Sidebar toggle; persists across pages via session state + localStorage."""
-    _hydrate_from_storage()
-    dark = st.sidebar.toggle(
+    if not _theme_known_in_session():
+        return
+
+    if TOGGLE_KEY not in st.session_state:
+        st.session_state[TOGGLE_KEY] = bool(st.session_state.get(SESSION_KEY, False))
+
+    st.sidebar.toggle(
         "Dark mode",
-        value=is_dark_mode(),
         key=TOGGLE_KEY,
         help="Switch light/dark colors on desktop, tablet, and phone.",
     )
+    dark = bool(st.session_state[TOGGLE_KEY])
     st.session_state[SESSION_KEY] = dark
+    st.session_state[SYNC_DONE_KEY] = True
     theme = "dark" if dark else "light"
     _persist_theme_script(theme)
     inject_dark_mode_styles()

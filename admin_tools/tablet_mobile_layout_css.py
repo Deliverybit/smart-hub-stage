@@ -288,6 +288,17 @@ MOBILE_CARD_FIELD_ORDER = """
         .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Headline Sentiment"] {
             order: 10 !important;
         }
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] {
+            order: 11 !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table .fr-analyze-link {
+            color: #2563eb !important;
+            font-weight: 600 !important;
+            text-decoration: none !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table .fr-analyze-link:hover {
+            text-decoration: underline !important;
+        }
 """
 
 # Mobile/tablet: keep generic field tooltips (Name, % Above Low, Market Mood, etc.) in viewport.
@@ -1396,6 +1407,16 @@ IPAD_MINI_PORTRAIT_LAYOUT = f"""
     @media (min-width: 744px) and (max-width: 768px) {{
 {SURFACE_DUO_SIDEBAR}
     }}
+"""
+
+# Injected early on every page (via theme_mode) so mobile/tablet overlay sidebar wins first paint.
+RESPONSIVE_SIDEBAR_BOOTSTRAP = f"""
+@media (max-width: 1366px) {{
+{TABLET_SIDEBAR}
+{OVERLAY_SIDEBAR_TOPBAR_LAYER}
+}}
+{PHONE_SIDEBAR_LAYOUT}
+{IPAD_MINI_PORTRAIT_LAYOUT}
 """
 
 TABLET_SCREENER_INNER = f"""{TABLET_SIDEBAR}

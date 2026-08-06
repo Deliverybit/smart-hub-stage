@@ -7,24 +7,22 @@ class Predictor:
         self.sentiment_engine = SentimentEngine()
         self.market_data = MarketData()
 
-    def predict(self, ticker, headlines):
+    def predict(self, ticker, headlines, market_data=None, *, latest_price=None, price_change_pct=None):
         """
         Combines sentiment and price action to generate a market signal.
         """
-        # 1. Get Sentiment Data
+        md = market_data or self.market_data
         sent_result = self.sentiment_engine.analyze_headlines(ticker, headlines)
         sentiment_score = sent_result["score"]  # Scale: -1 to 1
 
-        # 2. Get Price Data
-        latest_price = self.market_data.get_latest_price(ticker)
-        history = self.market_data.get_price_history(ticker, days=7)
-        
-        # Calculate 24h price change percentage
-        if len(history) >= 2:
-            prev_price = history[-2]["price"]
-            price_change_pct = (latest_price - prev_price) / prev_price
-        else:
-            price_change_pct = 0
+        if latest_price is None or price_change_pct is None:
+            latest_price = md.get_latest_price(ticker)
+            history = md.get_price_history(ticker, days=7)
+            if len(history) >= 2:
+                prev_price = history[-2]["price"]
+                price_change_pct = (latest_price - prev_price) / prev_price
+            else:
+                price_change_pct = 0
 
         # 3. COMBINED LOGIC (The "Brain")
         # We weight sentiment at 60% and price momentum at 40%
