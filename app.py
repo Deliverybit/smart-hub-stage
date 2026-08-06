@@ -309,7 +309,7 @@ st.markdown(
         background: #ffffff !important;
         display: block !important;
         width: calc(100% + 2rem) !important;
-        margin: 0.15rem -1rem 140px -1rem !important;
+        margin: 0.15rem -1rem 0.35rem -1rem !important;
         padding: 0.7rem 1rem !important;
         box-sizing: border-box !important;
         white-space: nowrap !important;
@@ -542,7 +542,7 @@ st.markdown(
 
         /* Mobile: reduce gap under the Scoop 52 title */
         .sidebar-brand {
-            margin: 0.15rem -1rem 1.1rem -1rem !important;
+            margin: 0.15rem -1rem 0.35rem -1rem !important;
             padding: 0.55rem 1rem !important;
         }
 
@@ -1073,7 +1073,7 @@ st.markdown(
             line-height: 1.05 !important;
         }
         .sidebar-brand {
-            margin: 0.15rem -1rem 1.1rem -1rem !important;
+            margin: 0.15rem -1rem 0.35rem -1rem !important;
             padding: 0.65rem 1rem !important;
             white-space: normal !important;
         }
@@ -1670,7 +1670,7 @@ st.markdown(
             line-height: 1.05 !important;
         }
         .sidebar-brand {
-            margin: 0.15rem -1rem 1.1rem -1rem !important;
+            margin: 0.15rem -1rem 0.35rem -1rem !important;
             padding: 0.65rem 1rem !important;
             white-space: normal !important;
         }
@@ -2407,7 +2407,7 @@ st.markdown(
     @media (min-width: 1367px) {
         .sidebar-brand {
             width: 100% !important;
-            margin: 0.15rem 0 1rem 0 !important;
+            margin: 0.15rem 0 0.35rem 0 !important;
             white-space: normal !important;
         }
     }

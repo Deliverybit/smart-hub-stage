@@ -868,7 +868,7 @@ TABLET_SIDEBAR = """
             line-height: 1.05 !important;
         }
         .sidebar-brand {
-            margin: 0.15rem -1rem 1.1rem -1rem !important;
+            margin: 0.15rem -1rem 0.35rem -1rem !important;
             padding: 0.65rem 1rem !important;
             white-space: normal !important;
         }
@@ -1299,7 +1299,7 @@ DESKTOP_SIDEBAR_LAYOUT = """
     }
     .sidebar-brand {
         width: 100% !important;
-        margin: 0.15rem 0 1rem 0 !important;
+        margin: 0.15rem 0 0.35rem 0 !important;
         padding: 0.7rem 1rem !important;
         box-sizing: border-box !important;
         white-space: normal !important;
@@ -1319,6 +1319,34 @@ DESKTOP_SIDEBAR_LAYOUT = """
         box-sizing: border-box !important;
     }
 }
+"""
+
+# Tighter nav slide-out spacing — all viewports; injected last on every page.
+SIDEBAR_NAV_COMPACT = """
+    [data-testid="stSidebar"] .sidebar-brand {
+        margin-bottom: 0.35rem !important;
+    }
+    [data-testid="stSidebar"] div[data-testid="stCheckbox"] {
+        margin-bottom: 0.35rem !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"]:has(hr) {
+        margin-top: 0 !important;
+        margin-bottom: 0.15rem !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    [data-testid="stSidebar"] hr {
+        margin: 0.15rem 0 !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        gap: 0.4rem !important;
+    }
+    [data-testid="stSidebar"] [data-testid="element-container"]:has([data-testid="stPageLink"]) {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
 """
 
 TABLET_SEARCH_MOBILE_LAYOUT = (

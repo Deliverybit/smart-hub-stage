@@ -5,6 +5,7 @@ from admin_tools.tablet_mobile_layout_css import (
     MOBILE_CARD_FIELD_ORDER,
     MOBILE_HEADLINES_CARD_OVERLAY,
     RESPONSIVE_GENERIC_TOOLTIP_LAYOUT,
+    SIDEBAR_NAV_COMPACT,
 )
 
 _MOBILE_HEADLINES_CSS = f"""
@@ -509,6 +510,28 @@ _RESPONSIVE_SIDEBAR_JS = """
         return false;
     };
 
+    const expandSidebar = () => {
+        const selectors = [
+            '[data-testid="stHeader"] [data-testid="stExpandSidebarButton"] button',
+            '[data-testid="stHeader"] [data-testid="stExpandSidebarButton"]',
+            '[data-testid="collapsedControl"] button',
+            '[data-testid="collapsedControl"]',
+        ];
+        for (const selector of selectors) {
+            const node = document.querySelector(selector);
+            if (node) {
+                node.click();
+                return true;
+            }
+        }
+        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+        if (sidebar && sidebar.getAttribute("aria-expanded") === "false") {
+            sidebar.setAttribute("aria-expanded", "true");
+            return true;
+        }
+        return false;
+    };
+
     const removeLegacyCloseButton = () => {
         document.getElementById("scoop-responsive-sidebar-close")?.remove();
         document.querySelectorAll(".scoop-responsive-sidebar-close").forEach((node) => {
@@ -562,65 +585,46 @@ _RESPONSIVE_SIDEBAR_JS = """
     });
 
     let tabletBootstrapped = false;
-    const forceZenbookSidebarCollapsed = () => {
-        if (!isAsusZenbookFoldViewport()) {
-            return;
-        }
-        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-        if (!sidebar || sidebar.getAttribute("aria-expanded") !== "true") {
-            return;
-        }
-        collapseSidebar();
-        if (sidebar.getAttribute("aria-expanded") === "true") {
-            sidebar.setAttribute("aria-expanded", "false");
-        }
-    };
 
-    const ensureInitialTabletCollapse = () => {
+    const ensureInitialResponsiveExpand = () => {
         if (!isResponsiveViewport()) {
             return;
         }
-        forceZenbookSidebarCollapsed();
         if (tabletBootstrapped) {
             return;
         }
         const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-        if (!sidebar || sidebar.getAttribute("aria-expanded") !== "true") {
+        if (!sidebar) {
+            return;
+        }
+        if (sidebar.getAttribute("aria-expanded") === "true") {
             tabletBootstrapped = true;
             removeLegacyCloseButton();
             return;
         }
-        if (collapseSidebar()) {
+        if (expandSidebar()) {
             tabletBootstrapped = true;
             removeLegacyCloseButton();
         }
     };
 
-    ensureInitialTabletCollapse();
+    ensureInitialResponsiveExpand();
     requestAnimationFrame(() => {
-        ensureInitialTabletCollapse();
+        ensureInitialResponsiveExpand();
         removeLegacyCloseButton();
     });
     setTimeout(() => {
-        ensureInitialTabletCollapse();
+        ensureInitialResponsiveExpand();
         removeLegacyCloseButton();
     }, 100);
     setTimeout(() => {
-        ensureInitialTabletCollapse();
+        ensureInitialResponsiveExpand();
         removeLegacyCloseButton();
     }, 400);
     setTimeout(() => {
-        forceZenbookSidebarCollapsed();
+        ensureInitialResponsiveExpand();
         removeLegacyCloseButton();
     }, 900);
-    if (isAsusZenbookFoldViewport()) {
-        [1500, 2500, 4000].forEach((delay) => {
-            setTimeout(() => {
-                forceZenbookSidebarCollapsed();
-                removeLegacyCloseButton();
-            }, delay);
-        });
-    }
 })();
 """
 
@@ -2037,6 +2041,7 @@ def install_responsive_sidebar_handler() -> None:
     """Responsive sidebar close (tablet) + always-open sidebar (desktop)."""
     st.html(
         f"<style id='scoop-desktop-sidebar-layout-css'>{DESKTOP_SIDEBAR_LAYOUT}</style>"
+        f"<style id='scoop-sidebar-nav-compact-css'>{SIDEBAR_NAV_COMPACT}</style>"
         f"<script>{_RESPONSIVE_SIDEBAR_JS}</script>"
         f"<script>{_DESKTOP_SIDEBAR_JS}</script>",
         unsafe_allow_javascript=True,
@@ -2057,6 +2062,7 @@ def install_tooltip_scroll_handler() -> None:
         f"<style id='scoop-dark-responsive-tip-underline-css'>{_DARK_RESPONSIVE_TIP_UNDERLINE_CSS}</style>"
         f"<style id='scoop-dark-popup-outline-css'>{_DARK_POPUP_OUTLINE_CSS}</style>"
         f"<style id='scoop-desktop-sidebar-layout-css'>{DESKTOP_SIDEBAR_LAYOUT}</style>"
+        f"<style id='scoop-sidebar-nav-compact-css'>{SIDEBAR_NAV_COMPACT}</style>"
         f"<script>{_COMBINED_PAGE_JS}</script>",
         unsafe_allow_javascript=True,
     )
