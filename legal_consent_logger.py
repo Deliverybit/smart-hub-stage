@@ -26,6 +26,11 @@ from vpn_detection import detect_vpn_proxy
 _SQLITE_PATH = Path(__file__).resolve().parent / "legal_consents.db"
 _DEFAULT_TIMEZONE = os.getenv("CONSENT_DEFAULT_TIMEZONE", "America/Chicago").strip()
 TERMS_STORAGE_KEY = "scoop-terms"
+ANALYZE_RETURN_QUERY_KEY = "scoop_from_analyze"
+ANALYZE_RETURN_STORAGE_KEY = "scoop-return-from-analyze"
+PENDING_ANALYZE_RETURN_CONSENT = "_scoop_pending_analyze_return_consent"
+POST_CONSENT_COLLAPSE_KEY = "scoop-post-consent-collapse"
+RESPONSIVE_MAX_WIDTH = 1366
 
 
 def _postgres_url() -> str:
@@ -639,7 +644,106 @@ def restore_terms_from_browser(
         st_module.session_state[flag] = True
         return True
 
+    return False
+
+
+def _query_param_flag(st_module, name: str) -> bool:
+    raw = st_module.query_params.get(name, "")
+    if isinstance(raw, list):
+        raw = raw[0] if raw else ""
+    return str(raw).strip() == "1"
+
+
+def _probe_analyze_return_storage(st_module, consent_key: str) -> bool:
+    try:
+        from streamlit_js_eval import streamlit_js_eval
+    except ImportError:
+        return False
+
+    storage_key = json.dumps(ANALYZE_RETURN_STORAGE_KEY)
+    value = streamlit_js_eval(
+        js_expressions=(
+            f"(() => {{ try {{ return sessionStorage.getItem({storage_key}) || ''; }}"
+            " catch (e) { return ''; } })()"
+        ),
+        key=f"scoop_analyze_return_probe_{consent_key}",
+        want_output=True,
+        height=0,
+    )
+    return str(value).strip() == "1"
+
+
+def _clear_analyze_return_storage(consent_key: str) -> None:
+    import streamlit as st
+
+    storage_key = json.dumps(ANALYZE_RETURN_STORAGE_KEY)
+    st.components.v1.html(
+        f"<script>(function(){{try{{sessionStorage.removeItem({storage_key});}}catch(e){{}}}})();</script>",
+        height=0,
+    )
+
+
+def _accept_terms_after_analyze_return(
+    st_module,
+    consent_key: str,
+    flag: str,
+) -> bool:
+    """Skip the gate when returning from Analyze to the source screener page."""
+    pending = st_module.session_state.get(PENDING_ANALYZE_RETURN_CONSENT)
+    if pending == consent_key:
+        st_module.session_state.pop(PENDING_ANALYZE_RETURN_CONSENT, None)
+        restore_terms_from_browser(st_module, consent_key, session_flag=flag)
+        if not terms_accepted(st_module, flag):
+            st_module.session_state[flag] = True
+        return True
+
+    from_query = _query_param_flag(st_module, ANALYZE_RETURN_QUERY_KEY)
+    from_storage = _probe_analyze_return_storage(st_module, consent_key)
+    if not from_query and not from_storage:
+        return False
+
+    restore_terms_from_browser(st_module, consent_key, session_flag=flag)
+    if not terms_accepted(st_module, flag):
+        st_module.session_state[flag] = True
+
+    if from_query:
+        try:
+            del st_module.query_params[ANALYZE_RETURN_QUERY_KEY]
+        except Exception:
+            pass
+
+    if from_storage:
+        _clear_analyze_return_storage(consent_key)
+
     return True
+
+
+def mark_post_consent_collapsed_view() -> None:
+    """Mobile/tablet: keep sidebar collapsed after the consent checkbox rerun."""
+    import streamlit as st
+
+    storage_key = json.dumps(POST_CONSENT_COLLAPSE_KEY)
+    st.components.v1.html(
+        f"""
+<script>
+(function() {{
+    try {{
+        const w = (window.parent && window.parent.innerWidth) || window.innerWidth || 0;
+        if (w > {RESPONSIVE_MAX_WIDTH}) {{
+            return;
+        }}
+        const aw = window.parent || window;
+        aw.sessionStorage.setItem({storage_key}, "1");
+        aw.__scoopSuppressSidebarExpand = Date.now() + 12000;
+        if (typeof aw.__scoopClearResponsiveExpandTimers === "function") {{
+            aw.__scoopClearResponsiveExpandTimers();
+        }}
+    }} catch (e) {{}}
+}})();
+</script>
+""",
+        height=0,
+    )
 
 
 def render_terms_gate(
@@ -658,18 +762,19 @@ def render_terms_gate(
             persist_terms_to_browser(consent_key)
             st_module.session_state[persisted_key] = True
         return True
-    if not restore_terms_from_browser(st_module, consent_key, session_flag=flag):
-        return False
-    if terms_accepted(st_module, flag):
+
+    if _accept_terms_after_analyze_return(st_module, consent_key, flag):
         persisted_key = f"_scoop_terms_persisted::{consent_key}"
         if not st_module.session_state.get(persisted_key):
             persist_terms_to_browser(consent_key)
             st_module.session_state[persisted_key] = True
         return True
+
     st_module.warning(warning_text)
     if st_module.checkbox(checkbox_label, key=f"{consent_key}__widget"):
         st_module.session_state[flag] = True
         persist_terms_to_browser(consent_key)
+        mark_post_consent_collapsed_view()
         log_terms_acceptance(st_module, consent_key=consent_key)
         st_module.rerun()
     return False

@@ -21,8 +21,19 @@ def test_mark_analyze_return_uses_parent_session_storage() -> None:
     assert "__scoopClearResponsiveExpandTimers" in js
 
 
+def test_analyze_back_link_marks_return_query() -> None:
+    from legal_consent_logger import ANALYZE_RETURN_QUERY_KEY
+
+    href = f"{analyze_page.analyze_back_href('pages/1_NYSE_Top_10.py')}?{ANALYZE_RETURN_QUERY_KEY}=1"
+    assert href.endswith(f"?{ANALYZE_RETURN_QUERY_KEY}=1")
+    assert "/NYSE_Top_10" in href
+
+
 def main() -> int:
-    tests = [test_mark_analyze_return_uses_parent_session_storage]
+    tests = [
+        test_mark_analyze_return_uses_parent_session_storage,
+        test_analyze_back_link_marks_return_query,
+    ]
     for fn in tests:
         fn()
         print(f"PASS {fn.__name__}")

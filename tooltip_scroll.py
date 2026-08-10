@@ -923,6 +923,7 @@ _RESPONSIVE_SIDEBAR_JS = (
 
     let tabletBootstrapped = false;
     const ANALYZE_RETURN_KEY = "scoop-return-from-analyze";
+    const POST_CONSENT_KEY = "scoop-post-consent-collapse";
 
     const isReturningFromAnalyze = () => {
         try {
@@ -935,6 +936,23 @@ _RESPONSIVE_SIDEBAR_JS = (
     const clearReturningFromAnalyze = () => {
         try {
             appWin.sessionStorage.removeItem(ANALYZE_RETURN_KEY);
+        } catch (e) {}
+    };
+
+    const isPostConsentCollapse = () => {
+        if (!isResponsiveViewport()) {
+            return false;
+        }
+        try {
+            return appWin.sessionStorage.getItem(POST_CONSENT_KEY) === "1";
+        } catch (e) {
+            return false;
+        }
+    };
+
+    const clearPostConsentCollapse = () => {
+        try {
+            appWin.sessionStorage.removeItem(POST_CONSENT_KEY);
         } catch (e) {}
     };
 
@@ -962,6 +980,25 @@ _RESPONSIVE_SIDEBAR_JS = (
         return true;
     };
 
+    const holdMainViewAfterConsent = () => {
+        if (!isResponsiveViewport() || __scoopIsAnalyzePage()) {
+            return false;
+        }
+        if (!isPostConsentCollapse()) {
+            return false;
+        }
+        clearPostConsentCollapse();
+        appWin.__scoopSuppressSidebarExpand = Date.now() + 12000;
+        tabletBootstrapped = true;
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+        if (sidebar && sidebar.getAttribute("aria-expanded") !== "false") {
+            sidebar.setAttribute("aria-expanded", "false");
+        }
+        layout()?.syncSidebarLayout?.();
+        removeLegacyCloseButton();
+        return true;
+    };
+
     const ensureScreenerContentVisible = () => {
         holdScreenerMainView();
     };
@@ -979,6 +1016,22 @@ _RESPONSIVE_SIDEBAR_JS = (
         [150, 500, 1200].forEach((delay) => {
             const timerId = appWin.setTimeout(run, delay);
             appWin.__scoopAnalyzeReturnCollapseTimers.push(timerId);
+        });
+    };
+
+    const scheduleCollapseAfterConsent = () => {
+        if (appWin.__scoopPostConsentCollapseTimers) {
+            appWin.__scoopPostConsentCollapseTimers.forEach((timerId) => {
+                appWin.clearTimeout(timerId);
+            });
+        }
+        appWin.__scoopPostConsentCollapseTimers = [];
+        const run = () => holdMainViewAfterConsent();
+        run();
+        appWin.requestAnimationFrame(run);
+        [150, 500, 1200].forEach((delay) => {
+            const timerId = appWin.setTimeout(run, delay);
+            appWin.__scoopPostConsentCollapseTimers.push(timerId);
         });
     };
 
@@ -1076,6 +1129,11 @@ _RESPONSIVE_SIDEBAR_JS = (
             scheduleCollapseAfterAnalyzeReturn();
             return;
         }
+        if (isPostConsentCollapse()) {
+            tabletBootstrapped = true;
+            scheduleCollapseAfterConsent();
+            return;
+        }
         if (tabletBootstrapped) {
             return;
         }
@@ -1109,8 +1167,14 @@ _RESPONSIVE_SIDEBAR_JS = (
             });
             appWin.__scoopAnalyzeReturnCollapseTimers = [];
         }
+        if (appWin.__scoopPostConsentCollapseTimers) {
+            appWin.__scoopPostConsentCollapseTimers.forEach((timerId) => {
+                appWin.clearTimeout(timerId);
+            });
+            appWin.__scoopPostConsentCollapseTimers = [];
+        }
     };
-    if (!isAnalyzeReturnSuppressed() && !isReturningFromAnalyze()) {
+    if (!isAnalyzeReturnSuppressed() && !isReturningFromAnalyze() && !isPostConsentCollapse()) {
         appWin.requestAnimationFrame(() => {
             ensureInitialResponsiveExpand();
             removeLegacyCloseButton();

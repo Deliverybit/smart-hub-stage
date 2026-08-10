@@ -120,10 +120,11 @@ def inherit_screener_terms_for_analyze() -> None:
         return
 
     st.session_state[consent_key] = True
+    from legal_consent_logger import PENDING_ANALYZE_RETURN_CONSENT, persist_terms_to_browser
+
+    st.session_state[PENDING_ANALYZE_RETURN_CONSENT] = consent_key
     marker = f"_scoop_analyze_terms_persisted::{consent_key}"
     if not st.session_state.get(marker):
-        from legal_consent_logger import persist_terms_to_browser
-
         persist_terms_to_browser(consent_key)
         st.session_state[marker] = True
 
@@ -191,10 +192,10 @@ def render_analyze_back_button() -> None:
     """Prominent back link for Analyze deep-dive (desktop, tablet, and phone)."""
     import html as html_module
 
-    from legal_consent_logger import TERMS_STORAGE_KEY
+    from legal_consent_logger import ANALYZE_RETURN_QUERY_KEY, TERMS_STORAGE_KEY
 
     page_script, label = analyze_back_target()
-    href = analyze_back_href(page_script)
+    href = f"{analyze_back_href(page_script)}?{ANALYZE_RETURN_QUERY_KEY}=1"
     consent_key = _analyze_back_consent_key()
     persist_js = _persist_terms_click_js(TERMS_STORAGE_KEY, consent_key)
     return_js = _mark_analyze_return_js()
