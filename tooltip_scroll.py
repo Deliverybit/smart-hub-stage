@@ -2472,15 +2472,11 @@ def _inject_responsive_bootstrap_css() -> str:
                 event.stopImmediatePropagation();
                 let theme = "light";
                 try {{
-                    const stored = localStorage.getItem("scoop-theme");
-                    if (stored === "dark" || stored === "light") {{
-                        theme = stored;
-                    }} else if (appDoc.documentElement.classList.contains("scoop-dark")) {{
-                        theme = "dark";
-                    }} else if (appDoc.documentElement.getAttribute("data-scoop-theme") === "dark") {{
+                    localStorage.removeItem("scoop-theme");
+                    const stored = sessionStorage.getItem("scoop-theme");
+                    if (stored === "dark") {{
                         theme = "dark";
                     }}
-                    localStorage.setItem("scoop-theme", theme);
                 }} catch (e) {{}}
                 try {{
                     appWin.__scoopAnalyzeSidebarUserOpened = false;
