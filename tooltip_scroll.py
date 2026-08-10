@@ -4,6 +4,7 @@ import streamlit as st
 
 from admin_tools.tablet_mobile_layout_css import (
     DESKTOP_SIDEBAR_LAYOUT,
+    DESKTOP_ZOOM_LAYOUT,
     MOBILE_CARD_FIELD_ORDER,
     MOBILE_HEADLINES_CARD_OVERLAY,
     RESPONSIVE_GENERIC_TOOLTIP_LAYOUT,
@@ -480,6 +481,8 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
     const TABLET_MIN = 744;
     const TABLET_MAX = 1366;
     const DESKTOP_MIN = 1367;
+    // Layout viewport floor when browser zoom shrinks CSS width on a physical desktop screen.
+    const DESKTOP_ZOOM_MIN = 1024;
 
     const isPhoneViewport = () => __scoopViewportWidth() <= PHONE_MAX;
     const isSurfaceDuoViewport = () => {
@@ -521,8 +524,27 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
         isIpad14ProMaxViewport() ||
         isAsusZenbookFoldViewport() ||
         (__scoopViewportWidth() >= TABLET_MIN && __scoopViewportWidth() <= TABLET_MAX);
-    const isDesktopViewport = () =>
-        __scoopViewportWidth() >= DESKTOP_MIN && !isAsusZenbookFoldViewport();
+    const isDesktopViewport = () => {
+        const innerW = __scoopViewportWidth();
+        const screenW = appWin.screen?.width || 0;
+        if (isAsusZenbookFoldViewport()) {
+            return false;
+        }
+        if (innerW >= DESKTOP_MIN) {
+            return true;
+        }
+        // Browser zoom on a desktop monitor shrinks layout width below 1367px — keep split sidebar.
+        return screenW >= DESKTOP_MIN && innerW >= DESKTOP_ZOOM_MIN;
+    };
+
+    const setDesktopLayoutFlag = (on) => {
+        const root = doc.documentElement;
+        if (on) {
+            root.setAttribute("data-scoop-desktop-layout", "1");
+        } else {
+            root.removeAttribute("data-scoop-desktop-layout");
+        }
+    };
 
     const DESKTOP_INLINE_PROPS = {
         view: ["display", "flex-direction", "position", "width", "max-width", "margin-left", "padding-left"],
@@ -615,12 +637,15 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
         view.style.setProperty("display", "flex", "important");
         view.style.setProperty("flex-direction", "row", "important");
         view.style.setProperty("position", "relative", "important");
-        sidebar.style.setProperty("flex", "0 0 var(--scoop-sidebar-width)", "important");
+        sidebar.style.setProperty("flex", "0 1 auto", "important");
         sidebar.style.setProperty("position", "relative", "important");
         sidebar.style.setProperty("transform", "none", "important");
         sidebar.style.setProperty("visibility", "visible", "important");
         sidebar.style.setProperty("overflow", "visible", "important");
         sidebar.style.setProperty("z-index", "2", "important");
+        sidebar.style.setProperty("min-width", "min(10rem, 28vw)", "important");
+        sidebar.style.setProperty("width", "var(--scoop-desktop-sidebar-width, clamp(10rem, min(20vw, 28rem), 36rem))", "important");
+        sidebar.style.setProperty("max-width", "min(32vw, 36rem)", "important");
         sidebar.style.setProperty("height", "100vh", "important");
         sidebar.style.setProperty("max-height", "100vh", "important");
         const inner =
@@ -629,21 +654,32 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
         if (inner) {
             inner.style.setProperty("overflow-x", "visible", "important");
             inner.style.setProperty("overflow-y", "auto", "important");
+            inner.style.setProperty("min-width", "0", "important");
             inner.style.setProperty("height", "100vh", "important");
             inner.style.setProperty("max-height", "100vh", "important");
         }
         const mainWrap = view.querySelector(':scope > div:not([data-testid="stSidebar"])');
         if (mainWrap) {
-            mainWrap.style.setProperty("flex", "1 1 auto", "important");
+            mainWrap.style.setProperty("flex", "1 1 0", "important");
             mainWrap.style.setProperty("min-width", "0", "important");
+            mainWrap.style.setProperty("max-width", "100%", "important");
+            mainWrap.style.setProperty("overflow-x", "auto", "important");
+        }
+        const mainSection = view.querySelector("section.main");
+        if (mainSection) {
+            mainSection.style.setProperty("min-width", "0", "important");
+            mainSection.style.setProperty("max-width", "100%", "important");
+            mainSection.style.setProperty("overflow-x", "auto", "important");
         }
     };
 
     const syncSidebarLayout = () => {
         if (isDesktopViewport()) {
+            setDesktopLayoutFlag(true);
             applyDesktopSidebarLayout();
             return;
         }
+        setDesktopLayoutFlag(false);
         if (isResponsiveViewport()) {
             applyResponsiveSidebarLayout();
             return;
@@ -684,6 +720,10 @@ _RESPONSIVE_LAYOUT_SYNC_JS = (
     if (!appWin.__scoopLayoutResizeBound) {
         appWin.__scoopLayoutResizeBound = true;
         appWin.addEventListener("resize", schedule);
+        if (appWin.visualViewport) {
+            appWin.visualViewport.addEventListener("resize", schedule);
+            appWin.visualViewport.addEventListener("scroll", schedule);
+        }
     }
     if (!appWin.__scoopLayoutObserver) {
         appWin.__scoopLayoutObserver = new MutationObserver(schedule);
@@ -2513,6 +2553,7 @@ def install_responsive_sidebar_handler() -> None:
     st.html(
         _inject_responsive_bootstrap_css()
         + f"<style id='scoop-desktop-sidebar-layout-css'>{DESKTOP_SIDEBAR_LAYOUT}</style>"
+        + f"<style id='scoop-desktop-zoom-layout-css'>{DESKTOP_ZOOM_LAYOUT}</style>"
         + f"<style id='scoop-sidebar-nav-compact-css'>{SIDEBAR_NAV_COMPACT}</style>"
         + _RESPONSIVE_LAYOUT_SCRIPTS,
         unsafe_allow_javascript=True,
@@ -2534,6 +2575,7 @@ def install_tooltip_scroll_handler() -> None:
         f"<style id='scoop-dark-popup-outline-css'>{_DARK_POPUP_OUTLINE_CSS}</style>"
         + _inject_responsive_bootstrap_css()
         + f"<style id='scoop-desktop-sidebar-layout-css'>{DESKTOP_SIDEBAR_LAYOUT}</style>"
+        + f"<style id='scoop-desktop-zoom-layout-css'>{DESKTOP_ZOOM_LAYOUT}</style>"
         + f"<style id='scoop-sidebar-nav-compact-css'>{SIDEBAR_NAV_COMPACT}</style>"
         + f"<script>{_COMBINED_PAGE_JS}</script>",
         unsafe_allow_javascript=True,

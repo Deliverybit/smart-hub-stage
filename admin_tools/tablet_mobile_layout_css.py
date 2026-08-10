@@ -1239,10 +1239,16 @@ DESKTOP_SIDEBAR = """
         }
 """
 
-# Injected last on every page — beats tablet overlay rules and fixes desktop clipping.
-DESKTOP_SIDEBAR_LAYOUT = """
-@media (min-width: 1367px) {
-    /* Desktop: flex split sidebar + main; sidebar always visible, no horizontal clip. */
+# Shared desktop flex rules — used for min-width media query and zoom (data-attribute) selectors.
+_DESKTOP_FLEX_SPLIT_RULES = """
+    /* Desktop: flex split sidebar + main; scales with browser zoom without clipping main. */
+    :root {
+        --scoop-desktop-sidebar-width: clamp(10rem, min(20vw, 28rem), 36rem);
+    }
+    .stApp {
+        overflow-x: auto !important;
+        max-width: 100vw !important;
+    }
     [data-testid="stAppViewContainer"] {
         display: flex !important;
         flex-direction: row !important;
@@ -1250,13 +1256,16 @@ DESKTOP_SIDEBAR_LAYOUT = """
         position: relative !important;
         width: 100% !important;
         max-width: 100vw !important;
+        min-width: 0 !important;
         margin-left: 0 !important;
         padding-left: 0 !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
     }
     section[data-testid="stSidebar"],
     section[data-testid="stSidebar"][aria-expanded="false"],
     section[data-testid="stSidebar"][aria-expanded="true"] {
-        flex: 0 0 var(--scoop-sidebar-width) !important;
+        flex: 0 1 auto !important;
         align-self: flex-start !important;
         position: relative !important;
         transform: none !important;
@@ -1267,9 +1276,9 @@ DESKTOP_SIDEBAR_LAYOUT = """
         pointer-events: auto !important;
         overflow: visible !important;
         z-index: 2 !important;
-        min-width: var(--scoop-sidebar-width) !important;
-        width: var(--scoop-sidebar-width) !important;
-        max-width: min(92vw, 36rem) !important;
+        min-width: min(10rem, 28vw) !important;
+        width: var(--scoop-desktop-sidebar-width) !important;
+        max-width: min(32vw, 36rem) !important;
         box-shadow: none !important;
         left: auto !important;
         top: auto !important;
@@ -1282,16 +1291,27 @@ DESKTOP_SIDEBAR_LAYOUT = """
         overflow-x: visible !important;
         overflow-y: auto !important;
         width: 100% !important;
+        min-width: 0 !important;
         max-width: 100% !important;
         height: 100vh !important;
         max-height: 100vh !important;
         box-sizing: border-box !important;
     }
     [data-testid="stAppViewContainer"] > div:not([data-testid="stSidebar"]) {
-        flex: 1 1 auto !important;
+        flex: 1 1 0 !important;
         min-width: 0 !important;
         width: auto !important;
-        max-width: none !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        box-sizing: border-box !important;
+    }
+    [data-testid="stAppViewContainer"] > section.main,
+    [data-testid="stMainBlockContainer"],
+    section.main > div {
+        min-width: 0 !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        box-sizing: border-box !important;
     }
     [data-testid="stSidebarBackdrop"] {
         display: none !important;
@@ -1329,7 +1349,21 @@ DESKTOP_SIDEBAR_LAYOUT = """
         max-width: 100% !important;
         box-sizing: border-box !important;
     }
-}
+"""
+
+# Injected last on every page — beats tablet overlay rules and fixes desktop clipping.
+DESKTOP_SIDEBAR_LAYOUT = f"""
+@media (min-width: 1367px) {{
+{_DESKTOP_FLEX_SPLIT_RULES}
+}}
+"""
+
+# When browser zoom shrinks layout viewport below 1367px on a physical desktop screen,
+# JS sets data-scoop-desktop-layout="1" so split-sidebar rules still apply.
+DESKTOP_ZOOM_LAYOUT = f"""
+html[data-scoop-desktop-layout="1"] {{
+{_DESKTOP_FLEX_SPLIT_RULES}
+}}
 """
 
 # Tighter nav slide-out spacing — all viewports; injected last on every page.
