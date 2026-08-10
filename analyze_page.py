@@ -97,10 +97,14 @@ def _persist_terms_click_js(storage_key: str, consent_key: str) -> str:
 def _mark_analyze_return_js() -> str:
     """Mobile/tablet: land on screener content after Back, not the sidebar overlay."""
     return (
-        "try{sessionStorage.setItem('scoop-return-from-analyze','1');"
-        "window.__scoopSuppressSidebarExpand=Date.now()+10000;"
-        "if(window.__scoopClearResponsiveExpandTimers)"
-        "window.__scoopClearResponsiveExpandTimers();}catch(e){}"
+        "try{"
+        "var aw=window.parent||window;"
+        "aw.sessionStorage.setItem('scoop-return-from-analyze','1');"
+        "aw.sessionStorage.setItem('scoop-landing-seen','1');"
+        "aw.__scoopSuppressSidebarExpand=Date.now()+10000;"
+        "if(typeof aw.__scoopClearResponsiveExpandTimers==='function')"
+        "aw.__scoopClearResponsiveExpandTimers();"
+        "}catch(e){}"
     )
 
 

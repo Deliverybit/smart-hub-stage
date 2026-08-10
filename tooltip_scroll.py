@@ -546,6 +546,16 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
         }
     };
 
+    const isAnalyzeReturnSuppressed = () => {
+        if (!isResponsiveViewport() || __scoopIsAnalyzePage()) {
+            return false;
+        }
+        return !!(
+            appWin.__scoopSuppressSidebarExpand &&
+            Date.now() < appWin.__scoopSuppressSidebarExpand
+        );
+    };
+
     const DESKTOP_INLINE_PROPS = {
         view: ["display", "flex-direction", "position", "width", "max-width", "margin-left", "padding-left"],
         sidebar: [
@@ -596,7 +606,12 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
         view.style.setProperty("margin-left", "0", "important");
         view.style.setProperty("padding-left", "0", "important");
 
-        const expanded = sidebar.getAttribute("aria-expanded") === "true";
+        if (isAnalyzeReturnSuppressed()) {
+            sidebar.setAttribute("aria-expanded", "false");
+        }
+        const expanded = isAnalyzeReturnSuppressed()
+            ? false
+            : sidebar.getAttribute("aria-expanded") === "true";
         sidebar.style.setProperty("position", "fixed", "important");
         sidebar.style.setProperty("top", "0", "important");
         sidebar.style.setProperty("left", "0", "important");
@@ -691,6 +706,7 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
         isResponsiveViewport,
         isDesktopViewport,
         isAnalyzePage: __scoopIsAnalyzePage,
+        isAnalyzeReturnSuppressed,
         applyResponsiveSidebarLayout,
         applyDesktopSidebarLayout,
         clearDesktopInlineLayout,
@@ -752,6 +768,7 @@ _ANALYZE_RETURN_NAV_JS = (
     const markAnalyzeReturn = () => {
         try {
             appWin.sessionStorage.setItem(RETURN_KEY, "1");
+            appWin.sessionStorage.setItem("scoop-landing-seen", "1");
             appWin.__scoopSuppressSidebarExpand = Date.now() + SUPPRESS_MS;
             if (typeof appWin.__scoopClearResponsiveExpandTimers === "function") {
                 appWin.__scoopClearResponsiveExpandTimers();
@@ -789,19 +806,7 @@ _ANALYZE_RETURN_NAV_JS = (
         if (sidebar) {
             sidebar.setAttribute("aria-expanded", "false");
         }
-        const layout = appWin.__scoopLayout;
-        if (typeof layout?.collapseSidebar === "function") {
-            layout.collapseSidebar();
-        }
-        layout?.syncSidebarLayout?.();
-    };
-
-    const scheduleForceScreenerMainView = () => {
-        forceScreenerMainView();
-        appWin.requestAnimationFrame(forceScreenerMainView);
-        [50, 150, 400, 900, 1600, 2500, 4000, 6000].forEach((delay) => {
-            appWin.setTimeout(forceScreenerMainView, delay);
-        });
+        appWin.__scoopLayout?.syncSidebarLayout?.();
     };
 
     if (!appWin.__scoopAnalyzeReturnNavBound) {
@@ -816,8 +821,6 @@ _ANALYZE_RETURN_NAV_JS = (
             true
         );
     }
-
-    scheduleForceScreenerMainView();
 })();
 """
 )
@@ -832,6 +835,7 @@ _RESPONSIVE_SIDEBAR_JS = (
     const appWin = __scoopGetAppWin();
     const layout = () => appWin.__scoopLayout;
     const isResponsiveViewport = () => layout()?.isResponsiveViewport() ?? false;
+    const isAnalyzeReturnSuppressed = () => layout()?.isAnalyzeReturnSuppressed?.() ?? false;
 
     const collapseSidebar = () => {
         const selectors = [
@@ -861,6 +865,9 @@ _RESPONSIVE_SIDEBAR_JS = (
     };
 
     const expandSidebar = () => {
+        if (isAnalyzeReturnSuppressed()) {
+            return false;
+        }
         const selectors = [
             '[data-testid="stHeader"] [data-testid="stExpandSidebarButton"] button',
             '[data-testid="stHeader"] [data-testid="stExpandSidebarButton"]',
@@ -931,15 +938,15 @@ _RESPONSIVE_SIDEBAR_JS = (
         } catch (e) {}
     };
 
-    const ensureScreenerContentVisible = () => {
+    const holdScreenerMainView = () => {
         if (!isResponsiveViewport() || __scoopIsAnalyzePage()) {
-            return;
+            return false;
         }
         const suppressed =
-            appWin.__scoopSuppressSidebarExpand &&
-            Date.now() < appWin.__scoopSuppressSidebarExpand;
-        if (!isReturningFromAnalyze() && !suppressed) {
-            return;
+            isAnalyzeReturnSuppressed() ||
+            isReturningFromAnalyze();
+        if (!suppressed) {
+            return false;
         }
         if (isReturningFromAnalyze()) {
             clearReturningFromAnalyze();
@@ -947,49 +954,78 @@ _RESPONSIVE_SIDEBAR_JS = (
         appWin.__scoopSuppressSidebarExpand = Date.now() + 10000;
         tabletBootstrapped = true;
         const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
-        if (sidebar) {
+        if (sidebar && sidebar.getAttribute("aria-expanded") !== "false") {
             sidebar.setAttribute("aria-expanded", "false");
         }
-        collapseSidebar();
-        layout()?.syncSidebarLayout();
+        layout()?.syncSidebarLayout?.();
         removeLegacyCloseButton();
+        return true;
+    };
+
+    const ensureScreenerContentVisible = () => {
+        holdScreenerMainView();
     };
 
     const scheduleCollapseAfterAnalyzeReturn = () => {
-        ensureScreenerContentVisible();
-        appWin.requestAnimationFrame(ensureScreenerContentVisible);
-        [50, 150, 400, 900, 1600, 2500, 4000].forEach((delay) => {
-            appWin.setTimeout(ensureScreenerContentVisible, delay);
+        if (appWin.__scoopAnalyzeReturnCollapseTimers) {
+            appWin.__scoopAnalyzeReturnCollapseTimers.forEach((timerId) => {
+                appWin.clearTimeout(timerId);
+            });
+        }
+        appWin.__scoopAnalyzeReturnCollapseTimers = [];
+        const run = () => holdScreenerMainView();
+        run();
+        appWin.requestAnimationFrame(run);
+        [150, 500, 1200].forEach((delay) => {
+            const timerId = appWin.setTimeout(run, delay);
+            appWin.__scoopAnalyzeReturnCollapseTimers.push(timerId);
         });
     };
 
-    if (appWin.__scoopResponsiveSidebarBound) {
-        scheduleCollapseAfterAnalyzeReturn();
-        return;
-    }
-    appWin.__scoopResponsiveSidebarBound = true;
+    appWin.__scoopResponsiveSidebarBound = appWin.__scoopResponsiveSidebarBound || false;
     removeLegacyCloseButton();
 
-    if (appWin.__scoopLayout) {
-        appWin.__scoopLayout.collapseSidebar = collapseSidebar;
-        appWin.__scoopLayout.expandSidebar = expandSidebar;
-    }
+    if (!appWin.__scoopResponsiveSidebarBound) {
+        appWin.__scoopResponsiveSidebarBound = true;
 
-    doc.addEventListener(
-        "click",
-        (event) => {
-            if (shouldCloseSidebar(event)) {
+        if (appWin.__scoopLayout) {
+            appWin.__scoopLayout.collapseSidebar = collapseSidebar;
+            appWin.__scoopLayout.expandSidebar = expandSidebar;
+        }
+
+        doc.addEventListener(
+            "click",
+            (event) => {
+                if (shouldCloseSidebar(event)) {
+                    collapseSidebar();
+                }
+            },
+            true
+        );
+
+        doc.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && isResponsiveViewport()) {
                 collapseSidebar();
             }
-        },
-        true
-    );
+        });
 
-    doc.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && isResponsiveViewport()) {
-            collapseSidebar();
-        }
-    });
+        doc.addEventListener(
+            "click",
+            (event) => {
+                if (!__scoopIsAnalyzePage() || !isResponsiveViewport()) {
+                    return;
+                }
+                if (
+                    event.target.closest(
+                        '[data-testid="stExpandSidebarButton"], [data-testid="collapsedControl"]'
+                    )
+                ) {
+                    appWin.__scoopAnalyzeSidebarUserOpened = true;
+                }
+            },
+            true
+        );
+    }
 
     const ensureAnalyzeSidebarCollapsed = () => {
         if (!isResponsiveViewport() || !__scoopIsAnalyzePage()) {
@@ -1019,23 +1055,6 @@ _RESPONSIVE_SIDEBAR_JS = (
         });
     };
 
-    doc.addEventListener(
-        "click",
-        (event) => {
-            if (!__scoopIsAnalyzePage() || !isResponsiveViewport()) {
-                return;
-            }
-            if (
-                event.target.closest(
-                    '[data-testid="stExpandSidebarButton"], [data-testid="collapsedControl"]'
-                )
-            ) {
-                appWin.__scoopAnalyzeSidebarUserOpened = true;
-            }
-        },
-        true
-    );
-
     const ensureInitialResponsiveExpand = () => {
         if (!isResponsiveViewport()) {
             layout()?.syncSidebarLayout();
@@ -1051,9 +1070,9 @@ _RESPONSIVE_SIDEBAR_JS = (
         }
         if (
             isReturningFromAnalyze() ||
-            (appWin.__scoopSuppressSidebarExpand &&
-                Date.now() < appWin.__scoopSuppressSidebarExpand)
+            isAnalyzeReturnSuppressed()
         ) {
+            tabletBootstrapped = true;
             scheduleCollapseAfterAnalyzeReturn();
             return;
         }
@@ -1084,18 +1103,26 @@ _RESPONSIVE_SIDEBAR_JS = (
             appWin.clearTimeout(timerId);
         });
         appWin.__scoopResponsiveExpandTimers = [];
+        if (appWin.__scoopAnalyzeReturnCollapseTimers) {
+            appWin.__scoopAnalyzeReturnCollapseTimers.forEach((timerId) => {
+                appWin.clearTimeout(timerId);
+            });
+            appWin.__scoopAnalyzeReturnCollapseTimers = [];
+        }
     };
-    appWin.requestAnimationFrame(() => {
-        ensureInitialResponsiveExpand();
-        removeLegacyCloseButton();
-    });
-    [100, 400, 900, 1600].forEach((delay) => {
-        const timerId = appWin.setTimeout(() => {
+    if (!isAnalyzeReturnSuppressed() && !isReturningFromAnalyze()) {
+        appWin.requestAnimationFrame(() => {
             ensureInitialResponsiveExpand();
             removeLegacyCloseButton();
-        }, delay);
-        appWin.__scoopResponsiveExpandTimers.push(timerId);
-    });
+        });
+        [100, 400, 900, 1600].forEach((delay) => {
+            const timerId = appWin.setTimeout(() => {
+                ensureInitialResponsiveExpand();
+                removeLegacyCloseButton();
+            }, delay);
+            appWin.__scoopResponsiveExpandTimers.push(timerId);
+        });
+    }
 })();
 """
 )
