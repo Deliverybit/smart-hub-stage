@@ -698,23 +698,19 @@ def _accept_terms_after_analyze_return(
         return True
 
     from_query = _query_param_flag(st_module, ANALYZE_RETURN_QUERY_KEY)
-    from_storage = _probe_analyze_return_storage(st_module, consent_key)
-    if not from_query and not from_storage:
+    if not from_query:
         return False
 
     restore_terms_from_browser(st_module, consent_key, session_flag=flag)
     if not terms_accepted(st_module, flag):
         st_module.session_state[flag] = True
 
-    if from_query:
-        try:
-            del st_module.query_params[ANALYZE_RETURN_QUERY_KEY]
-        except Exception:
-            pass
+    try:
+        del st_module.query_params[ANALYZE_RETURN_QUERY_KEY]
+    except Exception:
+        pass
 
-    if from_storage:
-        _clear_analyze_return_storage(consent_key)
-
+    _clear_analyze_return_storage(consent_key)
     return True
 
 
@@ -734,6 +730,7 @@ def mark_post_consent_collapsed_view() -> None:
         }}
         const aw = window.parent || window;
         aw.sessionStorage.setItem({storage_key}, "1");
+        aw.sessionStorage.setItem("scoop-responsive-sidebar-ready", "1");
         aw.__scoopSuppressSidebarExpand = Date.now() + 12000;
         if (typeof aw.__scoopClearResponsiveExpandTimers === "function") {{
             aw.__scoopClearResponsiveExpandTimers();

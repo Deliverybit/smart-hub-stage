@@ -556,6 +556,16 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
         );
     };
 
+    const shouldKeepResponsiveSidebarCollapsed = () => {
+        if (!isResponsiveViewport()) {
+            return false;
+        }
+        if (__scoopIsAnalyzePage()) {
+            return !appWin.__scoopAnalyzeSidebarUserOpened;
+        }
+        return isAnalyzeReturnSuppressed();
+    };
+
     const DESKTOP_INLINE_PROPS = {
         view: ["display", "flex-direction", "position", "width", "max-width", "margin-left", "padding-left"],
         sidebar: [
@@ -606,10 +616,10 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
         view.style.setProperty("margin-left", "0", "important");
         view.style.setProperty("padding-left", "0", "important");
 
-        if (isAnalyzeReturnSuppressed()) {
+        if (shouldKeepResponsiveSidebarCollapsed()) {
             sidebar.setAttribute("aria-expanded", "false");
         }
-        const expanded = isAnalyzeReturnSuppressed()
+        const expanded = shouldKeepResponsiveSidebarCollapsed()
             ? false
             : sidebar.getAttribute("aria-expanded") === "true";
         sidebar.style.setProperty("position", "fixed", "important");
@@ -707,6 +717,7 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
         isDesktopViewport,
         isAnalyzePage: __scoopIsAnalyzePage,
         isAnalyzeReturnSuppressed,
+        shouldKeepResponsiveSidebarCollapsed,
         applyResponsiveSidebarLayout,
         applyDesktopSidebarLayout,
         clearDesktopInlineLayout,
@@ -725,11 +736,21 @@ _RESPONSIVE_LAYOUT_SYNC_JS = (
     const doc = __scoopGetAppDoc();
     const appWin = __scoopGetAppWin();
     const sync = () => appWin.__scoopLayout?.syncSidebarLayout();
+    let syncTimer = null;
     const schedule = () => {
-        sync();
-        appWin.requestAnimationFrame(sync);
+        if (syncTimer) {
+            return;
+        }
+        syncTimer = appWin.setTimeout(() => {
+            syncTimer = null;
+            sync();
+        }, 80);
     };
     schedule();
+    if (appWin.__scoopLayoutSyncBound) {
+        return;
+    }
+    appWin.__scoopLayoutSyncBound = true;
     if (doc.readyState === "loading") {
         doc.addEventListener("DOMContentLoaded", schedule, { once: true });
     }
@@ -738,17 +759,31 @@ _RESPONSIVE_LAYOUT_SYNC_JS = (
         appWin.addEventListener("resize", schedule);
         if (appWin.visualViewport) {
             appWin.visualViewport.addEventListener("resize", schedule);
-            appWin.visualViewport.addEventListener("scroll", schedule);
         }
     }
-    if (!appWin.__scoopLayoutObserver) {
+    const bindSidebarObserver = () => {
+        if (appWin.__scoopLayoutObserver) {
+            return true;
+        }
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+        if (!sidebar) {
+            return false;
+        }
         appWin.__scoopLayoutObserver = new MutationObserver(schedule);
-        appWin.__scoopLayoutObserver.observe(doc.documentElement, {
-            subtree: true,
+        appWin.__scoopLayoutObserver.observe(sidebar, {
             attributes: true,
             attributeFilter: ["aria-expanded", "class"],
-            childList: true,
         });
+        return true;
+    };
+    if (!bindSidebarObserver()) {
+        let attempts = 0;
+        const retry = appWin.setInterval(() => {
+            attempts += 1;
+            if (bindSidebarObserver() || attempts >= 12) {
+                appWin.clearInterval(retry);
+            }
+        }, 250);
     }
 })();
 """
@@ -868,6 +903,9 @@ _RESPONSIVE_SIDEBAR_JS = (
         if (isAnalyzeReturnSuppressed()) {
             return false;
         }
+        if (__scoopIsAnalyzePage() && isResponsiveViewport() && !appWin.__scoopAnalyzeSidebarUserOpened) {
+            return false;
+        }
         const selectors = [
             '[data-testid="stHeader"] [data-testid="stExpandSidebarButton"] button',
             '[data-testid="stHeader"] [data-testid="stExpandSidebarButton"]',
@@ -924,6 +962,18 @@ _RESPONSIVE_SIDEBAR_JS = (
     let tabletBootstrapped = false;
     const ANALYZE_RETURN_KEY = "scoop-return-from-analyze";
     const POST_CONSENT_KEY = "scoop-post-consent-collapse";
+    const SIDEBAR_BOOTSTRAP_KEY = "scoop-responsive-sidebar-ready";
+
+    const markSidebarBootstrapped = () => {
+        tabletBootstrapped = true;
+        try {
+            appWin.sessionStorage.setItem(SIDEBAR_BOOTSTRAP_KEY, "1");
+        } catch (e) {}
+    };
+
+    try {
+        tabletBootstrapped = appWin.sessionStorage.getItem(SIDEBAR_BOOTSTRAP_KEY) === "1";
+    } catch (e) {}
 
     const isReturningFromAnalyze = () => {
         try {
@@ -970,7 +1020,7 @@ _RESPONSIVE_SIDEBAR_JS = (
             clearReturningFromAnalyze();
         }
         appWin.__scoopSuppressSidebarExpand = Date.now() + 10000;
-        tabletBootstrapped = true;
+        markSidebarBootstrapped();
         const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
         if (sidebar && sidebar.getAttribute("aria-expanded") !== "false") {
             sidebar.setAttribute("aria-expanded", "false");
@@ -989,7 +1039,7 @@ _RESPONSIVE_SIDEBAR_JS = (
         }
         clearPostConsentCollapse();
         appWin.__scoopSuppressSidebarExpand = Date.now() + 12000;
-        tabletBootstrapped = true;
+        markSidebarBootstrapped();
         const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
         if (sidebar && sidebar.getAttribute("aria-expanded") !== "false") {
             sidebar.setAttribute("aria-expanded", "false");
@@ -1080,6 +1130,27 @@ _RESPONSIVE_SIDEBAR_JS = (
         );
     }
 
+    if (appWin.__scoopResponsiveSidebarInitDone) {
+        if (__scoopIsAnalyzePage() && isResponsiveViewport()) {
+            if (!appWin.__scoopAnalyzeSidebarUserOpened) {
+                const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+                if (sidebar && sidebar.getAttribute("aria-expanded") !== "false") {
+                    sidebar.setAttribute("aria-expanded", "false");
+                }
+            }
+            layout()?.syncSidebarLayout();
+            return;
+        }
+        if (isReturningFromAnalyze() || isAnalyzeReturnSuppressed()) {
+            holdScreenerMainView();
+        } else if (isPostConsentCollapse()) {
+            holdMainViewAfterConsent();
+        } else {
+            layout()?.syncSidebarLayout();
+        }
+        return;
+    }
+
     const ensureAnalyzeSidebarCollapsed = () => {
         if (!isResponsiveViewport() || !__scoopIsAnalyzePage()) {
             return;
@@ -1115,26 +1186,25 @@ _RESPONSIVE_SIDEBAR_JS = (
         }
         layout()?.syncSidebarLayout();
         if (__scoopIsAnalyzePage()) {
-            if (!tabletBootstrapped) {
-                tabletBootstrapped = true;
-                scheduleAnalyzeSidebarCollapse();
-            }
+            markSidebarBootstrapped();
+            scheduleAnalyzeSidebarCollapse();
             return;
         }
         if (
             isReturningFromAnalyze() ||
             isAnalyzeReturnSuppressed()
         ) {
-            tabletBootstrapped = true;
+            markSidebarBootstrapped();
             scheduleCollapseAfterAnalyzeReturn();
             return;
         }
         if (isPostConsentCollapse()) {
-            tabletBootstrapped = true;
+            markSidebarBootstrapped();
             scheduleCollapseAfterConsent();
             return;
         }
         if (tabletBootstrapped) {
+            layout()?.syncSidebarLayout();
             return;
         }
         const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
@@ -1142,19 +1212,20 @@ _RESPONSIVE_SIDEBAR_JS = (
             return;
         }
         if (sidebar.getAttribute("aria-expanded") === "true") {
-            tabletBootstrapped = true;
+            markSidebarBootstrapped();
             layout()?.syncSidebarLayout();
             removeLegacyCloseButton();
             return;
         }
         if (expandSidebar()) {
-            tabletBootstrapped = true;
+            markSidebarBootstrapped();
             layout()?.syncSidebarLayout();
             removeLegacyCloseButton();
         }
     };
 
     ensureInitialResponsiveExpand();
+    appWin.__scoopResponsiveSidebarInitDone = true;
     appWin.__scoopResponsiveExpandTimers = appWin.__scoopResponsiveExpandTimers || [];
     appWin.__scoopClearResponsiveExpandTimers = () => {
         (appWin.__scoopResponsiveExpandTimers || []).forEach((timerId) => {
@@ -1174,18 +1245,21 @@ _RESPONSIVE_SIDEBAR_JS = (
             appWin.__scoopPostConsentCollapseTimers = [];
         }
     };
-    if (!isAnalyzeReturnSuppressed() && !isReturningFromAnalyze() && !isPostConsentCollapse()) {
+    if (
+        !isAnalyzeReturnSuppressed() &&
+        !isReturningFromAnalyze() &&
+        !isPostConsentCollapse() &&
+        !tabletBootstrapped
+    ) {
         appWin.requestAnimationFrame(() => {
             ensureInitialResponsiveExpand();
             removeLegacyCloseButton();
         });
-        [100, 400, 900, 1600].forEach((delay) => {
-            const timerId = appWin.setTimeout(() => {
-                ensureInitialResponsiveExpand();
-                removeLegacyCloseButton();
-            }, delay);
-            appWin.__scoopResponsiveExpandTimers.push(timerId);
-        });
+        const timerId = appWin.setTimeout(() => {
+            ensureInitialResponsiveExpand();
+            removeLegacyCloseButton();
+        }, 400);
+        appWin.__scoopResponsiveExpandTimers.push(timerId);
     }
 })();
 """
@@ -2353,12 +2427,27 @@ _TOOLTIP_SCROLL_JS = """
             capture: true,
         });
         window.addEventListener("resize", repositionVisibleGenericTooltips, { passive: true });
-        const genericTooltipSidebarObserver = new MutationObserver(repositionVisibleGenericTooltips);
-        genericTooltipSidebarObserver.observe(document.documentElement, {
-            attributes: true,
-            subtree: true,
-            attributeFilter: ["aria-expanded"],
-        });
+        const bindGenericTooltipSidebarObserver = () => {
+            const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+            if (!sidebar) {
+                return false;
+            }
+            const genericTooltipSidebarObserver = new MutationObserver(repositionVisibleGenericTooltips);
+            genericTooltipSidebarObserver.observe(sidebar, {
+                attributes: true,
+                attributeFilter: ["aria-expanded", "class"],
+            });
+            return true;
+        };
+        if (!bindGenericTooltipSidebarObserver()) {
+            let attempts = 0;
+            const retry = window.setInterval(() => {
+                attempts += 1;
+                if (bindGenericTooltipSidebarObserver() || attempts >= 12) {
+                    window.clearInterval(retry);
+                }
+            }, 250);
+        }
     }
 
     if (!window.__scoopTooltipScrollBound) {
@@ -2470,12 +2559,27 @@ _TOOLTIP_SCROLL_JS = """
 
         window.addEventListener("resize", repositionOpenResponsiveHeadlines, { passive: true });
 
-        const sidebarHeadlinesObserver = new MutationObserver(repositionOpenResponsiveHeadlines);
-        sidebarHeadlinesObserver.observe(document.documentElement, {
-            attributes: true,
-            subtree: true,
-            attributeFilter: ["aria-expanded"],
-        });
+        const bindResponsiveHeadlinesObserver = () => {
+            const sidebar = document.querySelector('section[data-testid="stSidebar"]');
+            if (!sidebar) {
+                return false;
+            }
+            const sidebarHeadlinesObserver = new MutationObserver(repositionOpenResponsiveHeadlines);
+            sidebarHeadlinesObserver.observe(sidebar, {
+                attributes: true,
+                attributeFilter: ["aria-expanded", "class"],
+            });
+            return true;
+        };
+        if (!bindResponsiveHeadlinesObserver()) {
+            let attempts = 0;
+            const retry = window.setInterval(() => {
+                attempts += 1;
+                if (bindResponsiveHeadlinesObserver() || attempts >= 12) {
+                    window.clearInterval(retry);
+                }
+            }, 250);
+        }
     }
 })();
 """
@@ -2586,6 +2690,9 @@ def _inject_responsive_bootstrap_css() -> str:
     }}
 
     const appWin = appDoc.defaultView || window;
+    if (/Analyze/i.test(appWin.location.pathname || "")) {{
+        appWin.__scoopAnalyzeSidebarUserOpened = false;
+    }}
     if (!appWin.__scoopAnalyzeLinksBound) {{
         appWin.__scoopAnalyzeLinksBound = true;
         appDoc.addEventListener(
@@ -2611,6 +2718,15 @@ def _inject_responsive_bootstrap_css() -> str:
                 }} catch (e) {{}}
                 try {{
                     appWin.__scoopAnalyzeSidebarUserOpened = false;
+                    appWin.__scoopSuppressSidebarExpand = Date.now() + 15000;
+                    if (typeof appWin.__scoopClearResponsiveExpandTimers === "function") {{
+                        appWin.__scoopClearResponsiveExpandTimers();
+                    }}
+                    const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+                    if (sidebar) {{
+                        sidebar.setAttribute("aria-expanded", "false");
+                    }}
+                    appWin.__scoopLayout?.syncSidebarLayout?.();
                     appWin.__scoopLayout?.collapseSidebar?.();
                 }} catch (e) {{}}
                 appWin.location.href =
