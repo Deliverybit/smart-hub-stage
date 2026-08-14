@@ -4358,6 +4358,8 @@ st.markdown(
     "Headline sentiment is fetched for the final displayed rows.".format(len(NYSE_UNIVERSE))
 )
 
+st.markdown("---")
+
 st.info(proximity_how_it_works("stock"))
 
 @st.cache_data(ttl=900, show_spinner="Refreshing NYSE data…")

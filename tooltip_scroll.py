@@ -560,6 +560,9 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
         if (!isResponsiveViewport()) {
             return false;
         }
+        if (appWin.__scoopResponsiveSidebarUserToggled) {
+            return false;
+        }
         if (__scoopIsAnalyzePage()) {
             return !appWin.__scoopAnalyzeSidebarUserOpened;
         }
@@ -630,6 +633,11 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
         sidebar.style.setProperty("z-index", "1000010", "important");
         sidebar.style.setProperty("width", "min(92vw, 36rem)", "important");
         sidebar.style.setProperty("max-width", "min(92vw, 36rem)", "important");
+        sidebar.style.setProperty(
+            "transition",
+            "transform 0.28s ease, visibility 0.28s ease",
+            "important"
+        );
         sidebar.style.setProperty(
             "transform",
             expanded ? "translateX(0)" : "translateX(-100vw)",
@@ -873,6 +881,10 @@ _RESPONSIVE_SIDEBAR_JS = (
     const isAnalyzeReturnSuppressed = () => layout()?.isAnalyzeReturnSuppressed?.() ?? false;
 
     const collapseSidebar = () => {
+        if (isResponsiveViewport()) {
+            appWin.__scoopResponsiveSidebarUserToggled = true;
+            appWin.__scoopSuppressSidebarExpand = 0;
+        }
         const selectors = [
             '[data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] button',
             '[data-testid="stHeader"] [data-testid="stSidebarCollapseButton"]',
@@ -900,7 +912,10 @@ _RESPONSIVE_SIDEBAR_JS = (
     };
 
     const expandSidebar = () => {
-        if (isAnalyzeReturnSuppressed()) {
+        if (
+            isAnalyzeReturnSuppressed() &&
+            !appWin.__scoopResponsiveSidebarUserToggled
+        ) {
             return false;
         }
         if (__scoopIsAnalyzePage() && isResponsiveViewport() && !appWin.__scoopAnalyzeSidebarUserOpened) {
@@ -1115,16 +1130,34 @@ _RESPONSIVE_SIDEBAR_JS = (
         doc.addEventListener(
             "click",
             (event) => {
-                if (!__scoopIsAnalyzePage() || !isResponsiveViewport()) {
+                if (!isResponsiveViewport()) {
                     return;
                 }
-                if (
-                    event.target.closest(
-                        '[data-testid="stExpandSidebarButton"], [data-testid="collapsedControl"]'
-                    )
-                ) {
+                const expandTarget = event.target.closest(
+                    '[data-testid="stExpandSidebarButton"], [data-testid="collapsedControl"]'
+                );
+                const collapseTarget = event.target.closest(
+                    '[data-testid="stSidebarCollapseButton"]'
+                );
+                if (!expandTarget && !collapseTarget) {
+                    return;
+                }
+                event.preventDefault();
+                event.stopPropagation();
+                appWin.__scoopResponsiveSidebarUserToggled = true;
+                appWin.__scoopSuppressSidebarExpand = 0;
+                if (expandTarget && __scoopIsAnalyzePage()) {
                     appWin.__scoopAnalyzeSidebarUserOpened = true;
                 }
+                const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+                if (!sidebar) {
+                    return;
+                }
+                sidebar.setAttribute(
+                    "aria-expanded",
+                    expandTarget ? "true" : "false"
+                );
+                layout()?.syncSidebarLayout?.();
             },
             true
         );
