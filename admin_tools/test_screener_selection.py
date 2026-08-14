@@ -14,6 +14,7 @@ from screener_selection import (  # noqa: E402
     MAX_PAD_CAP_PCT,
     TARGET_COUNT,
     select_proximity_results,
+    sentiment_negative_keyword_notice,
 )
 
 
@@ -53,11 +54,22 @@ def test_empty_when_everything_above_30():
     assert selection.results == []
 
 
+def test_sentiment_negative_keyword_notice_mentions_scandal_and_bankruptcy():
+    stock = sentiment_negative_keyword_notice("stock")
+    crypto = sentiment_negative_keyword_notice("crypto")
+    commodity = sentiment_negative_keyword_notice("commodity")
+    for text in (stock, crypto, commodity):
+        assert "scandal" in text.lower()
+        assert "bankruptcy" in text.lower()
+        assert "not** included" in text
+
+
 def main() -> int:
     test_all_strict_when_enough_within_15()
     test_pads_to_ten_from_30_cap()
     test_excludes_rows_above_30()
     test_empty_when_everything_above_30()
+    test_sentiment_negative_keyword_notice_mentions_scandal_and_bankruptcy()
     print("screener_selection tests: PASS")
     return 0
 

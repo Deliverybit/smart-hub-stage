@@ -23,6 +23,7 @@ from screener_selection import (
     order_full_results_columns,
     proximity_how_it_works,
     selection_status_message,
+    sentiment_negative_keyword_notice,
 )
 from screener_table import ANALYZE_COLUMN_TIP, analyze_link_html, build_source_ticker_map
 from tooltip_scroll import install_tooltip_scroll_handler
@@ -4336,6 +4337,7 @@ st.caption(
 st.markdown("---")
 
 st.info(proximity_how_it_works("crypto"))
+st.markdown(sentiment_negative_keyword_notice("crypto"))
 
 @st.cache_data(ttl=900, show_spinner="Refreshing Crypto data…")
 def _run_screen(_cache_version: int = SCREENER_CACHE_VERSION):
@@ -4595,7 +4597,7 @@ else:
             | Criterion | Check |
             |-----------|-------|
             | **Near 52-week low** | Price is within 30% of the lowest price in the past year (15% preferred) |
-            | **No scandal headlines** | Recent news contains no keywords related to fraud, scams, rug-pulls, or hacks |
+            | **No scandal headlines** | Sentiment screening filters negative keywords—including scandal, bankruptcy, fraud, scams, rug-pulls, and hacks |
             | **Headline context** | Click **Analyze** for detailed headline sentiment and charts |
             | **Coinbase listed** | All cryptos in this screen are available for purchase on Coinbase |
 

@@ -22,6 +22,7 @@ from screener_selection import (
     order_full_results_columns,
     proximity_how_it_works,
     selection_status_message,
+    sentiment_negative_keyword_notice,
 )
 from screener_table import ANALYZE_COLUMN_TIP, analyze_link_html, build_source_ticker_map
 from tooltip_scroll import install_tooltip_scroll_handler
@@ -4297,6 +4298,7 @@ st.markdown(
 st.markdown("---")
 
 st.info(proximity_how_it_works("commodity future or ETF"))
+st.markdown(sentiment_negative_keyword_notice("commodity"))
 
 @st.cache_data(ttl=900, show_spinner="Refreshing ICE data…")
 def _run_screen(_cache_version: int = SCREENER_CACHE_VERSION):
@@ -4550,7 +4552,7 @@ else:
             | Criterion | Check |
             |-----------|-------|
             | **Near 52-week low** | Price is within 30% of the lowest price in the past year (15% preferred) |
-            | **No red-flag headlines** | Recent news contains no keywords related to manipulation, sanctions, or contamination |
+            | **No scandal headlines** | Sentiment screening filters negative keywords—including scandal, bankruptcy, manipulation, sanctions, and contamination |
             | **Headline context** | Click **Analyze** for detailed headline sentiment and charts |
             | **ICE listed** | All futures / ETFs trade on or track ICE-listed commodity contracts |
 

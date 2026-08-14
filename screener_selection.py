@@ -137,6 +137,23 @@ def proximity_how_it_works(asset_label: str = "asset") -> str:
     )
 
 
+_SENTIMENT_KEYWORD_PHRASES = {
+    "stock": "scandal, bankruptcy, fraud, lawsuits, and delisting",
+    "crypto": "scandal, bankruptcy, fraud, scams, rug-pulls, and hacks",
+    "commodity": "scandal, bankruptcy, manipulation, sanctions, and contamination",
+}
+
+
+def sentiment_negative_keyword_notice(profile: str = "stock") -> str:
+    """Disclosure shown on market screeners: negative headline keywords are filtered out."""
+    keywords = _SENTIMENT_KEYWORD_PHRASES.get(profile, _SENTIMENT_KEYWORD_PHRASES["stock"])
+    return (
+        "**Sentiment screening:** Headline sentiment scans recent news for negative keywords "
+        f"(including {keywords}). Names whose headlines match scandal, bankruptcy, or related "
+        "red-flag terms are **not** included in the Top 10 results."
+    )
+
+
 # Desktop table column order — mirrors mobile card layout (tablet_mobile_layout_css.py).
 _FULL_RESULTS_COLUMN_ORDER = (
     "Company",
