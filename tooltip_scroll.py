@@ -21,10 +21,17 @@ _MOBILE_HEADLINES_CSS = f"""
 
 _MOBILE_PHONE_HEADLINES_FIXED_CSS = """
 @media (max-width: 743px) {
-    /* Phone mobile: fixed slot below Deploy bar; reserve bottom space for backdrop tap. */
+    /* Phone mobile: fixed panel at top of page; width inset inside card; heading never clipped. */
     .stMarkdown .full-results-wrap .full-results-table tbody tr:has(.hl-tip-cb:checked) {
         position: static !important;
         z-index: auto !important;
+        overflow: visible !important;
+    }
+    .stMarkdown .full-results-wrap .full-results-table tbody tr:has(.hl-tip-cb:checked) td {
+        position: static !important;
+    }
+    .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) {
+        position: static !important;
     }
     .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text {
         position: fixed !important;
@@ -39,37 +46,46 @@ _MOBILE_PHONE_HEADLINES_FIXED_CSS = """
         max-height: var(--hl-fixed-max-height, 75dvh) !important;
         display: flex !important;
         flex-direction: column !important;
+        align-items: stretch !important;
         overflow: hidden !important;
         transform: none !important;
         position-anchor: none !important;
         anchor-name: none !important;
         z-index: 100002 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+        background: #111827 !important;
+        border: 1px solid #334155 !important;
+        border-radius: 14px !important;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.35) !important;
     }
     .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-heading {
-        position: fixed !important;
-        top: var(--hl-fixed-top, 20px) !important;
-        left: var(--hl-fixed-left, 0.75rem) !important;
-        width: var(--hl-fixed-width, calc(100vw - 1.5rem)) !important;
-        max-width: var(--hl-fixed-width, calc(100vw - 1.5rem)) !important;
-        box-sizing: border-box !important;
-        z-index: 100003 !important;
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        width: auto !important;
+        max-width: none !important;
         flex: 0 0 auto !important;
         flex-shrink: 0 !important;
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
+        overflow: visible !important;
         overflow-wrap: anywhere !important;
         word-break: break-word !important;
         white-space: normal !important;
         color: #ffffff !important;
         background: #1e1e2f !important;
-        border: 1px solid #334155 !important;
+        border: none !important;
         border-bottom: 1px solid #334155 !important;
         border-radius: 14px 14px 0 0 !important;
-        padding: 0.45rem 0.6rem !important;
+        padding: 0.55rem 0.75rem !important;
         font-size: calc(0.82rem + 4pt) !important;
         font-weight: 700 !important;
-        line-height: 1.15 !important;
+        line-height: 1.2 !important;
+        box-sizing: border-box !important;
+        z-index: 2 !important;
     }
     html.scoop-tooltip-scrolling .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-heading,
     body.scoop-tooltip-scrolling .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-heading {
@@ -79,7 +95,14 @@ _MOBILE_PHONE_HEADLINES_FIXED_CSS = """
     .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll {
         flex: 1 1 auto !important;
         min-height: 0 !important;
+        max-height: none !important;
+        margin-top: 0 !important;
+        overflow-x: hidden !important;
         overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        overscroll-behavior-y: contain !important;
+        padding: 0.28rem 0.35rem 0.35rem 0.55rem !important;
     }
     html.scoop-tooltip-scrolling .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text,
     body.scoop-tooltip-scrolling .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text {
@@ -1662,8 +1685,9 @@ _TOOLTIP_SCROLL_JS = """
     const root = document.documentElement;
     const className = "scoop-tooltip-scrolling";
     const DESKTOP_MIN = 1367;
-    const MOBILE_MAX = 768;
+    const MOBILE_MAX = 743;
     const MOBILE_HEADLINES_BOTTOM_TAP_PAD = 80;
+    const MOBILE_HEADLINES_CARD_WIDTH_INSET = 16;
     const RESPONSIVE_MIN = 769;
     const RESPONSIVE_MAX = 1366;
     const IPAD_MINI_MIN = 744;
@@ -2600,7 +2624,7 @@ _TOOLTIP_SCROLL_JS = """
         };
     };
 
-    const getPhoneMobileHeadlinesSlot = () => {
+    const getPhoneMobileHeadlinesSlot = (wrap) => {
         const header = document.querySelector('[data-testid="stHeader"]');
         const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
         const viewRight = window.innerWidth - VIEWPORT_PAD;
@@ -2610,14 +2634,36 @@ _TOOLTIP_SCROLL_JS = """
             200,
             window.innerHeight - top - MOBILE_HEADLINES_BOTTOM_TAP_PAD
         );
-        const width = Math.round(
+
+        let left = viewLeft;
+        let width = Math.round(
             Math.min(viewRight - viewLeft, Math.max(280, window.innerWidth - 2 * VIEWPORT_PAD))
         );
+
+        const row = wrap?.closest("tr");
+        if (row) {
+            const cardRect = row.getBoundingClientRect();
+            if (cardRect.width > 0) {
+                width = Math.max(
+                    240,
+                    Math.round(cardRect.width - MOBILE_HEADLINES_CARD_WIDTH_INSET)
+                );
+                left = Math.round(cardRect.left + MOBILE_HEADLINES_CARD_WIDTH_INSET / 2);
+                if (left + width > viewRight) {
+                    left = Math.max(viewLeft, viewRight - width);
+                }
+                if (left < viewLeft) {
+                    left = viewLeft;
+                    width = Math.min(width, viewRight - viewLeft);
+                }
+            }
+        }
+
         return {
             top,
-            left: viewLeft,
-            width,
-            maxHeight,
+            left: Math.round(left),
+            width: Math.round(width),
+            maxHeight: Math.round(maxHeight),
         };
     };
 
@@ -2642,22 +2688,9 @@ _TOOLTIP_SCROLL_JS = """
             const scroll = tip.querySelector(".headlines-tip-scroll");
             if (scroll) {
                 scroll.scrollTop = 0;
+                scroll.style.removeProperty("margin-top");
             }
         }
-    };
-
-    const syncPhoneMobileHeadlinesHeadingInset = (wrap) => {
-        if (!isPhoneMobileHeadlinesViewport() || !wrap) {
-            return;
-        }
-        const tip = wrap.querySelector(":scope > .tip-text");
-        const heading = tip?.querySelector(".hl-tip-heading");
-        const scroll = tip?.querySelector(".headlines-tip-scroll");
-        if (!heading || !scroll) {
-            return;
-        }
-        const headingHeight = Math.max(0, Math.ceil(heading.getBoundingClientRect().height));
-        scroll.style.setProperty("margin-top", `${headingHeight}px`, "important");
     };
 
     const positionPhoneMobileHeadlinesTip = (wrap, preserveScroll = false) => {
@@ -2669,9 +2702,8 @@ _TOOLTIP_SCROLL_JS = """
             return;
         }
 
-        applyPhoneMobileHeadlinesSlot(wrap, getPhoneMobileHeadlinesSlot(), !preserveScroll);
+        applyPhoneMobileHeadlinesSlot(wrap, getPhoneMobileHeadlinesSlot(wrap), !preserveScroll);
         updateHeadlinesHeading(wrap);
-        syncPhoneMobileHeadlinesHeadingInset(wrap);
     };
 
     const schedulePhoneMobileHeadlinesPosition = (wrap, preserveScroll = false) => {
@@ -3225,7 +3257,7 @@ def _inject_responsive_bootstrap_css() -> str:
 BOOTSTRAP_INSTALLED_KEY = "_scoop_responsive_bootstrap_installed"
 BOOTSTRAP_SCRIPT_VERSION = 4
 TOOLTIP_INSTALLED_KEY = "_scoop_tooltip_scroll_installed"
-TOOLTIP_SCRIPT_VERSION = 11
+TOOLTIP_SCRIPT_VERSION = 12
 SIDEBAR_HANDLER_INSTALLED_KEY = "_scoop_responsive_sidebar_handler_installed"
 
 
@@ -3262,6 +3294,14 @@ def _inject_ipad_mini_headlines_css() -> None:
     """Always inject iPad Mini Headlines popup styling after page CSS."""
     st.markdown(
         f"<style id='scoop-ipad-mini-headlines-css'>{_IPAD_MINI_HEADLINES_CSS}</style>",
+        unsafe_allow_html=True,
+    )
+
+
+def _inject_mobile_phone_headlines_css() -> None:
+    """Always inject phone mobile Headlines top-panel styling after page CSS."""
+    st.markdown(
+        f"<style id='scoop-mobile-phone-headlines-fixed-css'>{_MOBILE_PHONE_HEADLINES_FIXED_CSS}</style>",
         unsafe_allow_html=True,
     )
 
@@ -3313,6 +3353,7 @@ def install_tooltip_scroll_handler() -> None:
     _inject_name_tooltip_override()
     _inject_desktop_headlines_css()
     _inject_ipad_mini_headlines_css()
+    _inject_mobile_phone_headlines_css()
     _ensure_generic_tooltip_mobile_assets()
 
     if st.session_state.get(TOOLTIP_INSTALLED_KEY) == TOOLTIP_SCRIPT_VERSION:
