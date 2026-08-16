@@ -19,7 +19,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from screener_engine import SCREENER_DEFINITIONS  # noqa: E402
-from screener_snapshots import fetch_snapshot, snapshot_is_fresh  # noqa: E402
+from screener_snapshots import _fetch_snapshot_uncached as fetch_snapshot, snapshot_is_fresh  # noqa: E402
 
 
 def _run_script(relative_path: str, *extra_args: str) -> tuple[str, int]:

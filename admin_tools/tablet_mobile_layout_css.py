@@ -58,7 +58,7 @@ TABLET_TYPE = """
         section.main > div {
             padding-left: var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem)) !important;
             padding-right: var(--scoop-tablet-gutter, clamp(0.85rem, 2.5vw, 1.1rem)) !important;
-            padding-top: calc(0.75rem + env(safe-area-inset-top, 0px) + 1.5rem) !important;
+            padding-top: calc(0.75rem + env(safe-area-inset-top, 0px) + 2.75rem) !important;
             padding-bottom: 2.5rem !important;
         }
 
@@ -291,45 +291,256 @@ MOBILE_CARD_FIELD_ORDER = """
         .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] {
             order: 11 !important;
         }
-        .stMarkdown .full-results-wrap .full-results-table .fr-analyze-link {
-            color: #2563eb !important;
+        .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell .fr-analyze-link {
+            display: none !important;
+        }
+        .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell .fr-analyze-mobile-tip {
+            display: inline-block !important;
+            cursor: help !important;
+            border-bottom: 1px dashed #888 !important;
+            color: inherit !important;
             font-weight: 600 !important;
             text-decoration: none !important;
         }
-        .stMarkdown .full-results-wrap .full-results-table .fr-analyze-link:hover {
-            text-decoration: underline !important;
-        }
 """
 
-# Mobile/tablet: keep generic field tooltips (Name, % Above Low, Market Mood, etc.) in viewport.
-RESPONSIVE_GENERIC_TOOLTIP_LAYOUT = """
-        .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text,
-        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip) .tip-text,
-        .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text {
-            position: fixed !important;
-            left: var(--tip-fixed-left, 0.75rem) !important;
-            right: auto !important;
-            top: var(--tip-fixed-top, 4.5rem) !important;
+# Mobile/tablet: generic info tooltips mirror desktop (above trigger, CSS :hover only).
+# Name/Company/Commodity values sit at the top of each card — their tips open below
+# the trigger so they are not clipped by the card's overflow:hidden.
+_RESPONSIVE_TIP_SCOPE = (
+    "html body .stApp [data-testid=\"stAppViewContainer\"] .stMarkdown"
+)
+_NAME_VALUE_TIP_SELECTOR = (
+    ".full-results-wrap .full-results-table tbody "
+    'td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip), '
+    ".full-results-wrap .full-results-table tbody "
+    'td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip), '
+    ".full-results-wrap .full-results-table tbody "
+    'td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip)'
+)
+_GENERIC_TIP_ACTIVE = (
+    ".tip-wrap:not(.headlines-tip):hover, "
+    ".tip-wrap:not(.headlines-tip):active, "
+    ".tip-wrap:not(.headlines-tip):focus-within"
+)
+_NAME_TIP_CELL_SELECTOR = (
+    '.full-results-wrap .full-results-table tbody td[data-label="Company"], '
+    '.full-results-wrap .full-results-table tbody td[data-label="Name"], '
+    '.full-results-wrap .full-results-table tbody td[data-label="Commodity"]'
+)
+_NAME_TIP_TEXT_LAYOUT = """
+            top: 100% !important;
             bottom: auto !important;
+            left: 0 !important;
+            right: 0 !important;
             transform: none !important;
-            width: var(--tip-fixed-width, calc(100vw - 1.5rem)) !important;
+            width: auto !important;
             min-width: 0 !important;
-            max-width: var(--tip-fixed-width, calc(100vw - 1.5rem)) !important;
-            max-height: var(--tip-fixed-max-height, min(60dvh, calc(100dvh - 6rem))) !important;
-            overflow-x: hidden !important;
+            max-width: none !important;
+            margin-top: 12px !important;
+            box-sizing: border-box !important;
+"""
+_NAME_TIP_TEXT_RULES = f"""
+        {_RESPONSIVE_TIP_SCOPE} {_NAME_TIP_CELL_SELECTOR} {{
+            position: relative !important;
+        }}
+        {_RESPONSIVE_TIP_SCOPE} {_NAME_VALUE_TIP_SELECTOR} {{
+            position: static !important;
+        }}
+        {_RESPONSIVE_TIP_SCOPE} {_NAME_VALUE_TIP_SELECTOR} .tip-text {{
+{_NAME_TIP_TEXT_LAYOUT}
+        }}
+        {_RESPONSIVE_TIP_SCOPE} {_NAME_VALUE_TIP_SELECTOR} .tip-text::before {{
+            top: -14px !important;
+            bottom: auto !important;
+        }}
+        {_RESPONSIVE_TIP_SCOPE} {_NAME_VALUE_TIP_SELECTOR} .tip-text::after {{
+            top: auto !important;
+            bottom: 100% !important;
+            left: auto !important;
+            right: 0.75rem !important;
+            transform: none !important;
+            border-color: transparent transparent #1e1e2f transparent !important;
+        }}
+"""
+RESPONSIVE_GENERIC_TOOLTIP_LAYOUT = f"""
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) {{
+            position: relative !important;
+            cursor: help !important;
+            border-bottom: 1px dashed #888 !important;
+        }}
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip) .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} [data-testid="stHorizontalBlock"] .tip-wrap:not(.headlines-tip) .tip-text {{
+            visibility: hidden !important;
+            opacity: 0 !important;
+            position: absolute !important;
+            bottom: calc(100% + 12px) !important;
+            left: 50% !important;
+            right: auto !important;
+            top: auto !important;
+            transform: translateX(-50%) !important;
+            width: max-content !important;
+            min-width: min(360px, calc(100vw - 2rem)) !important;
+            max-width: min(700px, calc(100vw - 2rem)) !important;
+            background: #1e1e2f !important;
+            color: #e2e8f0 !important;
+            border: 1px solid #555 !important;
+            border-radius: 8px !important;
+            padding: 16px 20px !important;
+            font-size: 0.95rem !important;
+            line-height: 1.5 !important;
+            font-weight: 400 !important;
+            white-space: normal !important;
+            z-index: 100001 !important;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.45) !important;
+            pointer-events: auto !important;
+            transition: opacity 0.15s ease-in-out, visibility 0.15s ease-in-out !important;
+            max-height: min(45vh, 22rem) !important;
             overflow-y: auto !important;
-            -webkit-overflow-scrolling: touch !important;
             margin: 0 !important;
             box-sizing: border-box !important;
             word-break: break-word !important;
             overflow-wrap: anywhere !important;
-            text-align: left !important;
-            z-index: 100001 !important;
-            pointer-events: auto !important;
-            font-size: clamp(1rem, 2.2vw, 1.2rem) !important;
-            line-height: 1.55 !important;
-            padding: 0.95rem 1.05rem !important;
-        }
+        }}
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text::before {{
+            content: "" !important;
+            display: block !important;
+            position: absolute !important;
+            bottom: -14px !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 14px !important;
+        }}
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text::after {{
+            content: "" !important;
+            display: block !important;
+            position: absolute !important;
+            top: 100% !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            border-width: 8px !important;
+            border-style: solid !important;
+            border-color: #1e1e2f transparent transparent transparent !important;
+        }}
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip):hover .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip):active .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip):focus-within .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text:hover,
+        {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip):hover .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip):active .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip):hover .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip):active .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} [data-testid="stHorizontalBlock"] .tip-wrap:not(.headlines-tip):hover .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} [data-testid="stHorizontalBlock"] .tip-wrap:not(.headlines-tip):active .tip-text {{
+            visibility: visible !important;
+            opacity: 1 !important;
+        }}
+{_NAME_TIP_TEXT_RULES}
+        .stMarkdown .full-results-wrap .full-results-table tbody tr:has({_GENERIC_TIP_ACTIVE}) {{
+            overflow: visible !important;
+            position: relative !important;
+            z-index: 100003 !important;
+        }}
+        .stMarkdown .full-results-wrap:has({_GENERIC_TIP_ACTIVE}) {{
+            overflow: visible !important;
+        }}
+        .stMarkdown .full-results-wrap .full-results-table tbody td:has({_GENERIC_TIP_ACTIVE}) {{
+            overflow: visible !important;
+            position: relative !important;
+            z-index: 100004 !important;
+        }}
+        [data-testid="stMarkdownContainer"]:has({_GENERIC_TIP_ACTIVE}) {{
+            overflow: visible !important;
+        }}
+        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active {{
+            overflow: visible !important;
+            position: relative !important;
+            z-index: 100003 !important;
+        }}
+        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active td {{
+            overflow: visible !important;
+            position: relative !important;
+            z-index: 100004 !important;
+        }}
+        .stMarkdown .full-results-wrap:has(tr.scoop-name-tip-active) {{
+            overflow: visible !important;
+        }}
+        [data-testid="stMarkdownContainer"]:has(tr.scoop-name-tip-active) {{
+            overflow: visible !important;
+        }}
+"""
+
+# Inserted into page @media blocks (mobile + tablet) — beats inline "appear above" fr-val rules.
+NAME_VALUE_TOOLTIP_PAGE_SNIPPET = f"""
+        /* Name/Company/Commodity: tooltip below value (full card width, no horizontal clip). */
+        .stMarkdown {_NAME_TIP_CELL_SELECTOR} {{
+            position: relative !important;
+        }}
+        .stMarkdown {_NAME_VALUE_TIP_SELECTOR} {{
+            position: static !important;
+        }}
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text {{
+{_NAME_TIP_TEXT_LAYOUT}
+        }}
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::before,
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::before,
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::before {{
+            top: -14px !important;
+            bottom: auto !important;
+        }}
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::after,
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::after,
+        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::after {{
+            top: auto !important;
+            bottom: 100% !important;
+            left: auto !important;
+            right: 0.75rem !important;
+            transform: none !important;
+            border-color: transparent transparent #1e1e2f transparent !important;
+        }}
+        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active {{
+            overflow: visible !important;
+            position: relative !important;
+            z-index: 100003 !important;
+        }}
+        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active td {{
+            overflow: visible !important;
+            position: relative !important;
+            z-index: 100004 !important;
+        }}
+        .stMarkdown .full-results-wrap:has(tr.scoop-name-tip-active) {{
+            overflow: visible !important;
+        }}
+"""
+
+NAME_VALUE_TOOLTIP_PAGE_MARKER = (
+    "/* Name/Company/Commodity: tooltip below value (full card width, no horizontal clip). */"
+)
+
+RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS = f"""
+@media (max-width: 1366px) {{
+{_NAME_TIP_TEXT_RULES}
+        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active {{
+            overflow: visible !important;
+            position: relative !important;
+            z-index: 100003 !important;
+        }}
+        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active td {{
+            overflow: visible !important;
+            position: relative !important;
+            z-index: 100004 !important;
+        }}
+        .stMarkdown .full-results-wrap:has(tr.scoop-name-tip-active) {{
+            overflow: visible !important;
+        }}
+        [data-testid="stMarkdownContainer"]:has(tr.scoop-name-tip-active) {{
+            overflow: visible !important;
+        }}
+}}
 """
 
 # Shared mobile card layout for screener Full Results + Top Picks + tooltips/headlines.
@@ -688,7 +899,7 @@ TABLET_SCREENER_MOBILE_LAYOUT = (
             touch-action: manipulation !important;
         }
         .stMarkdown .tip-wrap:not(.headlines-tip):hover .tip-text,
-        .stMarkdown .tip-wrap:not(.headlines-tip):active .tip-text {
+        .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text:hover {
             visibility: visible !important;
             opacity: 1 !important;
         }
@@ -697,10 +908,6 @@ TABLET_SCREENER_MOBILE_LAYOUT = (
             visibility: hidden !important;
             opacity: 0 !important;
             pointer-events: none !important;
-        }
-        .stMarkdown .tip-wrap .tip-text::before,
-        .stMarkdown .tip-wrap .tip-text::after {
-            display: none !important;
         }
 """
     + MOBILE_CARD_FIELD_ORDER
@@ -1312,6 +1519,7 @@ _DESKTOP_FLEX_SPLIT_RULES = """
         max-width: 100% !important;
         overflow-x: auto !important;
         box-sizing: border-box !important;
+        padding-top: calc(0.75rem + env(safe-area-inset-top, 0px) + 2.75rem) !important;
     }
     [data-testid="stSidebarBackdrop"] {
         display: none !important;

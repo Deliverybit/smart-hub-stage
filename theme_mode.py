@@ -13,8 +13,9 @@ SESSION_KEY = "scoop_dark_mode"
 TOGGLE_KEY = "scoop_dark_mode_toggle"
 STORAGE_KEY = "scoop-theme"
 HYDRATED_KEY = "_scoop_theme_hydrated"
+PAGE_KEY = "_scoop_theme_page"
+SKIP_HYDRATE_KEY = "_scoop_theme_skip_hydrate"
 WRITE_SEQ_KEY = "_scoop_theme_write_seq"
-STATIC_CSS_KEY = "_scoop_theme_static_css"
 # Use sessionStorage so each new browser session starts light; persists across pages in the same tab.
 _BROWSER_STORAGE = "sessionStorage"
 
@@ -58,18 +59,30 @@ def _dark_from_storage_value(stored: object) -> bool:
 
 
 def _hydrate_theme_from_storage() -> bool:
-    """Load theme from localStorage into session state. False = js_eval not ready yet."""
+    """Load theme from sessionStorage into session state. False = js_eval not ready yet."""
+    if st.session_state.pop(SKIP_HYDRATE_KEY, False):
+        return True
+
+    page = _calling_page_id()
+    last_page = st.session_state.get(PAGE_KEY)
+
     try:
         from streamlit_js_eval import streamlit_js_eval
     except ImportError:
         if not _theme_known_in_session():
             _set_theme_session(False)
+            st.session_state[PAGE_KEY] = page
         return True
 
     stored = streamlit_js_eval(
         js_expressions=(
-            f"(() => {{ try {{ localStorage.removeItem('{STORAGE_KEY}'); }} catch (e) {{}} "
-            f"return {_BROWSER_STORAGE}.getItem('{STORAGE_KEY}') || ''; }})()"
+            f"(() => {{ "
+            f"  const nav = performance.getEntriesByType('navigation')[0]; "
+            f"  const reloaded = nav && nav.type === 'reload' ? '1' : '0'; "
+            f"  try {{ localStorage.removeItem('{STORAGE_KEY}'); }} catch (e) {{}} "
+            f"  const theme = {_BROWSER_STORAGE}.getItem('{STORAGE_KEY}') || ''; "
+            f"  return reloaded + '|' + theme; "
+            f"}})()"
         ),
         key=_storage_read_key(),
         want_output=True,
@@ -78,7 +91,21 @@ def _hydrate_theme_from_storage() -> bool:
     if stored is None:
         return False
 
-    _set_theme_session(_dark_from_storage_value(stored))
+    raw = str(stored)
+    if "|" in raw:
+        reloaded, theme_raw = raw.split("|", 1)
+    else:
+        reloaded, theme_raw = "0", raw
+
+    should_sync = (
+        not _theme_known_in_session()
+        or last_page != page
+        or reloaded == "1"
+    )
+    if should_sync:
+        _set_theme_session(_dark_from_storage_value(theme_raw))
+        st.session_state[PAGE_KEY] = page
+
     return True
 
 
@@ -119,12 +146,38 @@ def _session_dark_css() -> str:
 
 
 def _inject_static_dark_mode_css() -> None:
-    """Always present; only applies when bootstrap sets data-scoop-theme='dark'."""
-    flag = f"{STATIC_CSS_KEY}{_storage_read_key()}"
-    if st.session_state.get(flag):
-        return
-    st.session_state[flag] = True
-    st.markdown(f"<style id='scoop-theme-static-css'>{DARK_MODE_CSS}</style>", unsafe_allow_html=True)
+    """Inject on every page; only applies when bootstrap sets data-scoop-theme='dark'."""
+    css_json = json.dumps(DARK_MODE_CSS)
+    st.html(
+        f"""
+<script>
+(function() {{
+    const css = {css_json};
+    const id = "scoop-theme-static-css";
+    function apply(doc) {{
+        if (!doc || !doc.documentElement) return;
+        let el = doc.getElementById(id);
+        if (!el) {{
+            el = doc.createElement("style");
+            el.id = id;
+        }}
+        el.textContent = css;
+        const root = doc.body || doc.documentElement;
+        root.appendChild(el);
+    }}
+    let parentDoc = null;
+    try {{
+        parentDoc = window.parent && window.parent.document ? window.parent.document : null;
+    }} catch (e) {{
+        parentDoc = null;
+    }}
+    apply(parentDoc || document);
+    if (parentDoc && parentDoc !== document) apply(document);
+}})();
+</script>
+""",
+        unsafe_allow_javascript=True,
+    )
 
 
 def _apply_theme_dom(theme: str) -> None:
@@ -134,10 +187,20 @@ def _apply_theme_dom(theme: str) -> None:
 <script>
 (function() {{
     const theme = {payload};
-    const doc = window.parent && window.parent.document ? window.parent.document : document;
-    const root = doc.documentElement;
-    root.setAttribute("data-scoop-theme", theme);
-    root.classList.toggle("scoop-dark", theme === "dark");
+    function apply(doc) {{
+        if (!doc || !doc.documentElement) return;
+        const root = doc.documentElement;
+        root.setAttribute("data-scoop-theme", theme);
+        root.classList.toggle("scoop-dark", theme === "dark");
+    }}
+    let parentDoc = null;
+    try {{
+        parentDoc = window.parent && window.parent.document ? window.parent.document : null;
+    }} catch (e) {{
+        parentDoc = null;
+    }}
+    apply(parentDoc || document);
+    if (parentDoc && parentDoc !== document) apply(document);
 }})();
 </script>
 """,
@@ -290,6 +353,8 @@ def _on_dark_mode_toggle_change() -> None:
     dark = bool(st.session_state.get(TOGGLE_KEY, False))
     st.session_state[SESSION_KEY] = dark
     st.session_state[HYDRATED_KEY] = True
+    st.session_state[PAGE_KEY] = _calling_page_id()
+    st.session_state[SKIP_HYDRATE_KEY] = True
     theme = "dark" if dark else "light"
     _write_theme_to_storage(theme)
 

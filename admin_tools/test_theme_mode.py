@@ -109,7 +109,7 @@ def test_hydrate_empty_storage_is_light() -> None:
     class _FakeJsEval:
         @staticmethod
         def streamlit_js_eval(**kwargs):
-            return ""
+            return "0|"
 
     sys.modules["streamlit_js_eval"] = _FakeJsEval()
     assert theme_mode._hydrate_theme_from_storage() is True
@@ -122,7 +122,7 @@ def test_hydrate_dark_storage_restores_toggle() -> None:
     class _FakeJsEval:
         @staticmethod
         def streamlit_js_eval(**kwargs):
-            return "dark"
+            return "0|dark"
 
     sys.modules["streamlit_js_eval"] = _FakeJsEval()
     theme_mode._hydrate_theme_from_storage()
@@ -147,24 +147,62 @@ def test_apply_theme_uses_session_while_storage_pending() -> None:
 
 
 def test_page_navigation_rehydrates_from_storage() -> None:
-    """Simulate a new page load reading an updated localStorage value."""
-    _fresh_session()
+    """Simulate a new page load reading an updated sessionStorage value."""
+    from unittest.mock import patch
 
-    reads: list[str | None] = ["", "dark"]
+    ss = _fresh_session()
+    frame_nyse = type("Frame", (), {"filename": "/project/pages/1_NYSE_Top_10.py"})()
+    frame_nasdaq = type("Frame", (), {"filename": "/project/pages/2_NASDAQ_Top_10.py"})()
 
     class _FakeJsEval:
         @staticmethod
         def streamlit_js_eval(**kwargs):
             assert kwargs.get("key", "").startswith("scoop_theme_read_")
-            return reads.pop(0) if reads else "dark"
+            return "0|"
 
     sys.modules["streamlit_js_eval"] = _FakeJsEval()
-    theme_mode.apply_theme_early()
+    with patch("inspect.stack", return_value=[frame_nyse]):
+        theme_mode.apply_theme_early()
     assert theme_mode.is_dark_mode() is False
 
-    _fresh_session()
-    theme_mode.apply_theme_early()
+    ss[theme_mode.HYDRATED_KEY] = True
+    ss[theme_mode.PAGE_KEY] = "/project/pages/1_NYSE_Top_10.py"
+
+    class _FakeJsEvalDark:
+        @staticmethod
+        def streamlit_js_eval(**kwargs):
+            return "0|dark"
+
+    sys.modules["streamlit_js_eval"] = _FakeJsEvalDark()
+    with patch("inspect.stack", return_value=[frame_nasdaq]):
+        theme_mode.apply_theme_early()
     assert theme_mode.is_dark_mode() is True
+
+
+def test_toggle_skip_hydrate_preserves_session() -> None:
+    ss = _fresh_session()
+    ss[theme_mode.HYDRATED_KEY] = True
+    ss[theme_mode.SESSION_KEY] = True
+    ss[theme_mode.PAGE_KEY] = "/project/pages/1_NYSE_Top_10.py"
+    ss[theme_mode.SKIP_HYDRATE_KEY] = True
+
+    class _FakeJsEval:
+        @staticmethod
+        def streamlit_js_eval(**kwargs):
+            raise AssertionError("hydrate should be skipped after toggle")
+
+    sys.modules["streamlit_js_eval"] = _FakeJsEval()
+    assert theme_mode._hydrate_theme_from_storage() is True
+    assert theme_mode.is_dark_mode() is True
+
+
+def test_static_css_requires_dark_attribute() -> None:
+    from admin_tools.dark_mode_css import DARK_MODE_CSS
+
+    assert "\nhtml,\n" not in DARK_MODE_CSS
+    assert "\nhtml body {\n" not in DARK_MODE_CSS
+    assert 'html [data-testid="stApp"]' not in DARK_MODE_CSS
+    assert "html[data-scoop-theme=\"dark\"]" in DARK_MODE_CSS
 
 
 def main() -> int:
@@ -181,6 +219,8 @@ def main() -> int:
         test_hydrate_dark_storage_restores_toggle,
         test_apply_theme_uses_session_while_storage_pending,
         test_page_navigation_rehydrates_from_storage,
+        test_toggle_skip_hydrate_preserves_session,
+        test_static_css_requires_dark_attribute,
     ]
     for fn in tests:
         fn()

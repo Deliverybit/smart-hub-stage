@@ -1,17 +1,17 @@
 """Color-only dark mode overrides (layout/s sizing unchanged)."""
 
 DARK_MODE_CSS = """
-html,
-html body {
+html[data-scoop-theme="dark"],
+html[data-scoop-theme="dark"] body {
     background-color: #0b1220 !important;
     color: #e2e8f0 !important;
 }
 
-html [data-testid="stApp"],
-html .stApp,
-html [data-testid="stAppViewContainer"],
-html [data-testid="stMainBlockContainer"],
-html section.main {
+html[data-scoop-theme="dark"] [data-testid="stApp"],
+html[data-scoop-theme="dark"] .stApp,
+html[data-scoop-theme="dark"] [data-testid="stAppViewContainer"],
+html[data-scoop-theme="dark"] [data-testid="stMainBlockContainer"],
+html[data-scoop-theme="dark"] section.main {
     background-color: #0b1220 !important;
     color: #e2e8f0 !important;
 }
@@ -345,5 +345,18 @@ html[data-scoop-theme="dark"] .stMarkdown .top-picks-wrap .top-picks-table thead
     background-color: #0f172a !important;
     color: #f1f5f9 !important;
     border-color: #475569 !important;
+}
+
+html[data-scoop-theme="dark"] .landing-hero p {
+    color: #cbd5e1 !important;
+}
+
+html[data-scoop-theme="dark"] .landing-card {
+    background: #1e293b !important;
+    border-color: #475569 !important;
+}
+
+html[data-scoop-theme="dark"] .landing-card p {
+    color: #cbd5e1 !important;
 }
 """

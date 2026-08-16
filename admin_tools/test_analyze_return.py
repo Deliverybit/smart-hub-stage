@@ -29,10 +29,35 @@ def test_analyze_back_link_marks_return_query() -> None:
     assert "/NYSE_Top_10" in href
 
 
+def test_analyze_link_includes_ticker_query() -> None:
+    from screener_table import analyze_link_html, analyze_search_url
+
+    url = analyze_search_url("BTC-USD")
+    assert url.startswith("Analyze?ticker=")
+    assert "BTC-USD" in url
+    html = analyze_link_html("DOGE-USD")
+    assert 'data-ticker="DOGE-USD"' in html
+    assert "ticker=DOGE-USD" in html
+    assert 'class="fr-analyze-link"' in html
+    assert 'class="tip-wrap fr-analyze-mobile-tip"' in html
+
+
+def test_analyze_click_js_handles_mobile_targets() -> None:
+    from tooltip_scroll import _inject_responsive_bootstrap_css
+
+    js = _inject_responsive_bootstrap_css()
+    assert "nodeType" in js
+    assert 'td[data-label="Analyze"]' in js
+    assert 'new URL("Analyze"' in js
+    assert "appDoc.querySelector" in js
+
+
 def main() -> int:
     tests = [
         test_mark_analyze_return_uses_parent_session_storage,
         test_analyze_back_link_marks_return_query,
+        test_analyze_link_includes_ticker_query,
+        test_analyze_click_js_handles_mobile_targets,
     ]
     for fn in tests:
         fn()

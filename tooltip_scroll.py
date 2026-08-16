@@ -8,6 +8,7 @@ from admin_tools.tablet_mobile_layout_css import (
     MOBILE_CARD_FIELD_ORDER,
     MOBILE_HEADLINES_CARD_OVERLAY,
     RESPONSIVE_GENERIC_TOOLTIP_LAYOUT,
+    RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS,
     RESPONSIVE_SIDEBAR_BOOTSTRAP,
     SIDEBAR_NAV_COMPACT,
 )
@@ -102,6 +103,162 @@ _RESPONSIVE_GENERIC_TOOLTIP_CSS = f"""
 }}
 """
 
+_GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
+(() => {
+    const VERSION = 6;
+    if (window.__scoopGenericTooltipBindVersion === VERSION) {
+        return;
+    }
+    window.__scoopGenericTooltipBindVersion = VERSION;
+
+    const NAME_TIP_SELECTOR =
+        'td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip), ' +
+        'td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip), ' +
+        'td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip)';
+
+    const isResponsiveViewport = () => (window.innerWidth || 0) < 1367;
+
+    const positionNameTipInViewport = (wrap, tip) => {
+        const margin = 16;
+        const vw = window.innerWidth || document.documentElement.clientWidth || 320;
+        const vh = window.innerHeight || document.documentElement.clientHeight || 640;
+        const maxWidth = Math.max(200, vw - margin * 2);
+        const wrapRect = wrap.getBoundingClientRect();
+
+        tip.style.setProperty("position", "fixed", "important");
+        tip.style.setProperty("width", `${maxWidth}px`, "important");
+        tip.style.setProperty("max-width", `${maxWidth}px`, "important");
+        tip.style.setProperty("min-width", "0", "important");
+        tip.style.setProperty("left", `${margin}px`, "important");
+        tip.style.setProperty("right", "auto", "important");
+        tip.style.setProperty("transform", "none", "important");
+        tip.style.setProperty("box-sizing", "border-box", "important");
+        tip.style.setProperty("visibility", "hidden", "important");
+        tip.style.setProperty("opacity", "1", "important");
+
+        let top = wrapRect.bottom + 12;
+        tip.style.setProperty("top", `${top}px`, "important");
+        tip.style.setProperty("bottom", "auto", "important");
+
+        let tipRect = tip.getBoundingClientRect();
+        if (tipRect.bottom > vh - margin) {
+            top = wrapRect.top - tipRect.height - 12;
+            if (top < margin) {
+                top = margin;
+                tip.style.setProperty("max-height", `${vh - margin * 2}px`, "important");
+                tip.style.setProperty("overflow-y", "auto", "important");
+            }
+            tip.style.setProperty("top", `${top}px`, "important");
+        }
+
+        tip.style.setProperty("visibility", "visible", "important");
+    };
+
+    const clearNameTipInlineStyles = (tip) => {
+        [
+            "position",
+            "top",
+            "bottom",
+            "left",
+            "right",
+            "transform",
+            "width",
+            "max-width",
+            "min-width",
+            "max-height",
+            "overflow-y",
+            "visibility",
+        ].forEach((prop) => tip.style.removeProperty(prop));
+    };
+
+    const activateNameTip = (wrap) => {
+        if (!isResponsiveViewport()) {
+            return;
+        }
+        const tip = wrap.querySelector(":scope > .tip-text");
+        const row = wrap.closest("tr");
+        if (row) {
+            row.classList.add("scoop-name-tip-active");
+        }
+        if (!tip) {
+            return;
+        }
+        positionNameTipInViewport(wrap, tip);
+    };
+
+    const deactivateNameTip = (wrap) => {
+        const tip = wrap.querySelector(":scope > .tip-text");
+        const row = wrap.closest("tr");
+        if (row) {
+            row.classList.remove("scoop-name-tip-active");
+        }
+        if (!tip) {
+            return;
+        }
+        clearNameTipInlineStyles(tip);
+    };
+
+    const resetGenericTooltips = () => {
+        document.querySelectorAll(".tip-wrap:not(.headlines-tip)").forEach((wrap) => {
+            wrap.classList.remove("generic-tip-open");
+            const tip = wrap.querySelector(":scope > .tip-text");
+            if (!tip) {
+                return;
+            }
+            [
+                "position",
+                "left",
+                "top",
+                "right",
+                "bottom",
+                "transform",
+                "width",
+                "max-width",
+                "max-height",
+                "--tip-center-x",
+                "--tip-center-y",
+                "--tip-fixed-width",
+                "--tip-fixed-max-height",
+            ].forEach((prop) => tip.style.removeProperty(prop));
+        });
+        document.querySelectorAll(".scoop-name-tip-active").forEach((row) => {
+            row.classList.remove("scoop-name-tip-active");
+        });
+        document.querySelectorAll(NAME_TIP_SELECTOR).forEach(deactivateNameTip);
+    };
+
+    const bindNameValueTips = (doc) => {
+        if (!doc || !isResponsiveViewport()) {
+            return;
+        }
+        doc.querySelectorAll(NAME_TIP_SELECTOR).forEach((wrap) => {
+            if (wrap.dataset.scoopNameTipBound === "1") {
+                return;
+            }
+            wrap.dataset.scoopNameTipBound = "1";
+            wrap.addEventListener("mouseenter", () => activateNameTip(wrap));
+            wrap.addEventListener("mouseleave", () => deactivateNameTip(wrap));
+            wrap.addEventListener("focusin", () => activateNameTip(wrap));
+            wrap.addEventListener("focusout", () => deactivateNameTip(wrap));
+        });
+    };
+
+    resetGenericTooltips();
+    bindNameValueTips(document);
+    window.__scoopGenericTooltipApi = {
+        positionGenericTooltip: () => {},
+        scheduleGenericTooltipPosition: () => {},
+        repositionVisibleGenericTooltips: resetGenericTooltips,
+        bindNameValueTips,
+    };
+})();
+"""
+
+_GENERIC_TOOLTIP_MOBILE_JS = _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS
+
+GENERIC_TOOLTIP_CSS_VERSION = 7
+GENERIC_TOOLTIP_CSS_KEY = "_scoop_generic_tooltip_css_version"
+
 _DARK_RESPONSIVE_TIP_UNDERLINE_CSS = """
 @media (max-width: 1366px) {
 html[data-scoop-theme="dark"] .stMarkdown .tip-wrap:not(.headlines-tip),
@@ -146,21 +303,44 @@ html[data-scoop-theme="dark"] .full-results-wrap .tip-wrap.headlines-tip .tip-te
 
 _DESKTOP_HEADLINES_CSS = """
 @media (min-width: 1367px) {
-    /* Desktop: click Headlines count to open; click outside (backdrop) to close. */
+    /* Desktop: count only — hide checkbox chrome and wrap border (avoids ". 10" artifact). */
+    .stMarkdown .tip-wrap.headlines-tip .hl-tip-cb,
+    .full-results-wrap .tip-wrap.headlines-tip .hl-tip-cb,
     .tip-wrap.headlines-tip .hl-tip-cb {
+        display: none !important;
+        appearance: none !important;
         position: absolute !important;
         opacity: 0 !important;
         width: 0 !important;
         height: 0 !important;
         margin: 0 !important;
+        padding: 0 !important;
         pointer-events: none !important;
     }
+    .stMarkdown .tip-wrap.headlines-tip,
+    .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip,
+    .tip-wrap.headlines-tip {
+        border-bottom: none !important;
+        line-height: inherit !important;
+        font-size: inherit !important;
+    }
+    .stMarkdown .tip-wrap.headlines-tip .hl-tip-count,
+    .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .hl-tip-count,
     .tip-wrap.headlines-tip .hl-tip-count {
         cursor: pointer !important;
         text-decoration: inherit !important;
         pointer-events: auto !important;
+        display: inline-block !important;
+        line-height: inherit !important;
+        font-size: inherit !important;
+        list-style: none !important;
+        border-bottom: 1px dashed #888 !important;
     }
-    .tip-wrap.headlines-tip .hl-tip-backdrop {
+    html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .hl-tip-count,
+    html[data-scoop-theme="dark"] .full-results-wrap .tip-wrap.headlines-tip .hl-tip-count {
+        border-bottom: 2px dashed #ffffff !important;
+    }
+    .tip-wrap.headlines-tip:not(:has(.hl-tip-cb:checked)) .hl-tip-backdrop {
         display: none !important;
     }
     .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .hl-tip-backdrop {
@@ -473,10 +653,6 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
     const appWin = __scoopGetAppWin();
     const doc = __scoopGetAppDoc();
 
-    if (appWin.__scoopLayout) {
-        return;
-    }
-
     const PHONE_MAX = 743;
     const TABLET_MIN = 744;
     const TABLET_MAX = 1366;
@@ -662,6 +838,7 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
         if (!isDesktopViewport()) {
             return;
         }
+        clearDesktopInlineLayout();
         const view = doc.querySelector('[data-testid="stAppViewContainer"]');
         const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
         if (!view || !sidebar) {
@@ -670,6 +847,10 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
         view.style.setProperty("display", "flex", "important");
         view.style.setProperty("flex-direction", "row", "important");
         view.style.setProperty("position", "relative", "important");
+        view.style.setProperty("width", "100%", "important");
+        view.style.setProperty("max-width", "100vw", "important");
+        view.style.setProperty("margin-left", "0", "important");
+        view.style.setProperty("padding-left", "0", "important");
         sidebar.style.setProperty("flex", "0 1 auto", "important");
         sidebar.style.setProperty("position", "relative", "important");
         sidebar.style.setProperty("transform", "none", "important");
@@ -706,19 +887,96 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
         }
     };
 
+    const syncMainBlockHeaderPadding = () => {
+        const header = doc.querySelector('[data-testid="stHeader"]');
+        const targets = doc.querySelectorAll(
+            '[data-testid="stMainBlockContainer"], section.main > div, [data-testid="stAppViewContainer"] > section.main'
+        );
+        if (!targets.length) {
+            return;
+        }
+        const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+        const padTop = Math.max(12, Math.round(headerBottom + 12));
+        targets.forEach((el) => {
+            el.style.setProperty("padding-top", `${padTop}px`, "important");
+        });
+    };
+
+    const injectDesktopLayoutFixCss = () => {
+        if (!isDesktopViewport()) {
+            return;
+        }
+        const id = "scoop-desktop-nav-fix-css";
+        let el = doc.getElementById(id);
+        if (!el) {
+            el = doc.createElement("style");
+            el.id = id;
+            (doc.body || doc.documentElement).appendChild(el);
+        }
+        el.textContent = `
+@media (min-width: 1367px) {
+  [data-testid="stAppViewContainer"] {
+    display: flex !important;
+    flex-direction: row !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    min-width: 0 !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+  }
+  [data-testid="stAppViewContainer"] > div:not([data-testid="stSidebar"]) {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    width: auto !important;
+    max-width: 100% !important;
+  }
+  section[data-testid="stSidebar"],
+  section[data-testid="stSidebar"][aria-expanded="false"],
+  section[data-testid="stSidebar"][aria-expanded="true"] {
+    position: relative !important;
+    transform: none !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    flex: 0 1 auto !important;
+  }
+  [data-testid="stMainBlockContainer"],
+  section.main > div,
+  [data-testid="stAppViewContainer"] > section.main {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+}`;
+    };
+
     const syncSidebarLayout = () => {
         if (isDesktopViewport()) {
             setDesktopLayoutFlag(true);
             applyDesktopSidebarLayout();
+            injectDesktopLayoutFixCss();
+            syncMainBlockHeaderPadding();
             return;
         }
         setDesktopLayoutFlag(false);
+        const fixEl = doc.getElementById("scoop-desktop-nav-fix-css");
+        if (fixEl) {
+            fixEl.remove();
+        }
         if (isResponsiveViewport()) {
             applyResponsiveSidebarLayout();
+            syncMainBlockHeaderPadding();
             return;
         }
         clearDesktopInlineLayout();
+        syncMainBlockHeaderPadding();
     };
+
+    if (appWin.__scoopLayout) {
+        appWin.__scoopLayout.syncSidebarLayout = syncSidebarLayout;
+        appWin.__scoopLayout.applyResponsiveSidebarLayout = applyResponsiveSidebarLayout;
+        appWin.__scoopLayout.applyDesktopSidebarLayout = applyDesktopSidebarLayout;
+        return;
+    }
 
     appWin.__scoopLayout = {
         isResponsiveViewport,
@@ -731,6 +989,100 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
         clearDesktopInlineLayout,
         syncSidebarLayout,
     };
+})();
+"""
+)
+
+_PAGE_NAV_LAYOUT_RESYNC_JS = (
+    """
+(() => {
+"""
+    + _RESPONSIVE_DOC_HELPER_JS
+    + """
+    const doc = __scoopGetAppDoc();
+    const appWin = __scoopGetAppWin();
+    const layout = () => appWin.__scoopLayout;
+
+    const resetScroll = () => {
+        const scrollEl =
+            doc.querySelector('[data-testid="stAppViewContainer"]') ||
+            doc.scrollingElement ||
+            doc.documentElement;
+        if (scrollEl) {
+            scrollEl.scrollTop = 0;
+        }
+        try {
+            appWin.scrollTo(0, 0);
+        } catch (e) {}
+    };
+
+    const resync = () => {
+        layout()?.syncSidebarLayout?.();
+        resetScroll();
+    };
+
+    resync();
+    appWin.requestAnimationFrame(() => {
+        resync();
+        appWin.requestAnimationFrame(resync);
+    });
+    [120, 350, 800, 1500, 2500].forEach((delay) => {
+        appWin.setTimeout(resync, delay);
+    });
+
+    const bindMainObserver = () => {
+        const main = doc.querySelector('[data-testid="stMainBlockContainer"]');
+        if (!main) {
+            return false;
+        }
+        if (appWin.__scoopMainLayoutObserver) {
+            appWin.__scoopMainLayoutObserver.disconnect();
+        }
+        appWin.__scoopMainLayoutObserver = new MutationObserver(() => {
+            appWin.requestAnimationFrame(resync);
+        });
+        appWin.__scoopMainLayoutObserver.observe(main, {
+            childList: true,
+            subtree: true,
+        });
+        return true;
+    };
+    if (!bindMainObserver()) {
+        let attempts = 0;
+        const retry = appWin.setInterval(() => {
+            attempts += 1;
+            if (bindMainObserver() || attempts >= 16) {
+                appWin.clearInterval(retry);
+            }
+        }, 200);
+    }
+
+    if (!appWin.__scoopPageNavBound) {
+        appWin.__scoopPageNavBound = true;
+        doc.addEventListener(
+            "click",
+            (event) => {
+                const target = event.target;
+                const el =
+                    target && target.nodeType === 1 ? target : target && target.parentElement;
+                if (!el || typeof el.closest !== "function") {
+                    return;
+                }
+                const link = el.closest(
+                    '[data-testid="stPageLink"] a, [data-testid="stSidebarNav"] a, a[href*="Top_10"], a[href*="Terms_of_Service"], a[href*="Landing"]'
+                );
+                if (!link) {
+                    return;
+                }
+                const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+                if (sidebar) {
+                    sidebar.setAttribute("aria-expanded", "false");
+                }
+                layout()?.syncSidebarLayout?.();
+            },
+            true
+        );
+    }
 })();
 """
 )
@@ -2379,108 +2731,153 @@ _TOOLTIP_SCROLL_JS = """
             });
     };
 
-    const getGenericTooltipSlot = () => {
-        const header = document.querySelector('[data-testid="stHeader"]');
-        const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
-        let viewLeft = VIEWPORT_PAD;
-        const viewRight = window.innerWidth - VIEWPORT_PAD;
-        const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-        if (sidebar && sidebar.getAttribute("aria-expanded") === "true") {
-            const sidebarRight = sidebar.getBoundingClientRect().right;
-            viewLeft = Math.max(viewLeft, Math.round(sidebarRight + VIEWPORT_PAD));
+    const NAME_TIP_SELECTOR =
+        'td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip), ' +
+        'td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip), ' +
+        'td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip)';
+
+    const isResponsiveNameTipViewport = () => (window.innerWidth || 0) < 1367;
+
+    const positionNameTipInViewport = (wrap, tip) => {
+        const margin = 16;
+        const vw = window.innerWidth || document.documentElement.clientWidth || 320;
+        const vh = window.innerHeight || document.documentElement.clientHeight || 640;
+        const maxWidth = Math.max(200, vw - margin * 2);
+        const wrapRect = wrap.getBoundingClientRect();
+
+        tip.style.setProperty("position", "fixed", "important");
+        tip.style.setProperty("width", `${maxWidth}px`, "important");
+        tip.style.setProperty("max-width", `${maxWidth}px`, "important");
+        tip.style.setProperty("min-width", "0", "important");
+        tip.style.setProperty("left", `${margin}px`, "important");
+        tip.style.setProperty("right", "auto", "important");
+        tip.style.setProperty("transform", "none", "important");
+        tip.style.setProperty("box-sizing", "border-box", "important");
+        tip.style.setProperty("visibility", "hidden", "important");
+        tip.style.setProperty("opacity", "1", "important");
+
+        let top = wrapRect.bottom + 12;
+        tip.style.setProperty("top", `${top}px`, "important");
+        tip.style.setProperty("bottom", "auto", "important");
+
+        let tipRect = tip.getBoundingClientRect();
+        if (tipRect.bottom > vh - margin) {
+            top = wrapRect.top - tipRect.height - 12;
+            if (top < margin) {
+                top = margin;
+                tip.style.setProperty("max-height", `${vh - margin * 2}px`, "important");
+                tip.style.setProperty("overflow-y", "auto", "important");
+            }
+            tip.style.setProperty("top", `${top}px`, "important");
         }
-        const viewTop = Math.max(VIEWPORT_PAD, Math.round(headerBottom + VIEWPORT_PAD));
-        const bottomPad =
-            window.innerWidth <= MOBILE_MAX ? MOBILE_HEADLINES_BOTTOM_TAP_PAD : VIEWPORT_PAD;
-        const viewBottom = window.innerHeight - bottomPad;
-        const width = Math.round(
-            Math.min(viewRight - viewLeft, Math.max(280, window.innerWidth - 2 * VIEWPORT_PAD))
-        );
-        const left = Math.round(viewLeft + Math.max(0, (viewRight - viewLeft - width) / 2));
-        const top = viewTop;
-        const maxHeight = Math.max(120, viewBottom - top);
-        return { top, left, width, maxHeight };
+
+        tip.style.setProperty("visibility", "visible", "important");
     };
 
-    const positionGenericTooltip = (wrap) => {
-        if (isDesktopLayoutViewport() || !wrap) {
+    const clearNameTipInlineStyles = (tip) => {
+        [
+            "position",
+            "top",
+            "bottom",
+            "left",
+            "right",
+            "transform",
+            "width",
+            "max-width",
+            "min-width",
+            "max-height",
+            "overflow-y",
+            "visibility",
+        ].forEach((prop) => tip.style.removeProperty(prop));
+    };
+
+    const activateNameTip = (wrap) => {
+        if (!isResponsiveNameTipViewport()) {
             return;
         }
         const tip = wrap.querySelector(":scope > .tip-text");
+        const row = wrap.closest("tr");
+        if (row) {
+            row.classList.add("scoop-name-tip-active");
+        }
         if (!tip) {
             return;
         }
-        const slot = getGenericTooltipSlot();
-        tip.style.setProperty("--tip-fixed-top", `${slot.top}px`);
-        tip.style.setProperty("--tip-fixed-left", `${slot.left}px`);
-        tip.style.setProperty("--tip-fixed-width", `${slot.width}px`);
-        tip.style.setProperty("--tip-fixed-max-height", `${slot.maxHeight}px`);
-        tip.style.setProperty("right", "auto", "important");
-        tip.style.setProperty("bottom", "auto", "important");
-        tip.style.setProperty("transform", "none", "important");
+        positionNameTipInViewport(wrap, tip);
     };
 
-    const scheduleGenericTooltipPosition = (wrap) => {
-        positionGenericTooltip(wrap);
-        window.requestAnimationFrame(() => positionGenericTooltip(wrap));
-    };
-
-    const repositionVisibleGenericTooltips = () => {
-        if (isDesktopLayoutViewport()) {
+    const deactivateNameTip = (wrap) => {
+        const tip = wrap.querySelector(":scope > .tip-text");
+        const row = wrap.closest("tr");
+        if (row) {
+            row.classList.remove("scoop-name-tip-active");
+        }
+        if (!tip) {
             return;
         }
+        clearNameTipInlineStyles(tip);
+    };
+
+    const bindNameValueTips = (doc) => {
+        if (!doc || !isResponsiveNameTipViewport()) {
+            return;
+        }
+        doc.querySelectorAll(NAME_TIP_SELECTOR).forEach((wrap) => {
+            if (wrap.dataset.scoopNameTipBound === "1") {
+                return;
+            }
+            wrap.dataset.scoopNameTipBound = "1";
+            wrap.addEventListener("mouseenter", () => activateNameTip(wrap));
+            wrap.addEventListener("mouseleave", () => deactivateNameTip(wrap));
+            wrap.addEventListener("focusin", () => activateNameTip(wrap));
+            wrap.addEventListener("focusout", () => deactivateNameTip(wrap));
+        });
+    };
+
+    const resetGenericTooltips = () => {
         document.querySelectorAll(".tip-wrap:not(.headlines-tip)").forEach((wrap) => {
+            wrap.classList.remove("generic-tip-open");
             const tip = wrap.querySelector(":scope > .tip-text");
             if (!tip) {
                 return;
             }
-            const styles = getComputedStyle(tip);
-            if (styles.visibility !== "hidden" && styles.opacity !== "0") {
-                scheduleGenericTooltipPosition(wrap);
-            }
+            [
+                "position",
+                "left",
+                "top",
+                "right",
+                "bottom",
+                "transform",
+                "width",
+                "max-width",
+                "max-height",
+                "--tip-center-x",
+                "--tip-center-y",
+                "--tip-fixed-width",
+                "--tip-fixed-max-height",
+            ].forEach((prop) => tip.style.removeProperty(prop));
         });
+        document.querySelectorAll(".scoop-name-tip-active").forEach((row) => {
+            row.classList.remove("scoop-name-tip-active");
+        });
+        document.querySelectorAll(NAME_TIP_SELECTOR).forEach(deactivateNameTip);
     };
 
-    const handleGenericTooltipInteraction = (event) => {
-        if (isDesktopLayoutViewport()) {
-            return;
-        }
-        const wrap = event.target?.closest?.(".tip-wrap:not(.headlines-tip)");
-        if (!wrap) {
-            return;
-        }
-        scheduleGenericTooltipPosition(wrap);
+    const repositionVisibleGenericTooltips = () => {
+        resetGenericTooltips();
     };
 
-    if (!window.__scoopGenericTooltipBound) {
-        window.__scoopGenericTooltipBound = true;
-        document.addEventListener("mouseover", handleGenericTooltipInteraction, true);
-        document.addEventListener("touchstart", handleGenericTooltipInteraction, {
-            passive: true,
-            capture: true,
-        });
-        window.addEventListener("resize", repositionVisibleGenericTooltips, { passive: true });
-        const bindGenericTooltipSidebarObserver = () => {
-            const sidebar = document.querySelector('section[data-testid="stSidebar"]');
-            if (!sidebar) {
-                return false;
-            }
-            const genericTooltipSidebarObserver = new MutationObserver(repositionVisibleGenericTooltips);
-            genericTooltipSidebarObserver.observe(sidebar, {
-                attributes: true,
-                attributeFilter: ["aria-expanded", "class"],
-            });
-            return true;
-        };
-        if (!bindGenericTooltipSidebarObserver()) {
-            let attempts = 0;
-            const retry = window.setInterval(() => {
-                attempts += 1;
-                if (bindGenericTooltipSidebarObserver() || attempts >= 12) {
-                    window.clearInterval(retry);
-                }
-            }, 250);
-        }
+    window.__scoopGenericTooltipApi = {
+        positionGenericTooltip: () => {},
+        scheduleGenericTooltipPosition: () => {},
+        repositionVisibleGenericTooltips,
+        bindNameValueTips,
+    };
+
+    if (window.__scoopGenericTooltipBindVersion !== 6) {
+        window.__scoopGenericTooltipBindVersion = 6;
+        resetGenericTooltips();
+        bindNameValueTips(document);
     }
 
     if (!window.__scoopTooltipScrollBound) {
@@ -2614,6 +3011,22 @@ _TOOLTIP_SCROLL_JS = """
             }, 250);
         }
     }
+
+    bindNameValueTips(document);
+    if (!window.__scoopNameTipTableObserver) {
+        const tableRoot =
+            document.querySelector(".full-results-wrap") ||
+            document.querySelector('[data-testid="stAppViewContainer"]');
+        if (tableRoot) {
+            window.__scoopNameTipTableObserver = new MutationObserver(() => {
+                bindNameValueTips(document);
+            });
+            window.__scoopNameTipTableObserver.observe(tableRoot, {
+                childList: true,
+                subtree: true,
+            });
+        }
+    }
 })();
 """
 
@@ -2715,7 +3128,12 @@ def _inject_responsive_bootstrap_css() -> str:
         }}
         el.textContent = css;
     }}
-    const parentDoc = window.parent && window.parent.document ? window.parent.document : null;
+    let parentDoc = null;
+    try {{
+        parentDoc = window.parent && window.parent.document ? window.parent.document : null;
+    }} catch (e) {{
+        parentDoc = null;
+    }}
     const appDoc = parentDoc || document;
     apply(appDoc);
     if (parentDoc && parentDoc !== document) {{
@@ -2726,82 +3144,164 @@ def _inject_responsive_bootstrap_css() -> str:
     if (/Analyze/i.test(appWin.location.pathname || "")) {{
         appWin.__scoopAnalyzeSidebarUserOpened = false;
     }}
-    if (!appWin.__scoopAnalyzeLinksBound) {{
-        appWin.__scoopAnalyzeLinksBound = true;
-        appDoc.addEventListener(
+    const bindAnalyzeClicks = (targetDoc) => {{
+        if (!targetDoc || targetDoc.__scoopAnalyzeLinksBound) {{
+            return;
+        }}
+        targetDoc.__scoopAnalyzeLinksBound = true;
+        targetDoc.addEventListener(
             "click",
             (event) => {{
-                const link = event.target.closest("a.fr-analyze-link");
-                if (!link) {{
-                    return;
-                }}
-                const ticker = (link.getAttribute("data-ticker") || "").trim();
-                if (!ticker) {{
-                    return;
-                }}
-                event.preventDefault();
-                event.stopImmediatePropagation();
-                let theme = "light";
                 try {{
-                    localStorage.removeItem("scoop-theme");
-                    const stored = sessionStorage.getItem("scoop-theme");
-                    if (stored === "dark") {{
-                        theme = "dark";
+                    if ((appWin.innerWidth || 0) < 1367) {{
+                        return;
                     }}
+                    const raw = event.target;
+                    const el = raw && raw.nodeType === 1 ? raw : (raw && raw.parentElement);
+                    if (!el || typeof el.closest !== "function") {{
+                        return;
+                    }}
+                    const analyzeCell = el.closest('td[data-label="Analyze"]');
+                    const link =
+                        el.closest("a.fr-analyze-link") ||
+                        (analyzeCell && analyzeCell.querySelector("a.fr-analyze-link"));
+                    if (!link) {{
+                        return;
+                    }}
+                    const ticker = (link.getAttribute("data-ticker") || "").trim();
+                    if (!ticker) {{
+                        return;
+                    }}
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    let theme = "light";
+                    try {{
+                        localStorage.removeItem("scoop-theme");
+                        const stored = sessionStorage.getItem("scoop-theme");
+                        if (stored === "dark") {{
+                            theme = "dark";
+                        }}
+                    }} catch (e) {{}}
+                    try {{
+                        appWin.__scoopAnalyzeSidebarUserOpened = false;
+                        appWin.__scoopSuppressSidebarExpand = Date.now() + 15000;
+                        if (typeof appWin.__scoopClearResponsiveExpandTimers === "function") {{
+                            appWin.__scoopClearResponsiveExpandTimers();
+                        }}
+                        const sidebar = appDoc.querySelector('section[data-testid="stSidebar"]');
+                        if (sidebar) {{
+                            sidebar.setAttribute("aria-expanded", "false");
+                        }}
+                        appWin.__scoopLayout?.syncSidebarLayout?.();
+                        appWin.__scoopLayout?.collapseSidebar?.();
+                    }} catch (e) {{}}
+                    const dest = new URL("Analyze", appWin.location.href);
+                    dest.searchParams.set("ticker", ticker);
+                    dest.searchParams.set("theme", theme);
+                    dest.searchParams.set("from", appWin.location.pathname || "/NYSE_Top_10");
+                    appWin.location.href = dest.toString();
                 }} catch (e) {{}}
-                try {{
-                    appWin.__scoopAnalyzeSidebarUserOpened = false;
-                    appWin.__scoopSuppressSidebarExpand = Date.now() + 15000;
-                    if (typeof appWin.__scoopClearResponsiveExpandTimers === "function") {{
-                        appWin.__scoopClearResponsiveExpandTimers();
-                    }}
-                    const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
-                    if (sidebar) {{
-                        sidebar.setAttribute("aria-expanded", "false");
-                    }}
-                    appWin.__scoopLayout?.syncSidebarLayout?.();
-                    appWin.__scoopLayout?.collapseSidebar?.();
-                }} catch (e) {{}}
-                appWin.location.href =
-                    "/Analyze?ticker="
-                    + encodeURIComponent(ticker)
-                    + "&theme="
-                    + encodeURIComponent(theme)
-                    + "&from="
-                    + encodeURIComponent(appWin.location.pathname || "/NYSE_Top_10");
             }},
             true
         );
+    }};
+    bindAnalyzeClicks(appDoc);
+    if (document !== appDoc) {{
+        bindAnalyzeClicks(document);
     }}
 }})();
 </script>
 """
 
 
+BOOTSTRAP_INSTALLED_KEY = "_scoop_responsive_bootstrap_installed"
+BOOTSTRAP_SCRIPT_VERSION = 4
+TOOLTIP_INSTALLED_KEY = "_scoop_tooltip_scroll_installed"
+TOOLTIP_SCRIPT_VERSION = 10
+SIDEBAR_HANDLER_INSTALLED_KEY = "_scoop_responsive_sidebar_handler_installed"
+
+
+def _responsive_bootstrap_markup() -> str:
+    """Bootstrap CSS/JS once per session (shared across pages)."""
+    if st.session_state.get(BOOTSTRAP_INSTALLED_KEY) == BOOTSTRAP_SCRIPT_VERSION:
+        return ""
+    st.session_state[BOOTSTRAP_INSTALLED_KEY] = BOOTSTRAP_SCRIPT_VERSION
+    return (
+        f"<style id='scoop-responsive-generic-tooltip-css'>{_RESPONSIVE_GENERIC_TOOLTIP_CSS}</style>"
+        + _inject_responsive_bootstrap_css()
+        + f"<script>{_RESPONSIVE_LAYOUT_CORE_JS}</script>"
+        + f"<script>{_RESPONSIVE_LAYOUT_SYNC_JS}</script>"
+    )
+
+
+def _inject_name_tooltip_override() -> None:
+    """Always inject name/company tooltip override after page CSS (mobile/tablet only)."""
+    st.markdown(
+        f"<style id='scoop-name-value-tooltip-override-css'>{RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS}</style>",
+        unsafe_allow_html=True,
+    )
+
+
+def _inject_desktop_headlines_css() -> None:
+    """Always inject desktop Headlines count styling (survives tooltip handler early return)."""
+    st.markdown(
+        f"<style id='scoop-desktop-headlines-css'>{_DESKTOP_HEADLINES_CSS}</style>",
+        unsafe_allow_html=True,
+    )
+
+
+def _ensure_generic_tooltip_mobile_assets() -> None:
+    """Inject centered generic tooltip CSS/JS after page styles on mobile/tablet."""
+    if st.session_state.get(GENERIC_TOOLTIP_CSS_KEY) != GENERIC_TOOLTIP_CSS_VERSION:
+        st.markdown(
+            f"<style id='scoop-responsive-generic-tooltip-css'>{_RESPONSIVE_GENERIC_TOOLTIP_CSS}</style>",
+            unsafe_allow_html=True,
+        )
+        st.session_state[GENERIC_TOOLTIP_CSS_KEY] = GENERIC_TOOLTIP_CSS_VERSION
+    st.components.v1.html(f"<script>{_GENERIC_TOOLTIP_MOBILE_JS}</script>", height=0)
+
+
+def install_page_layout_resync() -> None:
+    """Re-sync sidebar width and header clearance after Streamlit page navigation."""
+    st.html(f"<script>{_PAGE_NAV_LAYOUT_RESYNC_JS}</script>", unsafe_allow_javascript=True)
+
+
 def install_responsive_layout_bootstrap() -> None:
     """Early CSS + layout sync so mobile/tablet first paint uses overlay sidebar."""
-    st.html(
-        _inject_responsive_bootstrap_css()
-        + f"<script>{_RESPONSIVE_LAYOUT_CORE_JS}</script>"
-        + f"<script>{_RESPONSIVE_LAYOUT_SYNC_JS}</script>",
-        unsafe_allow_javascript=True,
-    )
+    markup = _responsive_bootstrap_markup()
+    if markup:
+        st.html(markup, unsafe_allow_javascript=True)
+    install_page_layout_resync()
 
 
 def install_responsive_sidebar_handler() -> None:
     """Responsive sidebar close (tablet) + always-open sidebar (desktop)."""
+    if st.session_state.get(SIDEBAR_HANDLER_INSTALLED_KEY):
+        return
+    st.session_state[SIDEBAR_HANDLER_INSTALLED_KEY] = True
     st.html(
-        _inject_responsive_bootstrap_css()
+        _responsive_bootstrap_markup()
         + f"<style id='scoop-desktop-sidebar-layout-css'>{DESKTOP_SIDEBAR_LAYOUT}</style>"
         + f"<style id='scoop-desktop-zoom-layout-css'>{DESKTOP_ZOOM_LAYOUT}</style>"
         + f"<style id='scoop-sidebar-nav-compact-css'>{SIDEBAR_NAV_COMPACT}</style>"
         + _RESPONSIVE_LAYOUT_SCRIPTS,
         unsafe_allow_javascript=True,
     )
+    install_page_layout_resync()
 
 
 def install_tooltip_scroll_handler() -> None:
     """Inject mobile headline CSS; HTML backdrop label closes panel on outside tap."""
+    from theme_mode import inject_dark_mode_styles
+
+    _inject_name_tooltip_override()
+    _inject_desktop_headlines_css()
+    _ensure_generic_tooltip_mobile_assets()
+
+    if st.session_state.get(TOOLTIP_INSTALLED_KEY) == TOOLTIP_SCRIPT_VERSION:
+        inject_dark_mode_styles()
+        install_page_layout_resync()
+        return
     st.html(
         f"<style id='scoop-mobile-headlines-css'>{_MOBILE_HEADLINES_CSS}</style>"
         f"<style id='scoop-mobile-tablet-card-order-css'>{_MOBILE_TABLET_CARD_ORDER_CSS}</style>"
@@ -2813,13 +3313,15 @@ def install_tooltip_scroll_handler() -> None:
         f"<style id='scoop-responsive-generic-tooltip-css'>{_RESPONSIVE_GENERIC_TOOLTIP_CSS}</style>"
         f"<style id='scoop-dark-responsive-tip-underline-css'>{_DARK_RESPONSIVE_TIP_UNDERLINE_CSS}</style>"
         f"<style id='scoop-dark-popup-outline-css'>{_DARK_POPUP_OUTLINE_CSS}</style>"
-        + _inject_responsive_bootstrap_css()
+        + _responsive_bootstrap_markup()
         + f"<style id='scoop-desktop-sidebar-layout-css'>{DESKTOP_SIDEBAR_LAYOUT}</style>"
         + f"<style id='scoop-desktop-zoom-layout-css'>{DESKTOP_ZOOM_LAYOUT}</style>"
         + f"<style id='scoop-sidebar-nav-compact-css'>{SIDEBAR_NAV_COMPACT}</style>"
         + f"<script>{_COMBINED_PAGE_JS}</script>",
         unsafe_allow_javascript=True,
     )
+    st.session_state[TOOLTIP_INSTALLED_KEY] = TOOLTIP_SCRIPT_VERSION
     from theme_mode import inject_dark_mode_styles
 
     inject_dark_mode_styles()
+    install_page_layout_resync()

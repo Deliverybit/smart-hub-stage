@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import html
-
-from analyze_page import ANALYZE_PAGE_PATH
-
+from urllib.parse import quote
 
 ANALYZE_COLUMN = "Analyze"
 
@@ -24,17 +22,24 @@ def build_source_ticker_map(df) -> dict[str, str]:
 
 
 def analyze_search_url(source_ticker: str) -> str:
-    """Analyze page path (ticker travels via data-ticker; query params are stripped from HTML hrefs)."""
-    return ANALYZE_PAGE_PATH
+    """Relative Analyze URL with ticker (works on Cloud ~/+/ paths if click JS is skipped)."""
+    sym = str(source_ticker).strip()
+    return f"Analyze?ticker={quote(sym, safe='')}"
 
 
 def analyze_link_html(source_ticker: str) -> str:
-    """HTML anchor for the Analyze column cell."""
+    """HTML for the Analyze column cell (desktop link + mobile/tablet tooltip)."""
     sym = str(source_ticker).strip()
     url = analyze_search_url(sym)
     sym_esc = html.escape(sym, quote=True)
     url_esc = html.escape(url, quote=True)
-    return (
+    tip_esc = html.escape(ANALYZE_COLUMN_TIP)
+    link = (
         f'<a class="fr-analyze-link" href="{url_esc}" data-ticker="{sym_esc}" '
         f'target="_self" rel="noopener">Analyze</a>'
     )
+    mobile_tip = (
+        f'<span class="tip-wrap fr-analyze-mobile-tip" style="display:none">Analyze'
+        f'<span class="tip-text">{tip_esc}</span></span>'
+    )
+    return f'<span class="fr-analyze-cell">{link}{mobile_tip}</span>'

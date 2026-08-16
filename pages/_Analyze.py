@@ -2487,6 +2487,7 @@ def _cached_analyze_bundle(ticker: str, days, screener_key: str | None) -> dict 
         market_data=market_eng,
         latest_price=latest_price,
         price_change_pct=price_change_pct,
+        sentiment_score=sent_result["score"],
     )
 
     return {

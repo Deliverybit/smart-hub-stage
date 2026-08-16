@@ -13,8 +13,8 @@ def snapshot_max_age_seconds() -> int:
     return ALPHAVANTAGE_CACHE_TIMEOUT
 
 
-def fetch_snapshot(screener_key: str) -> dict[str, Any] | None:
-    """Load a snapshot payload for ``screener_key``, or None if missing."""
+def _fetch_snapshot_uncached(screener_key: str) -> dict[str, Any] | None:
+    """Load a snapshot payload from Postgres (no Streamlit cache)."""
     database_url = get_database_url()
     if not database_url:
         return None
@@ -49,6 +49,21 @@ def fetch_snapshot(screener_key: str) -> dict[str, Any] | None:
                 )
             payload.setdefault("screener_key", screener_key)
             return payload
+
+
+try:
+    import streamlit as st
+
+    @st.cache_data(ttl=60, show_spinner=False)
+    def fetch_snapshot(screener_key: str) -> dict[str, Any] | None:
+        """Load a snapshot payload for ``screener_key``, or None if missing."""
+        return _fetch_snapshot_uncached(screener_key)
+
+except ImportError:
+
+    def fetch_snapshot(screener_key: str) -> dict[str, Any] | None:
+        """Load a snapshot payload for ``screener_key``, or None if missing."""
+        return _fetch_snapshot_uncached(screener_key)
 
 
 def save_snapshot(screener_key: str, payload: dict[str, Any]) -> None:

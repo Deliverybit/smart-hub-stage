@@ -162,11 +162,19 @@ class MarketData:
             return (symbol, "digital")
         return (symbol, outputsize)
 
-    def _daily_history_frame(self, ticker: str, outputsize: str = "full") -> pd.DataFrame:
+    def _daily_history_frame(
+        self,
+        ticker: str,
+        outputsize: str = "full",
+        max_rows: int | None = None,
+    ) -> pd.DataFrame:
         symbol = self._format_ticker(ticker)
         cache_key = self._daily_cache_key(ticker, outputsize)
         if cache_key in self._daily_cache:
-            return self._daily_cache[cache_key].copy()
+            df = self._daily_cache[cache_key]
+            if max_rows is not None and len(df) > max_rows:
+                return df.tail(max_rows).copy()
+            return df.copy()
 
         if self._is_crypto(ticker):
             data = self._request(
@@ -183,8 +191,13 @@ class MarketData:
             )
             series = data.get("Time Series (Daily)", {})
 
+        date_keys = sorted(series.keys())
+        if max_rows is not None and len(date_keys) > max_rows:
+            date_keys = date_keys[-max_rows:]
+
         rows = []
-        for date, values in series.items():
+        for date in date_keys:
+            values = series[date]
             close = self._to_float(values.get("4. close"))
             low = self._to_float(values.get("3. low"))
             high = self._to_float(values.get("2. high"))
@@ -197,6 +210,8 @@ class MarketData:
             df = df.sort_values("date").reset_index(drop=True)
 
         self._daily_cache[cache_key] = df
+        if max_rows is not None and len(df) > max_rows:
+            return df.tail(max_rows).copy()
         return df.copy()
 
     def get_latest_price(self, ticker):
@@ -249,7 +264,15 @@ class MarketData:
 
     def get_analyze_price_bundle(self, ticker: str, days=30) -> dict | None:
         """Single-pass price history + 52-week stats for Analyze (one API call for crypto)."""
-        df = self._daily_history_frame(ticker, outputsize="full")
+        if days == "max":
+            max_rows = None
+        else:
+            try:
+                max_rows = max(int(days), 365) + 10
+            except (TypeError, ValueError):
+                max_rows = 375
+
+        df = self._daily_history_frame(ticker, outputsize="full", max_rows=max_rows)
         if df.empty:
             return None
 
@@ -276,14 +299,15 @@ class MarketData:
                 chart_df = df
 
         chart_df = chart_df.copy()
-        chart_df["change_pct"] = chart_df["price"].pct_change()
-        history = []
-        for _, row in chart_df.iterrows():
-            history.append({
+        chart_df["change_pct"] = chart_df["price"].pct_change().fillna(0)
+        history = [
+            {
                 "date": row["date"].strftime("%Y-%m-%d"),
-                "price": row["price"],
-                "change_pct": row["change_pct"] if not pd.isna(row["change_pct"]) else 0,
-            })
+                "price": float(row["price"]),
+                "change_pct": float(row["change_pct"]),
+            }
+            for row in chart_df.to_dict("records")
+        ]
 
         return {
             "history": history,

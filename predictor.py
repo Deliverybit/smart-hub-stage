@@ -7,13 +7,23 @@ class Predictor:
         self.sentiment_engine = SentimentEngine()
         self.market_data = MarketData()
 
-    def predict(self, ticker, headlines, market_data=None, *, latest_price=None, price_change_pct=None):
+    def predict(
+        self,
+        ticker,
+        headlines,
+        market_data=None,
+        *,
+        latest_price=None,
+        price_change_pct=None,
+        sentiment_score=None,
+    ):
         """
         Combines sentiment and price action to generate a market signal.
         """
         md = market_data or self.market_data
-        sent_result = self.sentiment_engine.analyze_headlines(ticker, headlines)
-        sentiment_score = sent_result["score"]  # Scale: -1 to 1
+        if sentiment_score is None:
+            sent_result = self.sentiment_engine.analyze_headlines(ticker, headlines)
+            sentiment_score = sent_result["score"]  # Scale: -1 to 1
 
         if latest_price is None or price_change_pct is None:
             latest_price = md.get_latest_price(ticker)

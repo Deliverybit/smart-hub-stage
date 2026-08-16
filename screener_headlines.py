@@ -22,13 +22,26 @@ def normalize_screener_ticker(ticker: str) -> str:
     return sym
 
 
-def _ticker_matches_row(ticker: str, row: dict) -> bool:
+def _ticker_identity_variants(ticker: str) -> set[str]:
+    """Normalized ticker aliases for matching screener rows to Analyze lookups."""
     sym = normalize_screener_ticker(ticker)
     bare = sym.replace("-USD", "")
-    source = str(row.get("_source_ticker") or "").strip().upper()
-    display = str(row.get("Ticker") or "").strip().upper()
-    candidates = {sym, bare, source, display, source.replace("-USD", ""), display.replace("-USD", "")}
-    return sym in candidates or bare in candidates
+    variants = {sym, bare, f"{bare}-USD"}
+    alias = MarketData._CRYPTO_ID_ALIASES.get(bare)
+    if alias:
+        variants.add(alias)
+        variants.add(f"{alias}-USD")
+    return {v for v in variants if v}
+
+
+def _ticker_matches_row(ticker: str, row: dict) -> bool:
+    query = _ticker_identity_variants(ticker)
+    row_variants: set[str] = set()
+    for key in ("_source_ticker", "Ticker"):
+        raw = str(row.get(key) or "").strip().upper()
+        if raw:
+            row_variants |= _ticker_identity_variants(raw)
+    return bool(query & row_variants)
 
 
 def news_items_from_snapshot(ticker: str, screener_key: str) -> list[dict] | None:
@@ -56,7 +69,7 @@ def news_items_from_snapshot(ticker: str, screener_key: str) -> list[dict] | Non
         texts = list(row.get("_headline_texts") or [])
         urls = list(row.get("_headline_urls") or [])
         if not texts:
-            return None
+            continue
         items = []
         for idx, title in enumerate(texts[:10]):
             url = urls[idx] if idx < len(urls) else ""
@@ -109,6 +122,7 @@ def enrich_headline_sentiment(
     _market_data,
     ticker_column: str = "_source_ticker",
     *,
+    screener_key: str | None = None,
     cache_version: int = SCREENER_CACHE_VERSION,
 ):
     """Fetch headlines only for displayed screener rows and update sentiment fields."""
@@ -125,7 +139,11 @@ def enrich_headline_sentiment(
         if not ticker:
             continue
 
-        cached_rows = _cached_news_items(ticker, None, _cache_version=cache_version)
+        cached_rows = _cached_news_items(
+            ticker,
+            screener_key,
+            _cache_version=cache_version,
+        )
         news_items = [{"title": t, "url": u, "source": s} for t, u, s in cached_rows]
         headlines, urls = headlines_from_news_items(news_items)
         polarity = polarity_from_headlines(headlines)

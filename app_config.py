@@ -105,10 +105,10 @@ def get_screener_symbol_limit(default: int = 1000) -> int:
 
 
 # Bump when screener/API behavior changes to invalidate stale Streamlit caches.
-SCREENER_CACHE_VERSION = 5
+SCREENER_CACHE_VERSION = 6
 
 # Visible in the staging banner so Streamlit Cloud deploys are easy to verify.
-APP_BUILD_ID = "2026-08-14-sentiment-disclosure"
+APP_BUILD_ID = "2026-08-16-headlines-tooltips"
 
 # Back-compat aliases used by some page variants.
 ALPHAVANTAGE_CACHE_TIMEOUT = 900
