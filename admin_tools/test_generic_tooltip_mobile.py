@@ -20,6 +20,10 @@ from tooltip_scroll import (  # noqa: E402
     GENERIC_TOOLTIP_CSS_VERSION,
     TOOLTIP_SCRIPT_VERSION,
     _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS,
+    _IPAD_MINI_HEADLINES_CSS,
+    _MOBILE_HEADLINES_CSS,
+    _TABLET_HEADLINES_POPUP_RULES,
+    _TOOLTIP_SCROLL_JS,
 )
 
 
@@ -66,7 +70,17 @@ def test_mobile_tooltip_js_clears_legacy_fixed_positioning() -> None:
 
 def test_version_bumps_for_asset_refresh() -> None:
     assert GENERIC_TOOLTIP_CSS_VERSION >= 7
-    assert TOOLTIP_SCRIPT_VERSION >= 9
+    assert TOOLTIP_SCRIPT_VERSION >= 11
+
+
+def test_ipad_mini_headlines_use_tablet_pro_popup() -> None:
+    assert "@media (max-width: 743px)" in _MOBILE_HEADLINES_CSS
+    assert "744px" in _IPAD_MINI_HEADLINES_CSS
+    assert "768px" in _IPAD_MINI_HEADLINES_CSS
+    assert _TABLET_HEADLINES_POPUP_RULES.strip() in _IPAD_MINI_HEADLINES_CSS
+    assert "position: fixed !important" in _IPAD_MINI_HEADLINES_CSS
+    assert "isIpadMiniViewport()" in _TOOLTIP_SCROLL_JS
+    assert "isResponsiveHeadlinesViewport() || isIpadMiniViewport()" in _TOOLTIP_SCROLL_JS
 
 
 def main() -> int:
@@ -75,6 +89,7 @@ def main() -> int:
         test_name_value_tooltips_open_below_on_mobile_tablet,
         test_name_tooltip_override_css_and_page_snippet,
         test_mobile_tooltip_js_clears_legacy_fixed_positioning,
+        test_ipad_mini_headlines_use_tablet_pro_popup,
         test_version_bumps_for_asset_refresh,
     ]
     for fn in tests:

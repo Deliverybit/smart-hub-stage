@@ -14,7 +14,7 @@ from admin_tools.tablet_mobile_layout_css import (
 )
 
 _MOBILE_HEADLINES_CSS = f"""
-@media (max-width: 768px) {{
+@media (max-width: 743px) {{
 {MOBILE_HEADLINES_CARD_OVERLAY}
 }}
 """
@@ -603,14 +603,21 @@ _TABLET_HEADLINES_POPUP_CSS = f"""
 }}
 """
 
-_IPAD_MINI_SURFACE_DUO_HEADLINES_CSS = f"""
-@media (min-width: 744px) and (max-width: 768px),
-       (width: 540px),
+_IPAD_MINI_HEADLINES_CSS = f"""
+@media (min-width: 744px) and (max-width: 768px) {{
+{_TABLET_HEADLINES_POPUP_RULES}
+}}
+"""
+
+_SURFACE_DUO_HEADLINES_CSS = f"""
+@media (width: 540px),
        ((width: 720px) and (max-height: 541px)),
        ((min-width: 1110px) and (max-width: 1118px) and (max-height: 741px)) {{
 {_TABLET_HEADLINES_POPUP_RULES}
 }}
 """
+
+_IPAD_MINI_SURFACE_DUO_HEADLINES_CSS = _IPAD_MINI_HEADLINES_CSS + _SURFACE_DUO_HEADLINES_CSS
 
 _ASUS_ZENBOOK_FOLD_HEADLINES_CSS = f"""
 @media (min-width: 849px) and (max-width: 857px) and (min-height: 1276px) and (max-height: 1284px),
@@ -2551,7 +2558,8 @@ _TOOLTIP_SCROLL_JS = """
             document.querySelector('[data-testid="stMainBlockContainer"]') ||
             document.querySelector('[data-testid="stAppViewContainer"]');
 
-        const centerHorizontally = isResponsiveHeadlinesViewport();
+        const centerHorizontally =
+            isResponsiveHeadlinesViewport() || isIpadMiniViewport();
 
         let widthBasisLeft = viewLeft;
         if (!centerHorizontally && content) {
@@ -2574,7 +2582,7 @@ _TOOLTIP_SCROLL_JS = """
             left = viewLeft;
         }
 
-        if (isIpadMiniOrAirHeadlinesViewport()) {
+        if (isIpadAirViewport()) {
             left = Math.round((window.innerWidth - width) / 2);
             left = Math.max(VIEWPORT_PAD, Math.min(left, viewRight - width));
         }
@@ -3217,7 +3225,7 @@ def _inject_responsive_bootstrap_css() -> str:
 BOOTSTRAP_INSTALLED_KEY = "_scoop_responsive_bootstrap_installed"
 BOOTSTRAP_SCRIPT_VERSION = 4
 TOOLTIP_INSTALLED_KEY = "_scoop_tooltip_scroll_installed"
-TOOLTIP_SCRIPT_VERSION = 10
+TOOLTIP_SCRIPT_VERSION = 11
 SIDEBAR_HANDLER_INSTALLED_KEY = "_scoop_responsive_sidebar_handler_installed"
 
 
@@ -3246,6 +3254,14 @@ def _inject_desktop_headlines_css() -> None:
     """Always inject desktop Headlines count styling (survives tooltip handler early return)."""
     st.markdown(
         f"<style id='scoop-desktop-headlines-css'>{_DESKTOP_HEADLINES_CSS}</style>",
+        unsafe_allow_html=True,
+    )
+
+
+def _inject_ipad_mini_headlines_css() -> None:
+    """Always inject iPad Mini Headlines popup styling after page CSS."""
+    st.markdown(
+        f"<style id='scoop-ipad-mini-headlines-css'>{_IPAD_MINI_HEADLINES_CSS}</style>",
         unsafe_allow_html=True,
     )
 
@@ -3296,6 +3312,7 @@ def install_tooltip_scroll_handler() -> None:
 
     _inject_name_tooltip_override()
     _inject_desktop_headlines_css()
+    _inject_ipad_mini_headlines_css()
     _ensure_generic_tooltip_mobile_assets()
 
     if st.session_state.get(TOOLTIP_INSTALLED_KEY) == TOOLTIP_SCRIPT_VERSION:
@@ -3306,8 +3323,9 @@ def install_tooltip_scroll_handler() -> None:
         f"<style id='scoop-mobile-headlines-css'>{_MOBILE_HEADLINES_CSS}</style>"
         f"<style id='scoop-mobile-tablet-card-order-css'>{_MOBILE_TABLET_CARD_ORDER_CSS}</style>"
         f"<style id='scoop-tablet-headlines-css'>{_TABLET_HEADLINES_POPUP_CSS}</style>"
+        f"<style id='scoop-ipad-mini-headlines-css'>{_IPAD_MINI_HEADLINES_CSS}</style>"
+        f"<style id='scoop-surface-duo-headlines-css'>{_SURFACE_DUO_HEADLINES_CSS}</style>"
         f"<style id='scoop-desktop-headlines-css'>{_DESKTOP_HEADLINES_CSS}</style>"
-        f"<style id='scoop-ipad-mini-surface-duo-headlines-css'>{_IPAD_MINI_SURFACE_DUO_HEADLINES_CSS}</style>"
         f"<style id='scoop-asus-zenbook-fold-headlines-css'>{_ASUS_ZENBOOK_FOLD_HEADLINES_CSS}</style>"
         f"<style id='scoop-mobile-phone-headlines-fixed-css'>{_MOBILE_PHONE_HEADLINES_FIXED_CSS}</style>"
         f"<style id='scoop-responsive-generic-tooltip-css'>{_RESPONSIVE_GENERIC_TOOLTIP_CSS}</style>"
