@@ -3,7 +3,10 @@ import json
 import streamlit as st
 
 from admin_tools.tablet_mobile_layout_css import (
+    DESKTOP_ANALYZE_TOP_COMPACT,
+    DESKTOP_SCREENER_TOP_COMPACT,
     DESKTOP_SIDEBAR_LAYOUT,
+    DESKTOP_SIDEBAR_NAV_MARKET,
     DESKTOP_ZOOM_LAYOUT,
     MOBILE_CARD_FIELD_ORDER,
     MOBILE_HEADLINES_CARD_OVERLAY,
@@ -672,6 +675,13 @@ const __scoopIsAnalyzePage = () => {
         return false;
     }
 };
+const __scoopIsScreenerPage = () => {
+    try {
+        return /_Top_10/i.test(__scoopGetAppWin().location.pathname || "");
+    } catch (e) {
+        return false;
+    }
+};
 """
 
 _RESPONSIVE_LAYOUT_CORE_JS = (
@@ -925,6 +935,16 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
         if (!targets.length) {
             return;
         }
+        const analyzeActive =
+            __scoopIsAnalyzePage() &&
+            /(?:\\?|&)ticker=/i.test(appWin.location.search || "");
+        const screenerActive = __scoopIsScreenerPage();
+        if (isDesktopViewport() && (analyzeActive || screenerActive)) {
+            targets.forEach((el) => {
+                el.style.setProperty("padding-top", "12px", "important");
+            });
+            return;
+        }
         const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
         const padTop = Math.max(12, Math.round(headerBottom + 12));
         targets.forEach((el) => {
@@ -1046,8 +1066,61 @@ _PAGE_NAV_LAYOUT_RESYNC_JS = (
         } catch (e) {}
     };
 
+    const syncMarketNavActive = () => {
+        const boxes = doc.querySelectorAll(
+            '[data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]'
+        );
+        if (!layout()?.isDesktopViewport?.()) {
+            boxes.forEach((box) => box.removeAttribute("data-scoop-nav-active"));
+            return;
+        }
+        const normalize = (value) => (value || "").replace(/^\\/+|\\/+$/g, "").toLowerCase();
+        const current = normalize(location.pathname);
+        doc
+            .querySelectorAll(
+                '[data-testid="stSidebar"] [data-testid="stPageLink"] a[href$="_Top_10"]'
+            )
+            .forEach((a) => {
+                const box = a.closest('[data-testid="stPageLink"]');
+                if (!box) {
+                    return;
+                }
+                const href = normalize(a.getAttribute("href") || "");
+                const active = Boolean(href) && (current === href || current.endsWith("/" + href));
+                if (active) {
+                    box.setAttribute("data-scoop-nav-active", "");
+                } else {
+                    box.removeAttribute("data-scoop-nav-active");
+                }
+            });
+    };
+
+    const syncAnalyzePageFlag = () => {
+        const root = doc.documentElement;
+        const active =
+            __scoopIsAnalyzePage() &&
+            /(?:\\?|&)ticker=/i.test(appWin.location.search || "");
+        if (active) {
+            root.setAttribute("data-scoop-analyze-active", "1");
+        } else {
+            root.removeAttribute("data-scoop-analyze-active");
+        }
+    };
+
+    const syncScreenerPageFlag = () => {
+        const root = doc.documentElement;
+        if (__scoopIsScreenerPage()) {
+            root.setAttribute("data-scoop-screener-active", "1");
+        } else {
+            root.removeAttribute("data-scoop-screener-active");
+        }
+    };
+
     const resync = () => {
+        syncAnalyzePageFlag();
+        syncScreenerPageFlag();
         layout()?.syncSidebarLayout?.();
+        syncMarketNavActive();
         resetScroll();
     };
 
@@ -3257,7 +3330,7 @@ def _inject_responsive_bootstrap_css() -> str:
 BOOTSTRAP_INSTALLED_KEY = "_scoop_responsive_bootstrap_installed"
 BOOTSTRAP_SCRIPT_VERSION = 4
 TOOLTIP_INSTALLED_KEY = "_scoop_tooltip_scroll_installed"
-TOOLTIP_SCRIPT_VERSION = 12
+TOOLTIP_SCRIPT_VERSION = 22
 SIDEBAR_HANDLER_INSTALLED_KEY = "_scoop_responsive_sidebar_handler_installed"
 
 
@@ -3322,6 +3395,24 @@ def install_page_layout_resync() -> None:
     st.html(f"<script>{_PAGE_NAV_LAYOUT_RESYNC_JS}</script>", unsafe_allow_javascript=True)
 
 
+def inject_desktop_sidebar_nav_market() -> None:
+    """Inject desktop market nav containers on every page (sidebar persists across routes)."""
+    st.html(
+        f"<style id='scoop-desktop-sidebar-nav-market-css'>{DESKTOP_SIDEBAR_NAV_MARKET}</style>"
+        f"<style id='scoop-desktop-screener-top-compact-css'>{DESKTOP_SCREENER_TOP_COMPACT}</style>",
+        unsafe_allow_javascript=True,
+    )
+
+
+def inject_desktop_analyze_top_compact() -> None:
+    """Tighten Analyze deep-dive top spacing on desktop (padding, js_eval gaps, hr lines)."""
+    st.html(
+        f"<style id='scoop-desktop-analyze-top-compact-css'>{DESKTOP_ANALYZE_TOP_COMPACT}</style>"
+        + '<script>document.documentElement.setAttribute("data-scoop-analyze-active","1");</script>',
+        unsafe_allow_javascript=True,
+    )
+
+
 def install_responsive_layout_bootstrap() -> None:
     """Early CSS + layout sync so mobile/tablet first paint uses overlay sidebar."""
     markup = _responsive_bootstrap_markup()
@@ -3332,17 +3423,17 @@ def install_responsive_layout_bootstrap() -> None:
 
 def install_responsive_sidebar_handler() -> None:
     """Responsive sidebar close (tablet) + always-open sidebar (desktop)."""
-    if st.session_state.get(SIDEBAR_HANDLER_INSTALLED_KEY):
-        return
-    st.session_state[SIDEBAR_HANDLER_INSTALLED_KEY] = True
-    st.html(
-        _responsive_bootstrap_markup()
-        + f"<style id='scoop-desktop-sidebar-layout-css'>{DESKTOP_SIDEBAR_LAYOUT}</style>"
-        + f"<style id='scoop-desktop-zoom-layout-css'>{DESKTOP_ZOOM_LAYOUT}</style>"
-        + f"<style id='scoop-sidebar-nav-compact-css'>{SIDEBAR_NAV_COMPACT}</style>"
-        + _RESPONSIVE_LAYOUT_SCRIPTS,
-        unsafe_allow_javascript=True,
-    )
+    if not st.session_state.get(SIDEBAR_HANDLER_INSTALLED_KEY):
+        st.session_state[SIDEBAR_HANDLER_INSTALLED_KEY] = True
+        st.html(
+            _responsive_bootstrap_markup()
+            + f"<style id='scoop-desktop-sidebar-layout-css'>{DESKTOP_SIDEBAR_LAYOUT}</style>"
+            + f"<style id='scoop-desktop-zoom-layout-css'>{DESKTOP_ZOOM_LAYOUT}</style>"
+            + f"<style id='scoop-sidebar-nav-compact-css'>{SIDEBAR_NAV_COMPACT}</style>"
+            + _RESPONSIVE_LAYOUT_SCRIPTS,
+            unsafe_allow_javascript=True,
+        )
+    inject_desktop_sidebar_nav_market()
     install_page_layout_resync()
 
 
@@ -3358,6 +3449,7 @@ def install_tooltip_scroll_handler() -> None:
 
     if st.session_state.get(TOOLTIP_INSTALLED_KEY) == TOOLTIP_SCRIPT_VERSION:
         inject_dark_mode_styles()
+        inject_desktop_sidebar_nav_market()
         install_page_layout_resync()
         return
     st.html(
@@ -3379,6 +3471,7 @@ def install_tooltip_scroll_handler() -> None:
         + f"<script>{_COMBINED_PAGE_JS}</script>",
         unsafe_allow_javascript=True,
     )
+    inject_desktop_sidebar_nav_market()
     st.session_state[TOOLTIP_INSTALLED_KEY] = TOOLTIP_SCRIPT_VERSION
     from theme_mode import inject_dark_mode_styles
 

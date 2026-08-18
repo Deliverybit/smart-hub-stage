@@ -1602,6 +1602,213 @@ SIDEBAR_NAV_COMPACT = """
     }
 """
 
+# Desktop-only boxed nav items for market screener pages (not Terms of Service).
+_DESKTOP_MARKET_NAV_GAP = "12px"
+
+# Fixed gap between market nav buttons — beats page-level stVerticalBlock gap overrides.
+_DESKTOP_MARKET_NAV_SPACING_RULES = f"""
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {{
+        gap: 0 !important;
+    }}
+    [data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stPageLink"] a[href$="_Top_10"]),
+    [data-testid="stSidebar"] [data-testid="element-container"]:has([data-testid="stPageLink"] a[href$="_Top_10"]) {{
+        margin: 0 !important;
+        padding: 0 !important;
+    }}
+    [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) {{
+        margin: 0 !important;
+    }}
+    [data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stPageLink"] a[href$="_Top_10"]) + [data-testid="stElementContainer"]:has([data-testid="stPageLink"] a[href$="_Top_10"]),
+    [data-testid="stSidebar"] [data-testid="element-container"]:has([data-testid="stPageLink"] a[href$="_Top_10"]) + [data-testid="stElementContainer"]:has([data-testid="stPageLink"] a[href$="_Top_10"]),
+    [data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stPageLink"] a[href$="_Top_10"]) + [data-testid="stElementContainer"]:has([data-testid="stPageLink"] a[href$="_Top_10"]),
+    [data-testid="stSidebar"] [data-testid="element-container"]:has([data-testid="stPageLink"] a[href$="_Top_10"]) + [data-testid="stElementContainer"]:has([data-testid="stPageLink"] a[href$="_Top_10"]) {{
+        margin-top: {_DESKTOP_MARKET_NAV_GAP} !important;
+    }}
+"""
+
+_DESKTOP_MARKET_NAV_LIGHT_RULES = """
+    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 0.75rem !important;
+        background: #ffffff !important;
+        padding: 0.15rem 0.35rem !important;
+        box-sizing: border-box !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+    }
+    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):hover {
+        border-color: #94a3b8 !important;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1) !important;
+    }
+    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) a {
+        display: block !important;
+        width: 100% !important;
+        border-radius: 0.55rem !important;
+        padding: 0.45rem 0.65rem !important;
+        box-sizing: border-box !important;
+    }
+"""
+
+_DESKTOP_MARKET_NAV_DARK_RULES = """
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) {
+        border: 1px solid #404040 !important;
+        border-radius: 0.75rem !important;
+        background: #000000 !important;
+        padding: 0.15rem 0.35rem !important;
+        box-sizing: border-box !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35) !important;
+    }
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):hover {
+        border-color: #666666 !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45) !important;
+    }
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) a {
+        display: block !important;
+        width: 100% !important;
+        border-radius: 0.55rem !important;
+        padding: 0.45rem 0.65rem !important;
+        box-sizing: border-box !important;
+        color: #ffffff !important;
+        background-color: transparent !important;
+    }
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) span,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) div,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) p,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) a:visited,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) a:hover,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) a:active {
+        color: #ffffff !important;
+        background-color: transparent !important;
+    }
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) {
+        background: #333333 !important;
+        border-color: #555555 !important;
+    }
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) a {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+    }
+"""
+
+# Beat desktop nav containers on phones/tablets (≤1366px) even if dark-mode rules load later.
+_RESPONSIVE_MARKET_NAV_RESET_RULES = """
+    [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) {
+        border: none !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) a {
+        display: revert !important;
+        width: revert !important;
+        border-radius: revert !important;
+        padding: revert !important;
+        box-sizing: revert !important;
+    }
+"""
+
+DESKTOP_SIDEBAR_NAV_MARKET = f"""
+@media (min-width: 1367px) {{
+{_DESKTOP_MARKET_NAV_SPACING_RULES}
+{_DESKTOP_MARKET_NAV_LIGHT_RULES}
+{_DESKTOP_MARKET_NAV_DARK_RULES}
+}}
+html[data-scoop-desktop-layout="1"] {{
+{_DESKTOP_MARKET_NAV_SPACING_RULES}
+{_DESKTOP_MARKET_NAV_LIGHT_RULES}
+{_DESKTOP_MARKET_NAV_DARK_RULES}
+}}
+@media (max-width: 1366px) {{
+{_RESPONSIVE_MARKET_NAV_RESET_RULES}
+}}
+"""
+
+# Analyze deep-dive: drop header padding, js_eval gaps, and divider lines (desktop only).
+_DESKTOP_ANALYZE_TOP_COMPACT_RULES = """
+    html[data-scoop-analyze-active="1"] [data-testid="stMainBlockContainer"],
+    html[data-scoop-analyze-active="1"] section.main > div,
+    html[data-scoop-analyze-active="1"] [data-testid="stAppViewContainer"] > section.main {
+        padding-top: 0.75rem !important;
+    }
+    html[data-scoop-analyze-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {
+        gap: 0 !important;
+    }
+    html[data-scoop-analyze-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(iframe[src*="streamlit_js_eval"]) {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    html[data-scoop-analyze-active="1"] [data-testid="stMainBlockContainer"] hr:not(.search-52w-range-divider) {
+        display: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        height: 0 !important;
+    }
+"""
+
+DESKTOP_ANALYZE_TOP_COMPACT = f"""
+@media (min-width: 1367px) {{
+{_DESKTOP_ANALYZE_TOP_COMPACT_RULES}
+}}
+html[data-scoop-desktop-layout="1"][data-scoop-analyze-active="1"] {{
+{_DESKTOP_ANALYZE_TOP_COMPACT_RULES}
+}}
+"""
+
+# Market screener landing pages (_Top_10): drop header padding, js_eval gaps, and block spacing.
+_DESKTOP_SCREENER_TOP_COMPACT_RULES = """
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"],
+    html[data-scoop-screener-active="1"] section.main > div,
+    html[data-scoop-screener-active="1"] [data-testid="stAppViewContainer"] > section.main {
+        padding-top: 12px !important;
+    }
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {
+        gap: 0 !important;
+    }
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(iframe[src*="streamlit_js_eval"]) {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] style) {
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 0 !important;
+    }
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] hr:not(.search-52w-range-divider) {
+        display: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        height: 0 !important;
+    }
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] h1 {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.35rem !important;
+    }
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(+ [data-testid="stElementContainer"] h1) {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+"""
+
+DESKTOP_SCREENER_TOP_COMPACT = f"""
+@media (min-width: 1367px) {{
+{_DESKTOP_SCREENER_TOP_COMPACT_RULES}
+}}
+html[data-scoop-desktop-layout="1"][data-scoop-screener-active="1"] {{
+{_DESKTOP_SCREENER_TOP_COMPACT_RULES}
+}}
+"""
+
 TABLET_SEARCH_MOBILE_LAYOUT = (
     """
         .stApp { overflow-x: hidden !important; }

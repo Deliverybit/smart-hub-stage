@@ -347,6 +347,9 @@ def install_theme_support() -> None:
     from tooltip_scroll import install_responsive_layout_bootstrap
 
     install_responsive_layout_bootstrap()
+    from tooltip_scroll import inject_desktop_sidebar_nav_market
+
+    inject_desktop_sidebar_nav_market()
 
 
 def _on_dark_mode_toggle_change() -> None:
