@@ -20,9 +20,9 @@ from screener_selection import (
     MAX_PAD_CAP_PCT,
     MARKET_MOOD_TIP,
     order_full_results_columns,
-    proximity_how_it_works,
+    render_screener_landing_intro,
+    render_screener_last_updated,
     selection_status_message,
-    sentiment_negative_keyword_notice,
 )
 from screener_table import ANALYZE_COLUMN_TIP, analyze_link_html, build_source_ticker_map
 from tooltip_scroll import install_tooltip_scroll_handler
@@ -4550,17 +4550,13 @@ if _cards:
 
 # ── UI ────────────────────────────────────────────────────────────────
 st.title("🛢️ ICE Commodities")
-st.markdown(
-    "Screens **{}** ICE-traded commodity futures and commodity ETFs for "
-    "those trading **closest to their 52-week low** using Alpha Vantage-compatible "
-    "daily market data and ETF proxies where needed. Detailed headline sentiment "
-    "remains available — click **Analyze** on any row for a deeper dive.".format(len(ICE_UNIVERSE))
+render_screener_landing_intro(
+    st,
+    market="ICE",
+    universe_size=len(ICE_UNIVERSE),
+    asset_label="commodity future or ETF",
+    sentiment_profile="commodity",
 )
-
-st.markdown("---")
-
-st.info(proximity_how_it_works("commodity future or ETF"))
-st.markdown(sentiment_negative_keyword_notice("commodity"))
 
 @st.cache_data(ttl=900, show_spinner="Refreshing ICE data…")
 def _run_screen(_cache_version: int = SCREENER_CACHE_VERSION):
@@ -4591,11 +4587,7 @@ else:
     scanned_count = loaded.scanned_count
     selection = loaded.selection
 
-    st.markdown(
-        f'<div style="text-align:right;color:#64748b;font-size:1.1rem;margin-bottom:0.5rem;">'
-        f'Last updated: <b>{last_updated}</b>  ·  Auto-refreshes every 15 min</div>',
-        unsafe_allow_html=True,
-    )
+    render_screener_last_updated(st, last_updated)
 
     if not all_results:
         st.warning(

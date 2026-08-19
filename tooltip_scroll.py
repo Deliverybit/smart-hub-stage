@@ -7,6 +7,8 @@ from admin_tools.tablet_mobile_layout_css import (
     RESPONSIVE_ANALYZE_TOP_COMPACT,
     DESKTOP_SCREENER_TOP_COMPACT,
     RESPONSIVE_SCREENER_TOP_COMPACT,
+    RESPONSIVE_TERMS_TOP_COMPACT,
+    DESKTOP_TERMS_TOP_COMPACT,
     DESKTOP_SIDEBAR_LAYOUT,
     DESKTOP_SIDEBAR_NAV_MARKET,
     DESKTOP_ZOOM_LAYOUT,
@@ -16,6 +18,8 @@ from admin_tools.tablet_mobile_layout_css import (
     RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS,
     RESPONSIVE_SIDEBAR_BOOTSTRAP,
     SIDEBAR_NAV_COMPACT,
+    RESPONSIVE_SIDEBAR_BRAND_TOGGLE_BUFFER,
+    DESKTOP_SIDEBAR_BRAND_TOGGLE_BUFFER,
 )
 
 _MOBILE_HEADLINES_CSS = f"""
@@ -941,7 +945,8 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
             __scoopIsAnalyzePage() &&
             /(?:\\?|&)ticker=/i.test(appWin.location.search || "");
         const screenerActive = __scoopIsScreenerPage();
-        if (isDesktopViewport() && (analyzeActive || screenerActive)) {
+        const termsActive = /Terms_of_Service/i.test(appWin.location.pathname || "");
+        if (isDesktopViewport() && (analyzeActive || screenerActive || termsActive)) {
             targets.forEach((el) => {
                 el.style.setProperty("padding-top", "12px", "important");
             });
@@ -1115,9 +1120,19 @@ _PAGE_NAV_LAYOUT_RESYNC_JS = (
         }
     };
 
+    const syncTermsPageFlag = () => {
+        const root = doc.documentElement;
+        if (/Terms_of_Service/i.test(appWin.location.pathname || "")) {
+            root.setAttribute("data-scoop-terms-active", "1");
+        } else {
+            root.removeAttribute("data-scoop-terms-active");
+        }
+    };
+
     const resync = () => {
         syncAnalyzePageFlag();
         syncScreenerPageFlag();
+        syncTermsPageFlag();
         layout()?.syncSidebarLayout?.();
         syncMarketNavActive();
         resetScroll();
@@ -3395,11 +3410,15 @@ def install_page_layout_resync() -> None:
 
 
 def inject_desktop_sidebar_nav_market() -> None:
-    """Inject desktop market nav containers on every page (sidebar persists across routes)."""
+    """Inject global per-page sidebar CSS (nav containers, top compact, brand spacing)."""
     st.html(
         f"<style id='scoop-desktop-sidebar-nav-market-css'>{DESKTOP_SIDEBAR_NAV_MARKET}</style>"
         f"<style id='scoop-desktop-screener-top-compact-css'>{DESKTOP_SCREENER_TOP_COMPACT}</style>"
-        f"<style id='scoop-responsive-screener-top-compact-css'>{RESPONSIVE_SCREENER_TOP_COMPACT}</style>",
+        f"<style id='scoop-responsive-screener-top-compact-css'>{RESPONSIVE_SCREENER_TOP_COMPACT}</style>"
+        f"<style id='scoop-responsive-terms-top-compact-css'>{RESPONSIVE_TERMS_TOP_COMPACT}</style>"
+        f"<style id='scoop-desktop-terms-top-compact-css'>{DESKTOP_TERMS_TOP_COMPACT}</style>"
+        f"<style id='scoop-responsive-sidebar-brand-toggle-buffer-css'>{RESPONSIVE_SIDEBAR_BRAND_TOGGLE_BUFFER}</style>"
+        f"<style id='scoop-desktop-sidebar-brand-toggle-buffer-css'>{DESKTOP_SIDEBAR_BRAND_TOGGLE_BUFFER}</style>",
         unsafe_allow_javascript=True,
     )
 

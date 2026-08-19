@@ -154,6 +154,231 @@ def sentiment_negative_keyword_notice(profile: str = "stock") -> str:
     )
 
 
+def proximity_how_it_works_compact(asset_label: str = "asset") -> str:
+    """Short mobile/tablet copy for proximity screener info."""
+    return (
+        f"**How it works:** Ranks {asset_label}s nearest the 52-week low; "
+        f"shows up to 10 within **{MAX_PAD_CAP_PCT}%** of the low."
+    )
+
+
+def sentiment_negative_keyword_notice_compact(profile: str = "stock") -> str:
+    """Short mobile/tablet sentiment disclosure (profile kept for API parity)."""
+    _ = profile
+    return (
+        "**Sentiment:** Excludes names with scandal, bankruptcy, or similar red-flag headlines."
+    )
+
+
+def _landing_markdown_html(text: str) -> str:
+    """Convert **bold** markers to HTML for landing intro blocks."""
+    import html
+    import re
+
+    parts: list[str] = []
+    last = 0
+    for match in re.finditer(r"\*\*(.+?)\*\*", text):
+        if match.start() > last:
+            parts.append(html.escape(text[last : match.start()]))
+        parts.append(f"<strong>{html.escape(match.group(1))}</strong>")
+        last = match.end()
+    if last < len(text):
+        parts.append(html.escape(text[last:]))
+    return "".join(parts)
+
+
+_SCREENER_LANDING_SUMMARY_FULL: dict[str, str] = {
+    "NYSE": (
+        "Screens **{n}** major NYSE-listed stocks for those trading **at or near "
+        "their 52-week low** using Alpha Vantage daily market data. "
+        "Headline sentiment is fetched for the final displayed rows."
+    ),
+    "NASDAQ": (
+        "Screens **{n}** major NASDAQ-listed stocks for those trading **at or near "
+        "their 52-week low** using Alpha Vantage daily market data. "
+        "Headline sentiment is fetched for the final displayed rows."
+    ),
+    "CRYPTO": (
+        "Screens **{n}** major cryptocurrencies from **tier-1 exchanges** "
+        "(Coinbase, Binance, Kraken, KuCoin, Gemini) for "
+        "those trading **closest to their 52-week low** using Alpha Vantage daily market data. "
+        "Headline sentiment is fetched for the final displayed rows."
+    ),
+    "CME": (
+        "Screens **{n}** major CME Group futures (COMEX, NYMEX, CBOT, CME) for "
+        "those trading **closest to their 52-week low** using Alpha Vantage-compatible "
+        "daily market data and ETF proxies where needed. Detailed headline sentiment "
+        "remains available — click **Analyze** on any row for a deeper dive."
+    ),
+    "ICE": (
+        "Screens **{n}** ICE-traded commodity futures and commodity ETFs for "
+        "those trading **closest to their 52-week low** using Alpha Vantage-compatible "
+        "daily market data and ETF proxies where needed. Detailed headline sentiment "
+        "remains available — click **Analyze** on any row for a deeper dive."
+    ),
+}
+
+_SCREENER_LANDING_SUMMARY_COMPACT: dict[str, str] = {
+    "NYSE": "**{n}** NYSE stocks near **52-week lows**. Headline sentiment on shown rows.",
+    "NASDAQ": "**{n}** NASDAQ stocks near **52-week lows**. Headline sentiment on shown rows.",
+    "CRYPTO": "**{n}** tier-1 crypto pairs near **52-week lows**. Headline sentiment on shown rows.",
+    "CME": "**{n}** CME futures near **52-week lows**. Tap **Analyze** for deeper sentiment.",
+    "ICE": "**{n}** ICE futures and ETFs near **52-week lows**. Tap **Analyze** for deeper sentiment.",
+}
+
+_SCREENER_LANDING_INTRO_CSS = """
+<style id="scoop-landing-intro-css">
+    .scoop-landing-full { display: none; }
+    .scoop-landing-compact { display: block; }
+    .scoop-landing-summary,
+    .scoop-landing-sentiment {
+        margin: 0 0 0.65rem 0;
+        line-height: 1.55;
+    }
+    .scoop-landing-info {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 0.5rem;
+        padding: 0.85rem 1rem;
+        margin: 0 0 0.65rem 0;
+        line-height: 1.55;
+    }
+    html[data-scoop-theme="dark"] .scoop-landing-info {
+        background: rgba(30, 58, 138, 0.22);
+        border-color: #1e40af;
+        color: #e2e8f0;
+    }
+    .scoop-landing-divider {
+        border: none;
+        border-top: 1px solid rgba(49, 51, 63, 0.2);
+        margin: 0.65rem 0;
+    }
+    html[data-scoop-theme="dark"] .scoop-landing-divider {
+        border-top-color: rgba(148, 163, 184, 0.35);
+    }
+    @media (max-width: 1366px) {
+        .scoop-landing-full { display: none !important; }
+        .scoop-landing-compact { display: block !important; }
+        .scoop-landing-summary,
+        .scoop-landing-sentiment {
+            margin-bottom: 0.8rem;
+            line-height: 1.5;
+        }
+        .scoop-landing-info {
+            padding: 0.75rem 0.85rem;
+            margin-bottom: 0.8rem;
+            line-height: 1.5;
+        }
+        .scoop-landing-divider {
+            margin: 0.6rem 0;
+        }
+        .scoop-landing-compact:last-of-type .scoop-landing-sentiment {
+            margin-bottom: 1rem;
+        }
+        .scoop-screener-last-updated {
+            margin-top: 0.35rem !important;
+            margin-bottom: 0.85rem !important;
+        }
+        html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stAlert"] {
+            margin-top: 0.35rem !important;
+            margin-bottom: 0.85rem !important;
+        }
+    }
+    @media (min-width: 1367px) {
+        .scoop-landing-summary,
+        .scoop-landing-sentiment {
+            margin-bottom: 0.9rem;
+        }
+        .scoop-landing-info {
+            padding: 0.9rem 1.05rem;
+            margin-bottom: 0.9rem;
+        }
+        .scoop-landing-divider {
+            margin: 0.85rem 0;
+        }
+        .scoop-landing-compact:last-of-type .scoop-landing-sentiment {
+            margin-bottom: 1.1rem;
+        }
+        .scoop-screener-last-updated {
+            margin-top: 0.4rem !important;
+            margin-bottom: 0.9rem !important;
+        }
+        html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stAlert"] {
+            margin-top: 0.4rem !important;
+            margin-bottom: 0.9rem !important;
+        }
+    }
+    .scoop-screener-last-updated {
+        text-align: right;
+        color: #64748b;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    html[data-scoop-theme="dark"] .scoop-screener-last-updated {
+        color: #94a3b8;
+    }
+</style>
+"""
+
+
+def screener_landing_summary(market: str, universe_size: int, *, compact: bool = False) -> str:
+    """Return summary copy for a market screener landing page."""
+    templates = _SCREENER_LANDING_SUMMARY_COMPACT if compact else _SCREENER_LANDING_SUMMARY_FULL
+    template = templates.get(market)
+    if template is None:
+        raise ValueError(f"Unknown screener market: {market}")
+    return template.format(n=universe_size)
+
+
+def render_screener_landing_intro(
+    st_module,
+    *,
+    market: str,
+    universe_size: int,
+    asset_label: str,
+    sentiment_profile: str,
+    crypto_affiliate_caption: bool = False,
+) -> None:
+    """Render desktop + mobile/tablet landing copy before the terms gate."""
+    summary_full = screener_landing_summary(market, universe_size, compact=False)
+    summary_compact = screener_landing_summary(market, universe_size, compact=True)
+    how_full = proximity_how_it_works(asset_label)
+    how_compact = proximity_how_it_works_compact(asset_label)
+    sentiment_full = sentiment_negative_keyword_notice(sentiment_profile)
+    sentiment_compact = sentiment_negative_keyword_notice_compact(sentiment_profile)
+
+    affiliate_block = ""
+    if crypto_affiliate_caption:
+        affiliate_block = (
+            '<p class="scoop-landing-affiliate scoop-landing-full">'
+            "Some exchange links may be affiliate links. "
+            'See our <a href="/Terms_of_Service" target="_self">Terms of Service</a> for details.'
+            "</p>"
+        )
+
+    st_module.markdown(
+        _SCREENER_LANDING_INTRO_CSS
+        + f'<div class="scoop-landing-full"><p class="scoop-landing-summary">{_landing_markdown_html(summary_full)}</p></div>'
+        + f'<div class="scoop-landing-compact"><p class="scoop-landing-summary">{_landing_markdown_html(summary_compact)}</p></div>'
+        + affiliate_block
+        + '<hr class="scoop-landing-divider" />'
+        + f'<div class="scoop-landing-full"><div class="scoop-landing-info">{_landing_markdown_html(how_full)}</div></div>'
+        + f'<div class="scoop-landing-compact"><div class="scoop-landing-info">{_landing_markdown_html(how_compact)}</div></div>'
+        + f'<div class="scoop-landing-full"><p class="scoop-landing-sentiment">{_landing_markdown_html(sentiment_full)}</p></div>'
+        + f'<div class="scoop-landing-compact"><p class="scoop-landing-sentiment">{_landing_markdown_html(sentiment_compact)}</p></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def render_screener_last_updated(st_module, last_updated: str) -> None:
+    """Render the screener refresh timestamp row."""
+    st_module.markdown(
+        f'<div class="scoop-screener-last-updated">'
+        f"Last updated: <b>{last_updated}</b>  ·  Auto-refreshes every 15 min</div>",
+        unsafe_allow_html=True,
+    )
+
+
 # Desktop table column order — mirrors mobile card layout (tablet_mobile_layout_css.py).
 _FULL_RESULTS_COLUMN_ORDER = (
     "Company",

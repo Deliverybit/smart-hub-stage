@@ -1602,6 +1602,52 @@ SIDEBAR_NAV_COMPACT = """
     }
 """
 
+# Shared sidebar brand ↔ toggle ↔ first nav link spacing.
+_SIDEBAR_BRAND_TOGGLE_BUFFER_RULES = """
+    html body .stApp [data-testid="stSidebar"] .sidebar-brand {
+        margin-bottom: 0.85rem !important;
+    }
+    html body .stApp [data-testid="stSidebar"] div[data-testid="stCheckbox"] {
+        margin-top: 0.25rem !important;
+        margin-bottom: 0.1rem !important;
+    }
+    html body .stApp [data-testid="stSidebar"] [data-testid="stElementContainer"]:has(hr),
+    html body .stApp [data-testid="stSidebar"] [data-testid="element-container"]:has(hr),
+    html body .stApp [data-testid="stSidebar"] [data-testid="stMarkdownContainer"]:has(hr) {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        min-height: 0 !important;
+    }
+    html body .stApp [data-testid="stSidebar"] hr {
+        margin: 0.1rem 0 !important;
+    }
+    html body .stApp [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+        gap: 0.2rem !important;
+    }
+    html body .stApp [data-testid="stSidebar"] [data-testid="stElementContainer"]:has(hr) + [data-testid="stElementContainer"]:has([data-testid="stPageLink"]),
+    html body .stApp [data-testid="stSidebar"] [data-testid="element-container"]:has(hr) + [data-testid="element-container"]:has([data-testid="stPageLink"]) {
+        margin-top: 0.15rem !important;
+    }
+"""
+
+# Mobile/tablet slide-out: brand ↔ toggle spacing; tighten toggle ↔ first nav link.
+RESPONSIVE_SIDEBAR_BRAND_TOGGLE_BUFFER = f"""
+@media (max-width: 1366px) {{
+{_SIDEBAR_BRAND_TOGGLE_BUFFER_RULES}
+}}
+"""
+
+DESKTOP_SIDEBAR_BRAND_TOGGLE_BUFFER = f"""
+@media (min-width: 1367px) {{
+{_SIDEBAR_BRAND_TOGGLE_BUFFER_RULES}
+}}
+html[data-scoop-desktop-layout="1"] {{
+{_SIDEBAR_BRAND_TOGGLE_BUFFER_RULES}
+}}
+"""
+
 # Desktop-only boxed nav items for market screener pages (not Terms of Service).
 _DESKTOP_MARKET_NAV_GAP = "12px"
 
@@ -1937,7 +1983,7 @@ _DESKTOP_SCREENER_TOP_COMPACT_RULES = """
     }
     html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] h1 {
         margin-top: 0.5rem !important;
-        margin-bottom: 0.35rem !important;
+        margin-bottom: 0.55rem !important;
     }
     html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(+ [data-testid="stElementContainer"] h1) {
         margin-bottom: 0 !important;
@@ -1992,7 +2038,7 @@ _RESPONSIVE_SCREENER_TOP_COMPACT_RULES = """
     }
     html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] h1 {
         margin-top: 0.5rem !important;
-        margin-bottom: 0.35rem !important;
+        margin-bottom: 0.6rem !important;
     }
     html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(+ [data-testid="stElementContainer"] h1),
     html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(+ [data-testid="element-container"] h1) {
@@ -2004,6 +2050,127 @@ _RESPONSIVE_SCREENER_TOP_COMPACT_RULES = """
 RESPONSIVE_SCREENER_TOP_COMPACT = f"""
 @media (max-width: 1366px) {{
 {_RESPONSIVE_SCREENER_TOP_COMPACT_RULES}
+}}
+"""
+
+# Mobile/tablet Terms page: collapse bootstrap gaps before title and divider lines.
+_DESKTOP_TERMS_TOP_COMPACT_RULES = """
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"],
+    html[data-scoop-terms-active="1"] section.main > div,
+    html[data-scoop-terms-active="1"] [data-testid="stAppViewContainer"] > section.main {
+        padding-top: 12px !important;
+    }
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {
+        gap: 0 !important;
+    }
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(iframe[src*="streamlit_js_eval"]),
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(iframe[src*="streamlit_js_eval"]) {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stHtml"]),
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stHtml"]) {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] style),
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stMarkdownContainer"] style) {
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 0 !important;
+    }
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] hr:not(.search-52w-range-divider) {
+        display: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        height: 0 !important;
+    }
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] hr:not(.search-52w-range-divider)),
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stMarkdownContainer"] hr:not(.search-52w-range-divider)) {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] h1 {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.35rem !important;
+    }
+"""
+
+DESKTOP_TERMS_TOP_COMPACT = f"""
+@media (min-width: 1367px) {{
+{_DESKTOP_TERMS_TOP_COMPACT_RULES}
+}}
+html[data-scoop-desktop-layout="1"][data-scoop-terms-active="1"] {{
+{_DESKTOP_TERMS_TOP_COMPACT_RULES}
+}}
+"""
+
+_RESPONSIVE_TERMS_TOP_COMPACT_RULES = """
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {
+        gap: 0 !important;
+    }
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(iframe[src*="streamlit_js_eval"]),
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(iframe[src*="streamlit_js_eval"]) {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stHtml"]),
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stHtml"]) {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] style),
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stMarkdownContainer"] style) {
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 0 !important;
+    }
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] hr:not(.search-52w-range-divider) {
+        display: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        height: 0 !important;
+    }
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] hr:not(.search-52w-range-divider)),
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stMarkdownContainer"] hr:not(.search-52w-range-divider)) {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] h1 {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.35rem !important;
+    }
+"""
+
+RESPONSIVE_TERMS_TOP_COMPACT = f"""
+@media (max-width: 1366px) {{
+{_RESPONSIVE_TERMS_TOP_COMPACT_RULES}
 }}
 """
 

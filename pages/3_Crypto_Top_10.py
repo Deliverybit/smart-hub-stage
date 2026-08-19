@@ -21,9 +21,9 @@ from screener_selection import (
     MAX_PAD_CAP_PCT,
     MARKET_MOOD_TIP,
     order_full_results_columns,
-    proximity_how_it_works,
+    render_screener_landing_intro,
+    render_screener_last_updated,
     selection_status_message,
-    sentiment_negative_keyword_notice,
 )
 from screener_table import ANALYZE_COLUMN_TIP, analyze_link_html, build_source_ticker_map
 from tooltip_scroll import install_tooltip_scroll_handler
@@ -4585,21 +4585,14 @@ if _cards:
 
 # ── UI ────────────────────────────────────────────────────────────────
 st.title("🪙 Crypto")
-st.markdown(
-    "Screens **{}** major cryptocurrencies from **tier-1 exchanges** "
-    "(Coinbase, Binance, Kraken, KuCoin, Gemini) for "
-    "those trading **closest to their 52-week low** using Alpha Vantage daily market data. "
-    "Headline sentiment is fetched for the final displayed rows.".format(len(CRYPTO_UNIVERSE))
+render_screener_landing_intro(
+    st,
+    market="CRYPTO",
+    universe_size=len(CRYPTO_UNIVERSE),
+    asset_label="crypto",
+    sentiment_profile="crypto",
+    crypto_affiliate_caption=True,
 )
-st.caption(
-    "Some exchange links may be affiliate links. "
-    "See our [Terms of Service](/Terms_of_Service) for details."
-)
-
-st.markdown("---")
-
-st.info(proximity_how_it_works("crypto"))
-st.markdown(sentiment_negative_keyword_notice("crypto"))
 
 @st.cache_data(ttl=900, show_spinner="Refreshing Crypto data…")
 def _run_screen(_cache_version: int = SCREENER_CACHE_VERSION):
@@ -4630,11 +4623,7 @@ else:
     scanned_count = loaded.scanned_count
     selection = loaded.selection
 
-    st.markdown(
-        f'<div style="text-align:right;color:#64748b;font-size:1.1rem;margin-bottom:0.5rem;">'
-        f'Last updated: <b>{last_updated}</b>  ·  Auto-refreshes every 15 min</div>',
-        unsafe_allow_html=True,
-    )
+    render_screener_last_updated(st, last_updated)
 
     if not all_results:
         st.warning(
