@@ -4,7 +4,9 @@ import streamlit as st
 
 from admin_tools.tablet_mobile_layout_css import (
     DESKTOP_ANALYZE_TOP_COMPACT,
+    RESPONSIVE_ANALYZE_TOP_COMPACT,
     DESKTOP_SCREENER_TOP_COMPACT,
+    RESPONSIVE_SCREENER_TOP_COMPACT,
     DESKTOP_SIDEBAR_LAYOUT,
     DESKTOP_SIDEBAR_NAV_MARKET,
     DESKTOP_ZOOM_LAYOUT,
@@ -1067,32 +1069,29 @@ _PAGE_NAV_LAYOUT_RESYNC_JS = (
     };
 
     const syncMarketNavActive = () => {
-        const boxes = doc.querySelectorAll(
-            '[data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]'
-        );
-        if (!layout()?.isDesktopViewport?.()) {
-            boxes.forEach((box) => box.removeAttribute("data-scoop-nav-active"));
+        const isDesktop = layout()?.isDesktopViewport?.();
+        const isResponsive = layout()?.isResponsiveViewport?.();
+        if (!isDesktop && !isResponsive) {
             return;
         }
+        const navSelector = isDesktop
+            ? '[data-testid="stSidebar"] [data-testid="stPageLink"] a[href$="_Top_10"]'
+            : '[data-testid="stSidebar"] [data-testid="stPageLink"] a';
         const normalize = (value) => (value || "").replace(/^\\/+|\\/+$/g, "").toLowerCase();
         const current = normalize(location.pathname);
-        doc
-            .querySelectorAll(
-                '[data-testid="stSidebar"] [data-testid="stPageLink"] a[href$="_Top_10"]'
-            )
-            .forEach((a) => {
-                const box = a.closest('[data-testid="stPageLink"]');
-                if (!box) {
-                    return;
-                }
-                const href = normalize(a.getAttribute("href") || "");
-                const active = Boolean(href) && (current === href || current.endsWith("/" + href));
-                if (active) {
-                    box.setAttribute("data-scoop-nav-active", "");
-                } else {
-                    box.removeAttribute("data-scoop-nav-active");
-                }
-            });
+        doc.querySelectorAll(navSelector).forEach((a) => {
+            const box = a.closest('[data-testid="stPageLink"]');
+            if (!box) {
+                return;
+            }
+            const href = normalize(a.getAttribute("href") || "");
+            const active = Boolean(href) && (current === href || current.endsWith("/" + href));
+            if (active) {
+                box.setAttribute("data-scoop-nav-active", "");
+            } else {
+                box.removeAttribute("data-scoop-nav-active");
+            }
+        });
     };
 
     const syncAnalyzePageFlag = () => {
@@ -3399,7 +3398,8 @@ def inject_desktop_sidebar_nav_market() -> None:
     """Inject desktop market nav containers on every page (sidebar persists across routes)."""
     st.html(
         f"<style id='scoop-desktop-sidebar-nav-market-css'>{DESKTOP_SIDEBAR_NAV_MARKET}</style>"
-        f"<style id='scoop-desktop-screener-top-compact-css'>{DESKTOP_SCREENER_TOP_COMPACT}</style>",
+        f"<style id='scoop-desktop-screener-top-compact-css'>{DESKTOP_SCREENER_TOP_COMPACT}</style>"
+        f"<style id='scoop-responsive-screener-top-compact-css'>{RESPONSIVE_SCREENER_TOP_COMPACT}</style>",
         unsafe_allow_javascript=True,
     )
 
@@ -3408,6 +3408,7 @@ def inject_desktop_analyze_top_compact() -> None:
     """Tighten Analyze deep-dive top spacing on desktop (padding, js_eval gaps, hr lines)."""
     st.html(
         f"<style id='scoop-desktop-analyze-top-compact-css'>{DESKTOP_ANALYZE_TOP_COMPACT}</style>"
+        f"<style id='scoop-responsive-analyze-top-compact-css'>{RESPONSIVE_ANALYZE_TOP_COMPACT}</style>"
         + '<script>document.documentElement.setAttribute("data-scoop-analyze-active","1");</script>',
         unsafe_allow_javascript=True,
     )

@@ -19,7 +19,7 @@ def test_market_nav_css_scoped_to_desktop() -> None:
     assert "@media (min-width: 1367px)" in css
     assert 'html[data-scoop-desktop-layout="1"]' in css
     assert "@media (max-width: 1366px)" in css
-    assert "background: transparent !important" in css
+    assert "background: #ffffff !important" in css
 
 
 def test_dark_mode_css_does_not_style_market_nav_globally() -> None:

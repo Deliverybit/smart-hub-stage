@@ -1689,22 +1689,108 @@ _DESKTOP_MARKET_NAV_DARK_RULES = """
     }
 """
 
-# Beat desktop nav containers on phones/tablets (≤1366px) even if dark-mode rules load later.
-_RESPONSIVE_MARKET_NAV_RESET_RULES = """
-    [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) {
-        border: none !important;
-        border-radius: 0 !important;
-        background: transparent !important;
-        padding: 0 !important;
+# Mobile/tablet slide-out: boxed nav items for all sidebar page links (light + dark active state).
+_RESPONSIVE_MARKET_NAV_GAP = "10px"
+
+_RESPONSIVE_MARKET_NAV_SPACING_RULES = f"""
+    [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {{
+        gap: 0 !important;
+    }}
+    [data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stPageLink"]),
+    [data-testid="stSidebar"] [data-testid="element-container"]:has([data-testid="stPageLink"]) {{
         margin: 0 !important;
-        box-shadow: none !important;
+        padding: 0 !important;
+    }}
+    [data-testid="stSidebar"] [data-testid="stPageLink"] {{
+        margin: 0 !important;
+    }}
+    [data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stPageLink"]) + [data-testid="stElementContainer"]:has([data-testid="stPageLink"]),
+    [data-testid="stSidebar"] [data-testid="element-container"]:has([data-testid="stPageLink"]) + [data-testid="stElementContainer"]:has([data-testid="stPageLink"]),
+    [data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stPageLink"]) + [data-testid="stElementContainer"]:has([data-testid="stPageLink"]),
+    [data-testid="stSidebar"] [data-testid="element-container"]:has([data-testid="stPageLink"]) + [data-testid="stElementContainer"]:has([data-testid="stPageLink"]) {{
+        margin-top: {_RESPONSIVE_MARKET_NAV_GAP} !important;
+    }}
+"""
+
+_RESPONSIVE_MARKET_NAV_LIGHT_RULES = """
+    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"] {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 0.75rem !important;
+        background: #ffffff !important;
+        padding: 0.2rem 0.4rem !important;
+        box-sizing: border-box !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease !important;
     }
-    [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) a {
-        display: revert !important;
-        width: revert !important;
-        border-radius: revert !important;
-        padding: revert !important;
-        box-sizing: revert !important;
+    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:hover {
+        border-color: #94a3b8 !important;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1) !important;
+    }
+    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"] a {
+        display: block !important;
+        width: 100% !important;
+        border-radius: 0.55rem !important;
+        padding: 0.55rem 0.75rem !important;
+        box-sizing: border-box !important;
+    }
+    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active] {
+        background: #dbeafe !important;
+        border-color: #60a5fa !important;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.18) !important;
+    }
+    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active] a {
+        background-color: rgba(96, 165, 250, 0.14) !important;
+        color: #1e40af !important;
+        font-weight: 600 !important;
+    }
+"""
+
+_RESPONSIVE_MARKET_NAV_DARK_RULES = """
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"] {
+        border: 1px solid #404040 !important;
+        border-radius: 0.75rem !important;
+        background: #000000 !important;
+        padding: 0.2rem 0.4rem !important;
+        box-sizing: border-box !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35) !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease !important;
+    }
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:hover {
+        border-color: #666666 !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45) !important;
+    }
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"] a {
+        display: block !important;
+        width: 100% !important;
+        border-radius: 0.55rem !important;
+        padding: 0.55rem 0.75rem !important;
+        box-sizing: border-box !important;
+        color: #ffffff !important;
+        background-color: transparent !important;
+    }
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"] span,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"] div,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"] p,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"] a:visited,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"] a:hover,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"] a:active {
+        color: #ffffff !important;
+        background-color: transparent !important;
+    }
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active] {
+        background: #333333 !important;
+        border-color: #60a5fa !important;
+        box-shadow: 0 2px 8px rgba(96, 165, 250, 0.25) !important;
+    }
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active] a {
+        background-color: rgba(96, 165, 250, 0.18) !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+    }
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active] span,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active] p {
+        color: #ffffff !important;
+        font-weight: 600 !important;
     }
 """
 
@@ -1720,7 +1806,9 @@ html[data-scoop-desktop-layout="1"] {{
 {_DESKTOP_MARKET_NAV_DARK_RULES}
 }}
 @media (max-width: 1366px) {{
-{_RESPONSIVE_MARKET_NAV_RESET_RULES}
+{_RESPONSIVE_MARKET_NAV_SPACING_RULES}
+{_RESPONSIVE_MARKET_NAV_LIGHT_RULES}
+{_RESPONSIVE_MARKET_NAV_DARK_RULES}
 }}
 """
 
@@ -1757,6 +1845,63 @@ DESKTOP_ANALYZE_TOP_COMPACT = f"""
 }}
 html[data-scoop-desktop-layout="1"][data-scoop-analyze-active="1"] {{
 {_DESKTOP_ANALYZE_TOP_COMPACT_RULES}
+}}
+"""
+
+# Mobile/tablet Analyze deep-dive: collapse bootstrap gaps, js_eval, and stray divider lines.
+_RESPONSIVE_ANALYZE_TOP_COMPACT_RULES = """
+    html[data-scoop-analyze-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {
+        gap: 0 !important;
+    }
+    html[data-scoop-analyze-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(iframe[src*="streamlit_js_eval"]),
+    html[data-scoop-analyze-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(iframe[src*="streamlit_js_eval"]) {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    html[data-scoop-analyze-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stHtml"]),
+    html[data-scoop-analyze-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stHtml"]) {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    html[data-scoop-analyze-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] style),
+    html[data-scoop-analyze-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stMarkdownContainer"] style) {
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 0 !important;
+    }
+    html[data-scoop-analyze-active="1"] [data-testid="stMainBlockContainer"] hr:not(.search-52w-range-divider) {
+        display: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        height: 0 !important;
+    }
+    html[data-scoop-analyze-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] hr:not(.search-52w-range-divider)),
+    html[data-scoop-analyze-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stMarkdownContainer"] hr:not(.search-52w-range-divider)) {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    html[data-scoop-analyze-active="1"] [data-testid="stMainBlockContainer"] h1 {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.35rem !important;
+    }
+"""
+
+RESPONSIVE_ANALYZE_TOP_COMPACT = f"""
+@media (max-width: 1366px) {{
+{_RESPONSIVE_ANALYZE_TOP_COMPACT_RULES}
 }}
 """
 
@@ -1806,6 +1951,59 @@ DESKTOP_SCREENER_TOP_COMPACT = f"""
 }}
 html[data-scoop-desktop-layout="1"][data-scoop-screener-active="1"] {{
 {_DESKTOP_SCREENER_TOP_COMPACT_RULES}
+}}
+"""
+
+# Mobile/tablet screener landing pages: collapse bootstrap gaps (js_eval, stHtml, page CSS).
+_RESPONSIVE_SCREENER_TOP_COMPACT_RULES = """
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {
+        gap: 0 !important;
+    }
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(iframe[src*="streamlit_js_eval"]),
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(iframe[src*="streamlit_js_eval"]) {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stHtml"]),
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stHtml"]) {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] style),
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stMarkdownContainer"] style) {
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 0 !important;
+    }
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] hr:not(.search-52w-range-divider) {
+        display: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        height: 0 !important;
+    }
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] h1 {
+        margin-top: 0.5rem !important;
+        margin-bottom: 0.35rem !important;
+    }
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(+ [data-testid="stElementContainer"] h1),
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(+ [data-testid="element-container"] h1) {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }
+"""
+
+RESPONSIVE_SCREENER_TOP_COMPACT = f"""
+@media (max-width: 1366px) {{
+{_RESPONSIVE_SCREENER_TOP_COMPACT_RULES}
 }}
 """
 
