@@ -1,5 +1,7 @@
 """Color-only dark mode overrides (layout/s sizing unchanged)."""
 
+from admin_tools.tablet_mobile_layout_css import DARK_RESPONSIVE_NAME_VALUE_TIP_UNDERLINE_CSS
+
 DARK_MODE_CSS = """
 html[data-scoop-theme="dark"],
 html[data-scoop-theme="dark"] body {
@@ -359,4 +361,4 @@ html[data-scoop-theme="dark"] .landing-card {
 html[data-scoop-theme="dark"] .landing-card p {
     color: #cbd5e1 !important;
 }
-"""
+""" + DARK_RESPONSIVE_NAME_VALUE_TIP_UNDERLINE_CSS

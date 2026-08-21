@@ -11,7 +11,6 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from admin_tools.tablet_mobile_layout_css import (  # noqa: E402
-    NAME_VALUE_TOOLTIP_PAGE_MARKER,
     NAME_VALUE_TOOLTIP_PAGE_SNIPPET,
     RESPONSIVE_GENERIC_TOOLTIP_LAYOUT,
     RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS,
@@ -40,38 +39,94 @@ def test_mobile_tooltip_css_uses_desktop_hover_layout() -> None:
     assert "display: block !important" in css
 
 
-def test_name_value_tooltips_open_below_on_mobile_tablet() -> None:
+def test_name_value_tooltips_use_standard_popup_layout() -> None:
     css = RESPONSIVE_GENERIC_TOOLTIP_LAYOUT
-    assert 'td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip)' in css
-    assert 'td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip)' in css
-    assert "top: 100% !important" in css
-    assert "left: 0 !important" in css
-    assert "right: 0 !important" in css
-    assert "position: static !important" in css
+    assert ".fr-val .tip-wrap:not(.headlines-tip) .tip-text" in css
+    assert "position: relative !important" in css
+    assert "bottom: calc(100% + 12px)" in css
+    assert "margin-top: 12px !important" not in css
+    assert "position: static !important" not in css
     assert ":focus-within" in css
+    # Company tips inherit generic fr-val rules — no duplicate name-only popup block.
+    assert css.count('td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip),') == 0
 
 
 def test_name_tooltip_override_css_and_page_snippet() -> None:
-    assert "scoop-name-tip-active" in RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS
-    assert "left: 0 !important" in RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS
-    assert NAME_VALUE_TOOLTIP_PAGE_MARKER in NAME_VALUE_TOOLTIP_PAGE_SNIPPET
-    assert 'td[data-label="Company"]' in NAME_VALUE_TOOLTIP_PAGE_SNIPPET
+    css = RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS
+    assert "scoop-name-tip-active" not in css
+    assert "margin-top: 12px !important" not in css
+    assert "@media (max-width: 768px)" in css
+    assert "@media (max-width: 375px)" in css
+    assert "@media (min-width: 376px) and (max-width: 768px)" in css
+    assert "position: fixed !important" in css
+    assert "--scoop-mobile-tip-top" in css
+    assert "translateX(-50%)" in css
+    assert ".tip-wrap:not(.headlines-tip) .tip-text" in css
+    assert "background: #1e1e2f !important" in css
+    assert "opacity: 1 !important" not in css
+    assert NAME_VALUE_TOOLTIP_PAGE_SNIPPET == ""
+
+
+def test_tablet_tooltip_layout_unchanged() -> None:
+    css = RESPONSIVE_GENERIC_TOOLTIP_LAYOUT
+    assert "position: absolute !important" in css
+    assert "bottom: calc(100% + 12px)" in css
+    assert "position: fixed !important" not in css
+
+
+def test_name_value_tip_selectors_include_tip_text_for_each_label() -> None:
+    from admin_tools.tablet_mobile_layout_css import _name_value_tip_selectors
+
+    scoped = _name_value_tip_selectors(
+        'body .stApp [data-testid="stAppViewContainer"] .stMarkdown', " .tip-text"
+    )
+    assert scoped.count(".tip-text") == 3
+    assert 'td[data-label="Company"]' in scoped
+    assert 'td[data-label="Name"]' in scoped
+    assert 'td[data-label="Commodity"]' in scoped
+    assert (
+        'td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip), '
+        'body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap'
+        not in scoped
+    )
 
 
 def test_mobile_tooltip_js_clears_legacy_fixed_positioning() -> None:
     js = _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS
-    assert "__scoopGenericTooltipBindVersion === 6" in js or "VERSION = 6" in js
-    assert "positionNameTipInViewport" in js
-    assert "bindNameValueTips" in js
-    assert "scoop-name-tip-active" in js
+    assert "__scoopGenericTooltipBindVersion === 7" in js or "VERSION = 7" in js
+    assert "positionNameTipInViewport" not in js
+    assert "bindNameValueTips" not in js
     assert "removeProperty" in js
     assert "generic-tip-open" in js
     assert "handleGenericTooltipOver" not in js
 
 
+def test_dark_name_value_underline_beats_page_css() -> None:
+    from admin_tools.dark_mode_css import DARK_MODE_CSS
+    from admin_tools.tablet_mobile_layout_css import DARK_RESPONSIVE_NAME_VALUE_TIP_UNDERLINE_CSS
+
+    assert DARK_RESPONSIVE_NAME_VALUE_TIP_UNDERLINE_CSS.strip() in DARK_MODE_CSS
+    assert 'td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip)' in DARK_MODE_CSS
+    assert "border-bottom: 2px dashed #ffffff !important" in DARK_MODE_CSS
+    assert '[data-testid="stAppViewContainer"]' in DARK_MODE_CSS
+    assert "@media (max-width: 1366px)" in DARK_MODE_CSS
+
+
+def test_mobile_generic_tip_positioning_js() -> None:
+    js = _TOOLTIP_SCROLL_JS
+    assert "MOBILE_GENERIC_TIP_MAX = 768" in js
+    assert "IPHONE_SE_MAX = 375" in js
+    assert "isOtherMobileViewport" in js
+    assert "positionMobileGenericTip" in js
+    assert "applyIphoneSEHorizontalCenter" in js
+    assert "applyOtherMobileHorizontalCenter" in js
+    assert "--scoop-mobile-tip-top" in js
+    assert "bindMobileGenericTips" in js
+
+
 def test_version_bumps_for_asset_refresh() -> None:
-    assert GENERIC_TOOLTIP_CSS_VERSION >= 7
-    assert TOOLTIP_SCRIPT_VERSION >= 12
+    assert GENERIC_TOOLTIP_CSS_VERSION >= 16
+    assert TOOLTIP_SCRIPT_VERSION >= 27
 
 
 def test_ipad_mini_headlines_use_tablet_pro_popup() -> None:
@@ -102,8 +157,12 @@ def test_phone_mobile_headlines_top_panel() -> None:
 def main() -> int:
     tests = [
         test_mobile_tooltip_css_uses_desktop_hover_layout,
-        test_name_value_tooltips_open_below_on_mobile_tablet,
+        test_name_value_tooltips_use_standard_popup_layout,
         test_name_tooltip_override_css_and_page_snippet,
+        test_tablet_tooltip_layout_unchanged,
+        test_name_value_tip_selectors_include_tip_text_for_each_label,
+        test_mobile_generic_tip_positioning_js,
+        test_dark_name_value_underline_beats_page_css,
         test_mobile_tooltip_js_clears_legacy_fixed_positioning,
         test_ipad_mini_headlines_use_tablet_pro_popup,
         test_phone_mobile_headlines_top_panel,

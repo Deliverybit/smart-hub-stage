@@ -305,11 +305,11 @@ MOBILE_CARD_FIELD_ORDER = """
 """
 
 # Mobile/tablet: generic info tooltips mirror desktop (above trigger, CSS :hover only).
-# Name/Company/Commodity values sit at the top of each card — their tips open below
-# the trigger so they are not clipped by the card's overflow:hidden.
+# Company/name/commodity values use the same popup positioning as other field tooltips.
 _RESPONSIVE_TIP_SCOPE = (
     "html body .stApp [data-testid=\"stAppViewContainer\"] .stMarkdown"
 )
+_NAME_VALUE_LABELS = ("Company", "Name", "Commodity")
 _NAME_VALUE_TIP_SELECTOR = (
     ".full-results-wrap .full-results-table tbody "
     'td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip), '
@@ -318,51 +318,24 @@ _NAME_VALUE_TIP_SELECTOR = (
     ".full-results-wrap .full-results-table tbody "
     'td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip)'
 )
+
+
+def _name_value_tip_selectors(scope: str, suffix: str = "") -> str:
+    """Build comma-separated selectors; each label gets its own full path + suffix."""
+    parts = []
+    for label in _NAME_VALUE_LABELS:
+        parts.append(
+            f'{scope} .full-results-wrap .full-results-table tbody '
+            f'td[data-label="{label}"] .fr-val .tip-wrap:not(.headlines-tip){suffix}'
+        )
+    return ",\n        ".join(parts)
+
+
 _GENERIC_TIP_ACTIVE = (
     ".tip-wrap:not(.headlines-tip):hover, "
     ".tip-wrap:not(.headlines-tip):active, "
     ".tip-wrap:not(.headlines-tip):focus-within"
 )
-_NAME_TIP_CELL_SELECTOR = (
-    '.full-results-wrap .full-results-table tbody td[data-label="Company"], '
-    '.full-results-wrap .full-results-table tbody td[data-label="Name"], '
-    '.full-results-wrap .full-results-table tbody td[data-label="Commodity"]'
-)
-_NAME_TIP_TEXT_LAYOUT = """
-            top: 100% !important;
-            bottom: auto !important;
-            left: 0 !important;
-            right: 0 !important;
-            transform: none !important;
-            width: auto !important;
-            min-width: 0 !important;
-            max-width: none !important;
-            margin-top: 12px !important;
-            box-sizing: border-box !important;
-"""
-_NAME_TIP_TEXT_RULES = f"""
-        {_RESPONSIVE_TIP_SCOPE} {_NAME_TIP_CELL_SELECTOR} {{
-            position: relative !important;
-        }}
-        {_RESPONSIVE_TIP_SCOPE} {_NAME_VALUE_TIP_SELECTOR} {{
-            position: static !important;
-        }}
-        {_RESPONSIVE_TIP_SCOPE} {_NAME_VALUE_TIP_SELECTOR} .tip-text {{
-{_NAME_TIP_TEXT_LAYOUT}
-        }}
-        {_RESPONSIVE_TIP_SCOPE} {_NAME_VALUE_TIP_SELECTOR} .tip-text::before {{
-            top: -14px !important;
-            bottom: auto !important;
-        }}
-        {_RESPONSIVE_TIP_SCOPE} {_NAME_VALUE_TIP_SELECTOR} .tip-text::after {{
-            top: auto !important;
-            bottom: 100% !important;
-            left: auto !important;
-            right: 0.75rem !important;
-            transform: none !important;
-            border-color: transparent transparent #1e1e2f transparent !important;
-        }}
-"""
 RESPONSIVE_GENERIC_TOOLTIP_LAYOUT = f"""
         {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) {{
             position: relative !important;
@@ -437,7 +410,6 @@ RESPONSIVE_GENERIC_TOOLTIP_LAYOUT = f"""
             visibility: visible !important;
             opacity: 1 !important;
         }}
-{_NAME_TIP_TEXT_RULES}
         .stMarkdown .full-results-wrap .full-results-table tbody tr:has({_GENERIC_TIP_ACTIVE}) {{
             overflow: visible !important;
             position: relative !important;
@@ -454,94 +426,107 @@ RESPONSIVE_GENERIC_TOOLTIP_LAYOUT = f"""
         [data-testid="stMarkdownContainer"]:has({_GENERIC_TIP_ACTIVE}) {{
             overflow: visible !important;
         }}
-        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active {{
-            overflow: visible !important;
-            position: relative !important;
-            z-index: 100003 !important;
-        }}
-        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active td {{
-            overflow: visible !important;
-            position: relative !important;
-            z-index: 100004 !important;
-        }}
-        .stMarkdown .full-results-wrap:has(tr.scoop-name-tip-active) {{
-            overflow: visible !important;
-        }}
-        [data-testid="stMarkdownContainer"]:has(tr.scoop-name-tip-active) {{
-            overflow: visible !important;
-        }}
-"""
-
-# Inserted into page @media blocks (mobile + tablet) — beats inline "appear above" fr-val rules.
-NAME_VALUE_TOOLTIP_PAGE_SNIPPET = f"""
-        /* Name/Company/Commodity: tooltip below value (full card width, no horizontal clip). */
-        .stMarkdown {_NAME_TIP_CELL_SELECTOR} {{
-            position: relative !important;
-        }}
-        .stMarkdown {_NAME_VALUE_TIP_SELECTOR} {{
-            position: static !important;
-        }}
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text {{
-{_NAME_TIP_TEXT_LAYOUT}
-        }}
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::before,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::before,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::before {{
-            top: -14px !important;
-            bottom: auto !important;
-        }}
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::after,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::after,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::after {{
-            top: auto !important;
-            bottom: 100% !important;
-            left: auto !important;
-            right: 0.75rem !important;
-            transform: none !important;
-            border-color: transparent transparent #1e1e2f transparent !important;
-        }}
-        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active {{
-            overflow: visible !important;
-            position: relative !important;
-            z-index: 100003 !important;
-        }}
-        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active td {{
-            overflow: visible !important;
-            position: relative !important;
-            z-index: 100004 !important;
-        }}
-        .stMarkdown .full-results-wrap:has(tr.scoop-name-tip-active) {{
-            overflow: visible !important;
-        }}
 """
 
 NAME_VALUE_TOOLTIP_PAGE_MARKER = (
-    "/* Name/Company/Commodity: tooltip below value (full card width, no horizontal clip). */"
+    "/* Name/Company/Commodity: same above-trigger popup as other mobile/tablet tooltips. */"
 )
+NAME_VALUE_TOOLTIP_PAGE_SNIPPET = ""
 
-RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS = f"""
+# Dark mobile/tablet: company/name/commodity popup + underline beat stale page CSS.
+_DARK_RESPONSIVE_TIP_SCOPE = (
+    'body .stApp [data-testid="stAppViewContainer"] .stMarkdown'
+)
+DARK_RESPONSIVE_NAME_VALUE_TIP_UNDERLINE_CSS = f"""
 @media (max-width: 1366px) {{
-{_NAME_TIP_TEXT_RULES}
-        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active {{
-            overflow: visible !important;
-            position: relative !important;
-            z-index: 100003 !important;
-        }}
-        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active td {{
-            overflow: visible !important;
-            position: relative !important;
-            z-index: 100004 !important;
-        }}
-        .stMarkdown .full-results-wrap:has(tr.scoop-name-tip-active) {{
-            overflow: visible !important;
-        }}
-        [data-testid="stMarkdownContainer"]:has(tr.scoop-name-tip-active) {{
-            overflow: visible !important;
-        }}
+html[data-scoop-theme="dark"] {_DARK_RESPONSIVE_TIP_SCOPE} {_NAME_VALUE_TIP_SELECTOR} {{
+    border-bottom: 2px dashed #ffffff !important;
+}}
+html[data-scoop-theme="dark"] {_name_value_tip_selectors(_DARK_RESPONSIVE_TIP_SCOPE, " .tip-text")} {{
+    background: #0f172a !important;
+    background-color: #0f172a !important;
+    color: #e5e7eb !important;
+    border: 2px solid #ffffff !important;
+}}
+html[data-scoop-theme="dark"] {_name_value_tip_selectors(_DARK_RESPONSIVE_TIP_SCOPE, " .tip-text::after")} {{
+    border-color: #0f172a transparent transparent transparent !important;
+}}
 }}
 """
+
+# Phone mobile (≤768px): viewport-centered popup above tap/hover for all generic tooltips.
+_MOBILE_FIXED_GENERIC_TIP_TEXT = f"""
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text {{
+            position: fixed !important;
+            left: 50% !important;
+            right: auto !important;
+            bottom: auto !important;
+            transform: translateX(-50%) !important;
+            top: var(--scoop-mobile-tip-top, -10000px) !important;
+            width: min(18rem, calc(100vw - 2rem)) !important;
+            min-width: 0 !important;
+            max-width: min(18rem, calc(100vw - 2rem)) !important;
+            margin: 0 !important;
+            z-index: 100002 !important;
+            background: #1e1e2f !important;
+            background-color: #1e1e2f !important;
+            color: #e2e8f0 !important;
+            border: 1px solid #555 !important;
+            border-radius: 8px !important;
+            padding: 16px 20px !important;
+            font-size: 0.95rem !important;
+            line-height: 1.5 !important;
+            font-weight: 400 !important;
+            white-space: normal !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
+            pointer-events: auto !important;
+            max-height: min(72vh, 28rem) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            box-sizing: border-box !important;
+            word-break: break-word !important;
+            overflow-wrap: anywhere !important;
+            text-align: left !important;
+        }}
+"""
+
+# iPhone SE (≤375px): reinforce viewport centering — measureMobileGenericTipHeight must
+# not set inline left on this width (Safari can keep it and shift the popup off-screen).
+_IPHONE_SE_FIXED_GENERIC_TIP_TEXT = f"""
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text {{
+            position: fixed !important;
+            left: 50% !important;
+            right: auto !important;
+            transform: translateX(-50%) !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }}
+"""
+
+# Other mobile (376px–768px): same viewport centering reinforcement as iPhone SE.
+_OTHER_MOBILE_FIXED_GENERIC_TIP_TEXT = f"""
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text {{
+            position: fixed !important;
+            left: 50% !important;
+            right: auto !important;
+            transform: translateX(-50%) !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }}
+"""
+
+RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS = f"""
+@media (max-width: 768px) {{
+{_MOBILE_FIXED_GENERIC_TIP_TEXT}
+}}
+@media (max-width: 375px) {{
+{_IPHONE_SE_FIXED_GENERIC_TIP_TEXT}
+}}
+@media (min-width: 376px) and (max-width: 768px) {{
+{_OTHER_MOBILE_FIXED_GENERIC_TIP_TEXT}
+}}
+""" + DARK_RESPONSIVE_NAME_VALUE_TIP_UNDERLINE_CSS
 
 # Shared mobile card layout for screener Full Results + Top Picks + tooltips/headlines.
 TABLET_SCREENER_MOBILE_LAYOUT = (

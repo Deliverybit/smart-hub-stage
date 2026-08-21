@@ -15,6 +15,7 @@ from admin_tools.tablet_mobile_layout_css import (
     DESKTOP_ZOOM_LAYOUT,
     MOBILE_CARD_FIELD_ORDER,
     MOBILE_HEADLINES_CARD_OVERLAY,
+    DARK_RESPONSIVE_NAME_VALUE_TIP_UNDERLINE_CSS,
     RESPONSIVE_GENERIC_TOOLTIP_LAYOUT,
     RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS,
     RESPONSIVE_SIDEBAR_BOOTSTRAP,
@@ -138,98 +139,11 @@ _RESPONSIVE_GENERIC_TOOLTIP_CSS = f"""
 
 _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
 (() => {
-    const VERSION = 6;
+    const VERSION = 7;
     if (window.__scoopGenericTooltipBindVersion === VERSION) {
         return;
     }
     window.__scoopGenericTooltipBindVersion = VERSION;
-
-    const NAME_TIP_SELECTOR =
-        'td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip), ' +
-        'td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip), ' +
-        'td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip)';
-
-    const isResponsiveViewport = () => (window.innerWidth || 0) < 1367;
-
-    const positionNameTipInViewport = (wrap, tip) => {
-        const margin = 16;
-        const vw = window.innerWidth || document.documentElement.clientWidth || 320;
-        const vh = window.innerHeight || document.documentElement.clientHeight || 640;
-        const maxWidth = Math.max(200, vw - margin * 2);
-        const wrapRect = wrap.getBoundingClientRect();
-
-        tip.style.setProperty("position", "fixed", "important");
-        tip.style.setProperty("width", `${maxWidth}px`, "important");
-        tip.style.setProperty("max-width", `${maxWidth}px`, "important");
-        tip.style.setProperty("min-width", "0", "important");
-        tip.style.setProperty("left", `${margin}px`, "important");
-        tip.style.setProperty("right", "auto", "important");
-        tip.style.setProperty("transform", "none", "important");
-        tip.style.setProperty("box-sizing", "border-box", "important");
-        tip.style.setProperty("visibility", "hidden", "important");
-        tip.style.setProperty("opacity", "1", "important");
-
-        let top = wrapRect.bottom + 12;
-        tip.style.setProperty("top", `${top}px`, "important");
-        tip.style.setProperty("bottom", "auto", "important");
-
-        let tipRect = tip.getBoundingClientRect();
-        if (tipRect.bottom > vh - margin) {
-            top = wrapRect.top - tipRect.height - 12;
-            if (top < margin) {
-                top = margin;
-                tip.style.setProperty("max-height", `${vh - margin * 2}px`, "important");
-                tip.style.setProperty("overflow-y", "auto", "important");
-            }
-            tip.style.setProperty("top", `${top}px`, "important");
-        }
-
-        tip.style.setProperty("visibility", "visible", "important");
-    };
-
-    const clearNameTipInlineStyles = (tip) => {
-        [
-            "position",
-            "top",
-            "bottom",
-            "left",
-            "right",
-            "transform",
-            "width",
-            "max-width",
-            "min-width",
-            "max-height",
-            "overflow-y",
-            "visibility",
-        ].forEach((prop) => tip.style.removeProperty(prop));
-    };
-
-    const activateNameTip = (wrap) => {
-        if (!isResponsiveViewport()) {
-            return;
-        }
-        const tip = wrap.querySelector(":scope > .tip-text");
-        const row = wrap.closest("tr");
-        if (row) {
-            row.classList.add("scoop-name-tip-active");
-        }
-        if (!tip) {
-            return;
-        }
-        positionNameTipInViewport(wrap, tip);
-    };
-
-    const deactivateNameTip = (wrap) => {
-        const tip = wrap.querySelector(":scope > .tip-text");
-        const row = wrap.closest("tr");
-        if (row) {
-            row.classList.remove("scoop-name-tip-active");
-        }
-        if (!tip) {
-            return;
-        }
-        clearNameTipInlineStyles(tip);
-    };
 
     const resetGenericTooltips = () => {
         document.querySelectorAll(".tip-wrap:not(.headlines-tip)").forEach((wrap) => {
@@ -247,52 +161,36 @@ _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
                 "transform",
                 "width",
                 "max-width",
+                "min-width",
                 "max-height",
+                "overflow-y",
+                "visibility",
                 "--tip-center-x",
                 "--tip-center-y",
                 "--tip-fixed-width",
                 "--tip-fixed-max-height",
+                "--scoop-mobile-tip-top",
+                "--scoop-se-name-tip-top",
             ].forEach((prop) => tip.style.removeProperty(prop));
-        });
-        document.querySelectorAll(".scoop-name-tip-active").forEach((row) => {
-            row.classList.remove("scoop-name-tip-active");
-        });
-        document.querySelectorAll(NAME_TIP_SELECTOR).forEach(deactivateNameTip);
-    };
-
-    const bindNameValueTips = (doc) => {
-        if (!doc || !isResponsiveViewport()) {
-            return;
-        }
-        doc.querySelectorAll(NAME_TIP_SELECTOR).forEach((wrap) => {
-            if (wrap.dataset.scoopNameTipBound === "1") {
-                return;
-            }
-            wrap.dataset.scoopNameTipBound = "1";
-            wrap.addEventListener("mouseenter", () => activateNameTip(wrap));
-            wrap.addEventListener("mouseleave", () => deactivateNameTip(wrap));
-            wrap.addEventListener("focusin", () => activateNameTip(wrap));
-            wrap.addEventListener("focusout", () => deactivateNameTip(wrap));
         });
     };
 
     resetGenericTooltips();
-    bindNameValueTips(document);
     window.__scoopGenericTooltipApi = {
         positionGenericTooltip: () => {},
         scheduleGenericTooltipPosition: () => {},
         repositionVisibleGenericTooltips: resetGenericTooltips,
-        bindNameValueTips,
     };
 })();
 """
 
 _GENERIC_TOOLTIP_MOBILE_JS = _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS
 
-GENERIC_TOOLTIP_CSS_VERSION = 7
+GENERIC_TOOLTIP_CSS_VERSION = 16
 GENERIC_TOOLTIP_CSS_KEY = "_scoop_generic_tooltip_css_version"
 
-_DARK_RESPONSIVE_TIP_UNDERLINE_CSS = """
+_DARK_RESPONSIVE_TIP_UNDERLINE_CSS = (
+    """
 @media (max-width: 1366px) {
 html[data-scoop-theme="dark"] .stMarkdown .tip-wrap:not(.headlines-tip),
 html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip),
@@ -311,6 +209,8 @@ html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .hl-tip-count 
 }
 }
 """
+    + DARK_RESPONSIVE_NAME_VALUE_TIP_UNDERLINE_CSS
+)
 
 _DARK_POPUP_OUTLINE_CSS = """
 html[data-scoop-theme="dark"] .stMarkdown .tip-wrap .tip-text,
@@ -2859,109 +2759,6 @@ _TOOLTIP_SCROLL_JS = """
             });
     };
 
-    const NAME_TIP_SELECTOR =
-        'td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip), ' +
-        'td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip), ' +
-        'td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip)';
-
-    const isResponsiveNameTipViewport = () => (window.innerWidth || 0) < 1367;
-
-    const positionNameTipInViewport = (wrap, tip) => {
-        const margin = 16;
-        const vw = window.innerWidth || document.documentElement.clientWidth || 320;
-        const vh = window.innerHeight || document.documentElement.clientHeight || 640;
-        const maxWidth = Math.max(200, vw - margin * 2);
-        const wrapRect = wrap.getBoundingClientRect();
-
-        tip.style.setProperty("position", "fixed", "important");
-        tip.style.setProperty("width", `${maxWidth}px`, "important");
-        tip.style.setProperty("max-width", `${maxWidth}px`, "important");
-        tip.style.setProperty("min-width", "0", "important");
-        tip.style.setProperty("left", `${margin}px`, "important");
-        tip.style.setProperty("right", "auto", "important");
-        tip.style.setProperty("transform", "none", "important");
-        tip.style.setProperty("box-sizing", "border-box", "important");
-        tip.style.setProperty("visibility", "hidden", "important");
-        tip.style.setProperty("opacity", "1", "important");
-
-        let top = wrapRect.bottom + 12;
-        tip.style.setProperty("top", `${top}px`, "important");
-        tip.style.setProperty("bottom", "auto", "important");
-
-        let tipRect = tip.getBoundingClientRect();
-        if (tipRect.bottom > vh - margin) {
-            top = wrapRect.top - tipRect.height - 12;
-            if (top < margin) {
-                top = margin;
-                tip.style.setProperty("max-height", `${vh - margin * 2}px`, "important");
-                tip.style.setProperty("overflow-y", "auto", "important");
-            }
-            tip.style.setProperty("top", `${top}px`, "important");
-        }
-
-        tip.style.setProperty("visibility", "visible", "important");
-    };
-
-    const clearNameTipInlineStyles = (tip) => {
-        [
-            "position",
-            "top",
-            "bottom",
-            "left",
-            "right",
-            "transform",
-            "width",
-            "max-width",
-            "min-width",
-            "max-height",
-            "overflow-y",
-            "visibility",
-        ].forEach((prop) => tip.style.removeProperty(prop));
-    };
-
-    const activateNameTip = (wrap) => {
-        if (!isResponsiveNameTipViewport()) {
-            return;
-        }
-        const tip = wrap.querySelector(":scope > .tip-text");
-        const row = wrap.closest("tr");
-        if (row) {
-            row.classList.add("scoop-name-tip-active");
-        }
-        if (!tip) {
-            return;
-        }
-        positionNameTipInViewport(wrap, tip);
-    };
-
-    const deactivateNameTip = (wrap) => {
-        const tip = wrap.querySelector(":scope > .tip-text");
-        const row = wrap.closest("tr");
-        if (row) {
-            row.classList.remove("scoop-name-tip-active");
-        }
-        if (!tip) {
-            return;
-        }
-        clearNameTipInlineStyles(tip);
-    };
-
-    const bindNameValueTips = (doc) => {
-        if (!doc || !isResponsiveNameTipViewport()) {
-            return;
-        }
-        doc.querySelectorAll(NAME_TIP_SELECTOR).forEach((wrap) => {
-            if (wrap.dataset.scoopNameTipBound === "1") {
-                return;
-            }
-            wrap.dataset.scoopNameTipBound = "1";
-            wrap.addEventListener("mouseenter", () => activateNameTip(wrap));
-            wrap.addEventListener("mouseleave", () => deactivateNameTip(wrap));
-            wrap.addEventListener("focusin", () => activateNameTip(wrap));
-            wrap.addEventListener("focusout", () => deactivateNameTip(wrap));
-        });
-    };
-
     const resetGenericTooltips = () => {
         document.querySelectorAll(".tip-wrap:not(.headlines-tip)").forEach((wrap) => {
             wrap.classList.remove("generic-tip-open");
@@ -2978,34 +2775,163 @@ _TOOLTIP_SCROLL_JS = """
                 "transform",
                 "width",
                 "max-width",
+                "min-width",
                 "max-height",
+                "overflow-y",
+                "visibility",
                 "--tip-center-x",
                 "--tip-center-y",
                 "--tip-fixed-width",
                 "--tip-fixed-max-height",
+                "--scoop-mobile-tip-top",
+                "--scoop-se-name-tip-top",
             ].forEach((prop) => tip.style.removeProperty(prop));
         });
-        document.querySelectorAll(".scoop-name-tip-active").forEach((row) => {
-            row.classList.remove("scoop-name-tip-active");
-        });
-        document.querySelectorAll(NAME_TIP_SELECTOR).forEach(deactivateNameTip);
     };
 
+    const MOBILE_GENERIC_TIP_MAX = 768;
+    const IPHONE_SE_MAX = 375;
+    const MOBILE_GENERIC_TIP_GAP = 20;
+    const isMobileGenericTipViewport = () => window.innerWidth <= MOBILE_GENERIC_TIP_MAX;
+    const isIphoneSEViewport = () => window.innerWidth <= IPHONE_SE_MAX;
+    const isOtherMobileViewport = () =>
+        window.innerWidth > IPHONE_SE_MAX && window.innerWidth <= MOBILE_GENERIC_TIP_MAX;
+
+    const isMobileGenericTipWrap = (wrap) =>
+        !!wrap && !wrap.classList.contains("headlines-tip");
+
+    const measureMobileGenericTipHeight = (tip) => {
+        tip.style.setProperty("visibility", "hidden", "important");
+        tip.style.setProperty("opacity", "1", "important");
+        if (isIphoneSEViewport()) {
+            tip.style.setProperty("top", "-9999px", "important");
+        } else if (isOtherMobileViewport()) {
+            tip.style.setProperty("top", "-9999px", "important");
+        } else {
+            tip.style.setProperty("position", "fixed", "important");
+            tip.style.setProperty("left", "-9999px", "important");
+            tip.style.setProperty("top", "0", "important");
+            tip.style.setProperty("width", "min(18rem, calc(100vw - 2rem))", "important");
+        }
+        const height = tip.offsetHeight;
+        tip.style.removeProperty("visibility");
+        tip.style.removeProperty("opacity");
+        tip.style.removeProperty("position");
+        tip.style.removeProperty("left");
+        tip.style.removeProperty("top");
+        tip.style.removeProperty("width");
+        return height;
+    };
+
+    const applyIphoneSEHorizontalCenter = (tip) => {
+        if (!isIphoneSEViewport() || !tip) {
+            return;
+        }
+        tip.style.setProperty("position", "fixed", "important");
+        tip.style.setProperty("right", "auto", "important");
+        tip.style.setProperty("transform", "none", "important");
+        tip.style.setProperty("width", "min(18rem, calc(100vw - 2rem))", "important");
+        const width = tip.getBoundingClientRect().width || tip.offsetWidth;
+        const left = Math.max(8, (window.innerWidth - width) / 2);
+        tip.style.setProperty("left", `${left}px`, "important");
+    };
+
+    const applyOtherMobileHorizontalCenter = (tip) => {
+        if (!isOtherMobileViewport() || !tip) {
+            return;
+        }
+        tip.style.setProperty("position", "fixed", "important");
+        tip.style.setProperty("right", "auto", "important");
+        tip.style.setProperty("transform", "none", "important");
+        tip.style.setProperty("width", "min(18rem, calc(100vw - 2rem))", "important");
+        const width = tip.getBoundingClientRect().width || tip.offsetWidth;
+        const left = Math.max(8, (window.innerWidth - width) / 2);
+        tip.style.setProperty("left", `${left}px`, "important");
+    };
+
+    const positionMobileGenericTip = (wrap, event) => {
+        if (!isMobileGenericTipViewport() || !isMobileGenericTipWrap(wrap)) {
+            return;
+        }
+        const tip = wrap.querySelector(":scope > .tip-text");
+        if (!tip) {
+            return;
+        }
+
+        const touch = event && event.touches && event.touches[0];
+        const anchorY =
+            (event && typeof event.clientY === "number" ? event.clientY : null) ??
+            (touch ? touch.clientY : null) ??
+            wrap.getBoundingClientRect().top;
+        const tipHeight = measureMobileGenericTipHeight(tip);
+        const maxTop = Math.max(8, window.innerHeight - tipHeight - 8);
+        const top = Math.max(8, Math.min(anchorY - tipHeight - MOBILE_GENERIC_TIP_GAP, maxTop));
+        tip.style.setProperty("--scoop-mobile-tip-top", `${top}px`, "important");
+        applyIphoneSEHorizontalCenter(tip);
+        applyOtherMobileHorizontalCenter(tip);
+    };
+
+    const scheduleMobileGenericTip = (wrap, event) => {
+        positionMobileGenericTip(wrap, event);
+        window.requestAnimationFrame(() => positionMobileGenericTip(wrap, event));
+    };
+
+    const bindMobileGenericTips = () => {
+        if (window.__scoopMobileGenericTipBindVersion === 4) {
+            return;
+        }
+        window.__scoopMobileGenericTipBindVersion = 4;
+
+        const handleMobileGenericTipEvent = (event) => {
+            const wrap = event.target && event.target.closest
+                ? event.target.closest(".tip-wrap:not(.headlines-tip)")
+                : null;
+            if (!wrap || !isMobileGenericTipWrap(wrap)) {
+                return;
+            }
+            scheduleMobileGenericTip(wrap, event);
+        };
+
+        document.addEventListener("pointerenter", handleMobileGenericTipEvent, true);
+        document.addEventListener("pointerdown", handleMobileGenericTipEvent, true);
+        document.addEventListener("touchstart", handleMobileGenericTipEvent, { passive: true, capture: true });
+    };
+
+    bindMobileGenericTips();
+
     const repositionVisibleGenericTooltips = () => {
-        resetGenericTooltips();
+        if (!isMobileGenericTipViewport()) {
+            resetGenericTooltips();
+            return;
+        }
+        document.querySelectorAll(".tip-wrap:not(.headlines-tip)").forEach((wrap) => {
+            if (!isMobileGenericTipWrap(wrap)) {
+                return;
+            }
+            const tip = wrap.querySelector(":scope > .tip-text");
+            if (!tip) {
+                return;
+            }
+            const visible =
+                tip.matches(":hover") ||
+                wrap.matches(":hover") ||
+                wrap.matches(":active") ||
+                wrap.matches(":focus-within");
+            if (visible) {
+                scheduleMobileGenericTip(wrap, null);
+            }
+        });
     };
 
     window.__scoopGenericTooltipApi = {
         positionGenericTooltip: () => {},
         scheduleGenericTooltipPosition: () => {},
         repositionVisibleGenericTooltips,
-        bindNameValueTips,
     };
 
-    if (window.__scoopGenericTooltipBindVersion !== 6) {
-        window.__scoopGenericTooltipBindVersion = 6;
+    if (window.__scoopGenericTooltipBindVersion !== 7) {
+        window.__scoopGenericTooltipBindVersion = 7;
         resetGenericTooltips();
-        bindNameValueTips(document);
     }
 
     if (!window.__scoopTooltipScrollBound) {
@@ -3140,21 +3066,6 @@ _TOOLTIP_SCROLL_JS = """
         }
     }
 
-    bindNameValueTips(document);
-    if (!window.__scoopNameTipTableObserver) {
-        const tableRoot =
-            document.querySelector(".full-results-wrap") ||
-            document.querySelector('[data-testid="stAppViewContainer"]');
-        if (tableRoot) {
-            window.__scoopNameTipTableObserver = new MutationObserver(() => {
-                bindNameValueTips(document);
-            });
-            window.__scoopNameTipTableObserver.observe(tableRoot, {
-                childList: true,
-                subtree: true,
-            });
-        }
-    }
 })();
 """
 
@@ -3345,7 +3256,7 @@ def _inject_responsive_bootstrap_css() -> str:
 BOOTSTRAP_INSTALLED_KEY = "_scoop_responsive_bootstrap_installed"
 BOOTSTRAP_SCRIPT_VERSION = 4
 TOOLTIP_INSTALLED_KEY = "_scoop_tooltip_scroll_installed"
-TOOLTIP_SCRIPT_VERSION = 22
+TOOLTIP_SCRIPT_VERSION = 27
 SIDEBAR_HANDLER_INSTALLED_KEY = "_scoop_responsive_sidebar_handler_installed"
 
 
@@ -3363,7 +3274,7 @@ def _responsive_bootstrap_markup() -> str:
 
 
 def _inject_name_tooltip_override() -> None:
-    """Always inject name/company tooltip override after page CSS (mobile/tablet only)."""
+    """Inject mobile generic tooltip override last so it wins over tablet/generic CSS."""
     st.markdown(
         f"<style id='scoop-name-value-tooltip-override-css'>{RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS}</style>",
         unsafe_allow_html=True,
@@ -3463,13 +3374,13 @@ def install_tooltip_scroll_handler() -> None:
     """Inject mobile headline CSS; HTML backdrop label closes panel on outside tap."""
     from theme_mode import inject_dark_mode_styles
 
-    _inject_name_tooltip_override()
     _inject_desktop_headlines_css()
     _inject_ipad_mini_headlines_css()
     _inject_mobile_phone_headlines_css()
     _ensure_generic_tooltip_mobile_assets()
 
     if st.session_state.get(TOOLTIP_INSTALLED_KEY) == TOOLTIP_SCRIPT_VERSION:
+        _inject_name_tooltip_override()
         inject_dark_mode_styles()
         inject_desktop_sidebar_nav_market()
         install_page_layout_resync()
@@ -3495,6 +3406,7 @@ def install_tooltip_scroll_handler() -> None:
     )
     inject_desktop_sidebar_nav_market()
     st.session_state[TOOLTIP_INSTALLED_KEY] = TOOLTIP_SCRIPT_VERSION
+    _inject_name_tooltip_override()
     from theme_mode import inject_dark_mode_styles
 
     inject_dark_mode_styles()

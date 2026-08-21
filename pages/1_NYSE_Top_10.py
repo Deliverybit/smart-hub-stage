@@ -800,59 +800,6 @@ st.markdown(
             left: auto !important;
             right: 0 !important;
         }
-        /* Name/Company/Commodity: tooltip below value (full card width, no horizontal clip). */
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"], .full-results-wrap .full-results-table tbody td[data-label="Name"], .full-results-wrap .full-results-table tbody td[data-label="Commodity"] {
-            position: relative !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip), .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip), .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) {
-            position: static !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text {
-
-            top: 100% !important;
-            bottom: auto !important;
-            left: 0 !important;
-            right: 0 !important;
-            transform: none !important;
-            width: auto !important;
-            min-width: 0 !important;
-            max-width: none !important;
-            margin-top: 12px !important;
-            box-sizing: border-box !important;
-
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::before,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::before,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::before {
-            top: -14px !important;
-            bottom: auto !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::after,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::after,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::after {
-            top: auto !important;
-            bottom: 100% !important;
-            left: auto !important;
-            right: 0.75rem !important;
-            transform: none !important;
-            border-color: transparent transparent #1e1e2f transparent !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active {
-            overflow: visible !important;
-            position: relative !important;
-            z-index: 100003 !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active td {
-            overflow: visible !important;
-            position: relative !important;
-            z-index: 100004 !important;
-        }
-        .stMarkdown .full-results-wrap:has(tr.scoop-name-tip-active) {
-            overflow: visible !important;
-        }
-
         /* Headlines: tap count toggles checkbox; card overlay at top of row (same as tablet). */
         .stMarkdown .tip-wrap.headlines-tip { cursor: default !important; }
         .stMarkdown .tip-wrap.headlines-tip .hl-tip-cb {
@@ -1729,40 +1676,6 @@ st.markdown(
             visibility: visible !important;
             opacity: 1 !important;
         }
-
-        html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"], .full-results-wrap .full-results-table tbody td[data-label="Name"], .full-results-wrap .full-results-table tbody td[data-label="Commodity"] {
-            position: relative !important;
-        }
-        html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip), .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip), .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) {
-            position: static !important;
-        }
-        html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip), .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip), .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text {
-
-            top: 100% !important;
-            bottom: auto !important;
-            left: 0 !important;
-            right: 0 !important;
-            transform: none !important;
-            width: auto !important;
-            min-width: 0 !important;
-            max-width: none !important;
-            margin-top: 12px !important;
-            box-sizing: border-box !important;
-
-        }
-        html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip), .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip), .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::before {
-            top: -14px !important;
-            bottom: auto !important;
-        }
-        html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip), .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip), .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::after {
-            top: auto !important;
-            bottom: 100% !important;
-            left: auto !important;
-            right: 0.75rem !important;
-            transform: none !important;
-            border-color: transparent transparent #1e1e2f transparent !important;
-        }
-
         .stMarkdown .full-results-wrap .full-results-table tbody tr:has(.tip-wrap:not(.headlines-tip):hover, .tip-wrap:not(.headlines-tip):active, .tip-wrap:not(.headlines-tip):focus-within) {
             overflow: visible !important;
             position: relative !important;
@@ -1777,22 +1690,6 @@ st.markdown(
             z-index: 100004 !important;
         }
         [data-testid="stMarkdownContainer"]:has(.tip-wrap:not(.headlines-tip):hover, .tip-wrap:not(.headlines-tip):active, .tip-wrap:not(.headlines-tip):focus-within) {
-            overflow: visible !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active {
-            overflow: visible !important;
-            position: relative !important;
-            z-index: 100003 !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active td {
-            overflow: visible !important;
-            position: relative !important;
-            z-index: 100004 !important;
-        }
-        .stMarkdown .full-results-wrap:has(tr.scoop-name-tip-active) {
-            overflow: visible !important;
-        }
-        [data-testid="stMarkdownContainer"]:has(tr.scoop-name-tip-active) {
             overflow: visible !important;
         }
 
@@ -3238,59 +3135,6 @@ st.markdown(
             left: auto !important;
             right: 0 !important;
         }
-        /* Name/Company/Commodity: tooltip below value (full card width, no horizontal clip). */
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"], .full-results-wrap .full-results-table tbody td[data-label="Name"], .full-results-wrap .full-results-table tbody td[data-label="Commodity"] {
-            position: relative !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip), .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip), .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) {
-            position: static !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text {
-
-            top: 100% !important;
-            bottom: auto !important;
-            left: 0 !important;
-            right: 0 !important;
-            transform: none !important;
-            width: auto !important;
-            min-width: 0 !important;
-            max-width: none !important;
-            margin-top: 12px !important;
-            box-sizing: border-box !important;
-
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::before,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::before,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::before {
-            top: -14px !important;
-            bottom: auto !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::after,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::after,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::after {
-            top: auto !important;
-            bottom: 100% !important;
-            left: auto !important;
-            right: 0.75rem !important;
-            transform: none !important;
-            border-color: transparent transparent #1e1e2f transparent !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active {
-            overflow: visible !important;
-            position: relative !important;
-            z-index: 100003 !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active td {
-            overflow: visible !important;
-            position: relative !important;
-            z-index: 100004 !important;
-        }
-        .stMarkdown .full-results-wrap:has(tr.scoop-name-tip-active) {
-            overflow: visible !important;
-        }
-
         .stMarkdown .tip-wrap.headlines-tip { cursor: default !important; }
         .stMarkdown .tip-wrap.headlines-tip .hl-tip-cb {
             position: absolute !important;
@@ -3984,59 +3828,6 @@ st.markdown(
             left: auto !important;
             right: 0 !important;
         }
-        /* Name/Company/Commodity: tooltip below value (full card width, no horizontal clip). */
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"], .full-results-wrap .full-results-table tbody td[data-label="Name"], .full-results-wrap .full-results-table tbody td[data-label="Commodity"] {
-            position: relative !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip), .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip), .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) {
-            position: static !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text {
-
-            top: 100% !important;
-            bottom: auto !important;
-            left: 0 !important;
-            right: 0 !important;
-            transform: none !important;
-            width: auto !important;
-            min-width: 0 !important;
-            max-width: none !important;
-            margin-top: 12px !important;
-            box-sizing: border-box !important;
-
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::before,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::before,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::before {
-            top: -14px !important;
-            bottom: auto !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::after,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::after,
-        .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text::after {
-            top: auto !important;
-            bottom: 100% !important;
-            left: auto !important;
-            right: 0.75rem !important;
-            transform: none !important;
-            border-color: transparent transparent #1e1e2f transparent !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active {
-            overflow: visible !important;
-            position: relative !important;
-            z-index: 100003 !important;
-        }
-        .stMarkdown .full-results-wrap .full-results-table tbody tr.scoop-name-tip-active td {
-            overflow: visible !important;
-            position: relative !important;
-            z-index: 100004 !important;
-        }
-        .stMarkdown .full-results-wrap:has(tr.scoop-name-tip-active) {
-            overflow: visible !important;
-        }
-
         .stMarkdown .tip-wrap.headlines-tip { cursor: default !important; }
         .stMarkdown .tip-wrap.headlines-tip .hl-tip-cb {
             position: absolute !important;
