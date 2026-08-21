@@ -415,6 +415,37 @@ st.markdown(
         .full-results-wrap:has(.tip-wrap.headlines-tip.hl-tip-desktop-open) {
             overflow: visible !important;
         }
+        /* Commodity pages: even full-width desktop table layout. */
+        .full-results-wrap.commodity-results .full-results-table {
+            display: table !important;
+            table-layout: fixed !important;
+            width: 100% !important;
+            border-collapse: collapse !important;
+        }
+        .full-results-wrap.commodity-results .full-results-table thead {
+            display: table-header-group !important;
+        }
+        .full-results-wrap.commodity-results .full-results-table tbody {
+            display: table-row-group !important;
+        }
+        .full-results-wrap.commodity-results .full-results-table tr {
+            display: table-row !important;
+        }
+        .full-results-wrap.commodity-results .full-results-table th,
+        .full-results-wrap.commodity-results .full-results-table td {
+            display: table-cell !important;
+            vertical-align: middle !important;
+            padding: 0.65rem 0.75rem !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+            box-sizing: border-box !important;
+            text-align: left !important;
+            white-space: normal !important;
+        }
+        .full-results-wrap.commodity-results .full-results-table th:first-child,
+        .full-results-wrap.commodity-results .full-results-table td:first-child {
+            width: 3.5rem !important;
+        }
     }
 
     /* Sidebar — larger text & inputs */
@@ -496,6 +527,17 @@ st.markdown(
     }
     .full-results-mobile-legend {
         display: none !important;
+    }
+
+    /* Mobile/tablet: compact banner row only (desktop triple row hidden). */
+    .scoop-banner-desktop {
+        display: none !important;
+    }
+    .scoop-banner-compact {
+        display: flex !important;
+        gap: 1rem !important;
+        flex-wrap: wrap !important;
+        margin-bottom: 1rem !important;
     }
 
     /* ===== MOBILE ===== */
@@ -2420,6 +2462,17 @@ st.markdown(
         section.main > div {
             width: auto !important;
             max-width: none !important;
+        }
+        /* Desktop: NYSE-style triple banner row fills content width. */
+        .scoop-banner-compact {
+            display: none !important;
+        }
+        .scoop-banner-desktop {
+            display: flex !important;
+            gap: 1rem !important;
+            flex-wrap: wrap !important;
+            margin-bottom: 1rem !important;
+            width: 100% !important;
         }
         [data-testid="stSidebar"] #scoop-title {
             font-size: 60px !important;
@@ -4555,7 +4608,7 @@ def _fetch_index(ticker: str):
 
 _btc_price, _btc_chg = _fetch_index("BTC-USD")
 _eth_price, _eth_chg = _fetch_index("ETH-USD")
-_total_price, _total_chg = _fetch_index("^CMC200")
+_sol_price, _sol_chg = _fetch_index("SOL-USD")
 
 def _banner_card(label, price, chg, prefix="$"):
     if price is None:
@@ -4572,14 +4625,19 @@ def _banner_card(label, price, chg, prefix="$"):
         f'padding:0.3rem 0.8rem;border-radius:6px;">{a} {chg:+.2f}%</span></div>'
     )
 
-_cards = (
+_compact_cards = (
     _banner_card("Bitcoin (BTC) — Today", _btc_price, _btc_chg)
     + _banner_card("Ethereum (ETH) — Today", _eth_price, _eth_chg)
-    + _banner_card("CMC Crypto 200 — Today", _total_price, _total_chg, prefix="")
 )
-if _cards:
+_desktop_cards = (
+    _banner_card("Bitcoin (BTC) — Today", _btc_price, _btc_chg)
+    + _banner_card("Ethereum (ETH) — Today", _eth_price, _eth_chg)
+    + _banner_card("Solana (SOL) — Today", _sol_price, _sol_chg)
+)
+if _compact_cards or _desktop_cards:
     st.markdown(
-        f'<div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">{_cards}</div>',
+        f'<div class="scoop-banner-compact">{_compact_cards}</div>'
+        f'<div class="scoop-banner-desktop">{_desktop_cards}</div>',
         unsafe_allow_html=True,
     )
 
@@ -4823,7 +4881,7 @@ else:
                         cells += _td(c, str(val), COLUMN_TIPS.get(c, ""))
                 rows_html += f"<tr>{cells}</tr>"
             return (
-                f'<div class="full-results-wrap">'
+                f'<div class="full-results-wrap commodity-results">'
                 f'<table class="full-results-table"><thead><tr>{header_cells}</tr></thead>'
                 f"<tbody>{rows_html}</tbody></table></div>"
             )

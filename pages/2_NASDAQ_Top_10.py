@@ -413,6 +413,37 @@ st.markdown(
         .full-results-wrap:has(.tip-wrap.headlines-tip.hl-tip-desktop-open) {
             overflow: visible !important;
         }
+        /* Commodity pages: even full-width desktop table layout. */
+        .full-results-wrap.commodity-results .full-results-table {
+            display: table !important;
+            table-layout: fixed !important;
+            width: 100% !important;
+            border-collapse: collapse !important;
+        }
+        .full-results-wrap.commodity-results .full-results-table thead {
+            display: table-header-group !important;
+        }
+        .full-results-wrap.commodity-results .full-results-table tbody {
+            display: table-row-group !important;
+        }
+        .full-results-wrap.commodity-results .full-results-table tr {
+            display: table-row !important;
+        }
+        .full-results-wrap.commodity-results .full-results-table th,
+        .full-results-wrap.commodity-results .full-results-table td {
+            display: table-cell !important;
+            vertical-align: middle !important;
+            padding: 0.65rem 0.75rem !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+            box-sizing: border-box !important;
+            text-align: left !important;
+            white-space: normal !important;
+        }
+        .full-results-wrap.commodity-results .full-results-table th:first-child,
+        .full-results-wrap.commodity-results .full-results-table td:first-child {
+            width: 3.5rem !important;
+        }
     }
 
     /* Sidebar — larger text & inputs */
@@ -493,6 +524,16 @@ st.markdown(
     }
     .full-results-mobile-legend {
         display: none !important;
+    }
+    /* Mobile/tablet: compact banner row only (desktop triple row hidden). */
+    .scoop-banner-desktop {
+        display: none !important;
+    }
+    .scoop-banner-compact {
+        display: flex !important;
+        gap: 1rem !important;
+        flex-wrap: wrap !important;
+        margin-bottom: 1rem !important;
     }
     /* ===== MOBILE ===== */
     @media (max-width: 768px) {
@@ -4292,6 +4333,17 @@ st.markdown(
             width: auto !important;
             max-width: none !important;
         }
+        /* Desktop: NYSE-style triple banner row fills content width. */
+        .scoop-banner-compact {
+            display: none !important;
+        }
+        .scoop-banner-desktop {
+            display: flex !important;
+            gap: 1rem !important;
+            flex-wrap: wrap !important;
+            margin-bottom: 1rem !important;
+            width: 100% !important;
+        }
         [data-testid="stSidebar"] #scoop-title {
             font-size: 60px !important;
             line-height: 1.05 !important;
@@ -4609,27 +4661,39 @@ def _fetch_index(ticker: str):
         return None, None
 
 
-def _index_banner_card(label: str, price, chg, prefix: str = "") -> str:
+def _banner_card(label, price, chg, prefix="$"):
     if price is None:
         return ""
-    chg_color = "#22c55e" if chg >= 0 else "#ef4444"
-    arrow = "▲" if chg >= 0 else "▼"
+    c = "#22c55e" if chg >= 0 else "#ef4444"
+    a = "▲" if chg >= 0 else "▼"
     return (
-        f'<div style="flex:1;min-width:220px;max-width: 50%;background:linear-gradient(135deg,#1e293b,#0f172a);'
-        f'border:1px solid #334155;border-left:4px solid {chg_color};border-radius:12px;'
+        f'<div style="flex:1;min-width:220px;max-width:50%;background:linear-gradient(135deg,#1e293b,#0f172a);'
+        f'border:1px solid #334155;border-left:4px solid {c};border-radius:12px;'
         f'padding:1.2rem 1.8rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">'
         f'<span style="font-size:1.4rem;color:#e2e8f0;font-weight:500;">{label}</span>'
         f'<span style="font-size:2.2rem;font-weight:700;color:#f1f5f9;">{prefix}{price:,.2f}</span>'
-        f'<span style="font-size:1.4rem;font-weight:600;color:{chg_color};background:{chg_color}18;'
-        f'padding:0.3rem 0.8rem;border-radius:6px;">{arrow} {chg:+.2f}%</span></div>'
+        f'<span style="font-size:1.4rem;font-weight:600;color:{c};background:{c}18;'
+        f'padding:0.3rem 0.8rem;border-radius:6px;">{a} {chg:+.2f}%</span></div>'
     )
 
 
 _ixic_price, _ixic_chg = _fetch_index("^IXIC")
-_ixic_card = _index_banner_card("NASDAQ Composite (^IXIC) — Today", _ixic_price, _ixic_chg)
-if _ixic_card:
+_qqq_price, _qqq_chg = _fetch_index("QQQ")
+_soxx_price, _soxx_chg = _fetch_index("SOXX")
+_third_label = "SOXX Semiconductor (SOXX) — Today"
+if _soxx_price is None:
+    _soxx_price, _soxx_chg = _fetch_index("SMH")
+    _third_label = "VanEck Semiconductor (SMH) — Today"
+_compact_cards = _banner_card("NASDAQ Composite (^IXIC) — Today", _ixic_price, _ixic_chg)
+_desktop_cards = (
+    _banner_card("NASDAQ Composite (^IXIC) — Today", _ixic_price, _ixic_chg)
+    + _banner_card("Invesco QQQ (QQQ) — Today", _qqq_price, _qqq_chg)
+    + _banner_card(_third_label, _soxx_price, _soxx_chg)
+)
+if _compact_cards or _desktop_cards:
     st.markdown(
-        f'<div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;">{_ixic_card}</div>',
+        f'<div class="scoop-banner-compact">{_compact_cards}</div>'
+        f'<div class="scoop-banner-desktop">{_desktop_cards}</div>',
         unsafe_allow_html=True,
     )
 
@@ -4858,7 +4922,7 @@ else:
                         cells += _td(c, str(val), COLUMN_TIPS.get(c, ""))
                 rows_html += f"<tr>{cells}</tr>"
             return (
-                f'<div class="full-results-wrap">'
+                f'<div class="full-results-wrap commodity-results">'
                 f'<table class="full-results-table"><thead><tr>{header_cells}</tr></thead>'
                 f"<tbody>{rows_html}</tbody></table></div>"
             )
