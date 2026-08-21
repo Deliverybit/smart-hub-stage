@@ -2000,6 +2000,85 @@ html[data-scoop-desktop-layout="1"][data-scoop-screener-active="1"] {{
 }}
 """
 
+# Desktop screener gating view (terms not yet accepted): full-width banners + intro.
+_DESKTOP_SCREENER_GATING_LAYOUT_RULES = """
+    html[data-scoop-screener-gated="1"] [data-testid="stAppViewContainer"] > div:not([data-testid="stSidebar"]),
+    html[data-scoop-screener-gated="1"] [data-testid="stAppViewContainer"] > section.main {
+        flex: 1 1 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+    html[data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"],
+    html[data-scoop-screener-gated="1"] [data-testid="stAppViewContainer"] > section.main,
+    html[data-scoop-screener-gated="1"] section.main > div,
+    html[data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"] .block-container {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    html[data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"],
+    html[data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlockBorderWrapper"],
+    html[data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"],
+    html[data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"],
+    html[data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"] [data-testid="stMarkdownContainer"],
+    html[data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"] h1 {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    html[data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"] .scoop-landing-summary,
+    html[data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"] .scoop-landing-info,
+    html[data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"] .scoop-landing-sentiment,
+    html[data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"] .scoop-landing-affiliate {
+        width: 100% !important;
+        max-width: none !important;
+        box-sizing: border-box !important;
+    }
+    html[data-scoop-screener-gated="1"] .scoop-banner-compact {
+        display: none !important;
+    }
+    html[data-scoop-screener-gated="1"] .scoop-banner-desktop,
+    html[data-scoop-screener-gated="1"] [data-testid="stMarkdownContainer"] div[style*="display:flex"][style*="flex-wrap:wrap"][style*="margin-bottom:1rem"] {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 1rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 1rem !important;
+        box-sizing: border-box !important;
+    }
+    html[data-scoop-screener-gated="1"] .scoop-banner-desktop > div,
+    html[data-scoop-screener-gated="1"] [data-testid="stMarkdownContainer"] div[style*="max-width:50%"],
+    html[data-scoop-screener-gated="1"] [data-testid="stMarkdownContainer"] div[style*="max-width: 50%"] {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        width: auto !important;
+        box-sizing: border-box !important;
+    }
+    html[data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"] [data-testid="stAlert"],
+    html[data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stAlert"]),
+    html[data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"] div[data-testid="stCheckbox"],
+    html[data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stCheckbox"]) {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+"""
+
+DESKTOP_SCREENER_GATING_LAYOUT = f"""
+@media (min-width: 1367px) {{
+{_DESKTOP_SCREENER_GATING_LAYOUT_RULES}
+}}
+html[data-scoop-desktop-layout="1"][data-scoop-screener-gated="1"] {{
+{_DESKTOP_SCREENER_GATING_LAYOUT_RULES}
+}}
+"""
+
 # Mobile/tablet screener landing pages: collapse bootstrap gaps (js_eval, stHtml, page CSS).
 _RESPONSIVE_SCREENER_TOP_COMPACT_RULES = """
     html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {

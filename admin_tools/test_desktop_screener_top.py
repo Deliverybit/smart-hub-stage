@@ -9,7 +9,10 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from admin_tools.tablet_mobile_layout_css import DESKTOP_SCREENER_TOP_COMPACT  # noqa: E402
+from admin_tools.tablet_mobile_layout_css import (  # noqa: E402
+    DESKTOP_SCREENER_GATING_LAYOUT,
+    DESKTOP_SCREENER_TOP_COMPACT,
+)
 
 
 def test_screener_top_compact_scoped_to_desktop() -> None:
@@ -30,11 +33,23 @@ def test_screener_top_compact_does_not_touch_mobile() -> None:
     assert "@media (max-width:" not in css
 
 
+def test_screener_gating_layout_scoped_to_desktop() -> None:
+    css = DESKTOP_SCREENER_GATING_LAYOUT
+    assert "@media (min-width: 1367px)" in css
+    assert 'html[data-scoop-desktop-layout="1"][data-scoop-screener-gated="1"]' in css
+    assert 'html[data-scoop-screener-gated="1"]' in css
+    assert "max-width: none !important" in css
+    assert ".scoop-banner-compact" in css
+    assert "display: none !important" in css
+    assert "@media (max-width:" not in css
+
+
 if __name__ == "__main__":
     tests = [
         test_screener_top_compact_scoped_to_desktop,
         test_screener_top_compact_targets_active_flag,
         test_screener_top_compact_does_not_touch_mobile,
+        test_screener_gating_layout_scoped_to_desktop,
     ]
     for fn in tests:
         fn()

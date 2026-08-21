@@ -23,6 +23,7 @@ from screener_selection import (
     render_screener_landing_intro,
     render_screener_last_updated,
     selection_status_message,
+    sync_screener_gating_layout,
 )
 from screener_table import ANALYZE_COLUMN_TIP, analyze_link_html, build_source_ticker_map
 from tooltip_scroll import install_tooltip_scroll_handler
@@ -4355,6 +4356,7 @@ st.sidebar.page_link("pages/6_ICE_Top_10.py", label="🛢️ ICE Commodities 10"
 st.sidebar.markdown("---")
 st.sidebar.page_link("pages/7_Terms_of_Service.py", label="📜 Terms of Service")
 agreed = terms_accepted(st, "agree_terms_ice")
+sync_screener_gating_layout(st, gated=not agreed)
 ensure_timezone_cookie(st)
 if agreed:
     log_terms_acceptance(st, consent_key="agree_terms_ice")
@@ -4880,5 +4882,8 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+if not agreed:
+    sync_screener_gating_layout(st, gated=True)
 
 install_tooltip_scroll_handler()

@@ -370,6 +370,26 @@ def render_screener_landing_intro(
     )
 
 
+def sync_screener_gating_layout(st_module, *, gated: bool) -> None:
+    """Toggle desktop full-width layout while the terms gate is showing."""
+    if gated:
+        from admin_tools.tablet_mobile_layout_css import DESKTOP_SCREENER_GATING_LAYOUT
+
+        st_module.markdown(
+            f'<style id="scoop-screener-gating-page-css">{DESKTOP_SCREENER_GATING_LAYOUT}</style>',
+            unsafe_allow_html=True,
+        )
+        st_module.html(
+            '<script>document.documentElement.setAttribute("data-scoop-screener-gated","1");</script>',
+            unsafe_allow_javascript=True,
+        )
+    else:
+        st_module.html(
+            '<script>document.documentElement.removeAttribute("data-scoop-screener-gated");</script>',
+            unsafe_allow_javascript=True,
+        )
+
+
 def render_screener_last_updated(st_module, last_updated: str) -> None:
     """Render the screener refresh timestamp row."""
     st_module.markdown(

@@ -6,6 +6,7 @@ from admin_tools.tablet_mobile_layout_css import (
     DESKTOP_ANALYZE_TOP_COMPACT,
     RESPONSIVE_ANALYZE_TOP_COMPACT,
     DESKTOP_SCREENER_TOP_COMPACT,
+    DESKTOP_SCREENER_GATING_LAYOUT,
     RESPONSIVE_SCREENER_TOP_COMPACT,
     RESPONSIVE_TERMS_TOP_COMPACT,
     DESKTOP_TERMS_TOP_COMPACT,
@@ -1186,7 +1187,7 @@ _PAGE_NAV_LAYOUT_RESYNC_JS = (
                     return;
                 }
                 const link = el.closest(
-                    '[data-testid="stPageLink"] a, [data-testid="stSidebarNav"] a, a[href*="Top_10"], a[href*="Terms_of_Service"], a[href*="Landing"]'
+                    '[data-testid="stPageLink"] a, [data-testid="stSidebarNav"] a, a[href*="Top_10"], a[href*="Terms_of_Service"]'
                 );
                 if (!link) {
                     return;
@@ -3414,6 +3415,7 @@ def inject_desktop_sidebar_nav_market() -> None:
     st.html(
         f"<style id='scoop-desktop-sidebar-nav-market-css'>{DESKTOP_SIDEBAR_NAV_MARKET}</style>"
         f"<style id='scoop-desktop-screener-top-compact-css'>{DESKTOP_SCREENER_TOP_COMPACT}</style>"
+        f"<style id='scoop-desktop-screener-gating-layout-css'>{DESKTOP_SCREENER_GATING_LAYOUT}</style>"
         f"<style id='scoop-responsive-screener-top-compact-css'>{RESPONSIVE_SCREENER_TOP_COMPACT}</style>"
         f"<style id='scoop-responsive-terms-top-compact-css'>{RESPONSIVE_TERMS_TOP_COMPACT}</style>"
         f"<style id='scoop-desktop-terms-top-compact-css'>{DESKTOP_TERMS_TOP_COMPACT}</style>"
