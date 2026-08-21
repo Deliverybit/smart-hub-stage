@@ -30,6 +30,7 @@ ANALYZE_RETURN_QUERY_KEY = "scoop_from_analyze"
 ANALYZE_RETURN_STORAGE_KEY = "scoop-return-from-analyze"
 PENDING_ANALYZE_RETURN_CONSENT = "_scoop_pending_analyze_return_consent"
 POST_CONSENT_COLLAPSE_KEY = "scoop-post-consent-collapse"
+MOBILE_CONSENT_VIEW_MAX = 743
 RESPONSIVE_MAX_WIDTH = 1366
 
 
@@ -743,6 +744,82 @@ def mark_post_consent_collapsed_view() -> None:
     )
 
 
+def inject_mobile_consent_terms_nav_bridge(st_module) -> None:
+    """Phone mobile: consent-page Disclaimer/Terms links keep main-view Terms navigation."""
+    st_module.components.v1.html(
+        f"""
+<script>
+(function() {{
+    const aw = window.parent || window;
+    const doc = aw.document || document;
+    const w = aw.innerWidth || window.innerWidth || 0;
+    if (w > {MOBILE_CONSENT_VIEW_MAX}) {{
+        return;
+    }}
+    const TERMS_NAV_COLLAPSE_KEY = "scoop-terms-nav-collapse";
+    const TERMS_NAV_SUPPRESS_MS = 15000;
+    const mark = () => {{
+        try {{
+            aw.sessionStorage.setItem(TERMS_NAV_COLLAPSE_KEY, "1");
+            aw.sessionStorage.setItem("scoop-responsive-sidebar-ready", "1");
+        }} catch (e) {{}}
+        aw.__scoopSuppressSidebarExpand = Date.now() + TERMS_NAV_SUPPRESS_MS;
+        if (typeof aw.__scoopClearResponsiveExpandTimers === "function") {{
+            aw.__scoopClearResponsiveExpandTimers();
+        }}
+        doc.documentElement.removeAttribute("data-scoop-screener-gated");
+        doc.documentElement.removeAttribute("data-scoop-desktop-layout");
+        aw.__scoopLayout?.clearDesktopInlineLayout?.();
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+        if (sidebar) {{
+            sidebar.setAttribute("aria-expanded", "false");
+        }}
+        const view = doc.querySelector('[data-testid="stAppViewContainer"]');
+        if (view) {{
+            view.style.setProperty("display", "block", "important");
+            view.style.setProperty("width", "100%", "important");
+            view.style.setProperty("max-width", "100vw", "important");
+        }}
+        aw.__scoopLayout?.syncSidebarLayout?.();
+    }};
+    const onPointer = (event) => {{
+        const target = event.target;
+        const el = target && target.nodeType === 1 ? target : target && target.parentElement;
+        if (!el || typeof el.closest !== "function") {{
+            return;
+        }}
+        const link = el.closest('a[href*="Terms_of_Service"]');
+        if (!link) {{
+            return;
+        }}
+        event.preventDefault();
+        event.stopPropagation();
+        mark();
+        const href = link.getAttribute("href") || link.href || "/Terms_of_Service";
+        const url = /^https?:\\/\\//i.test(href)
+            ? href
+            : `${{aw.location.origin}}${{href.startsWith("/") ? href : `/${{href}}`}}`;
+        aw.location.assign(url);
+    }};
+    if (aw.__scoopMobileConsentTermsNavVersion !== 2) {{
+        if (aw.__scoopMobileConsentTermsNavHandler) {{
+            doc.removeEventListener("click", aw.__scoopMobileConsentTermsNavHandler, true);
+            doc.removeEventListener("touchstart", aw.__scoopMobileConsentTermsNavHandler, true);
+            doc.removeEventListener("pointerdown", aw.__scoopMobileConsentTermsNavHandler, true);
+        }}
+        aw.__scoopMobileConsentTermsNavHandler = onPointer;
+        aw.__scoopMobileConsentTermsNavVersion = 2;
+        doc.addEventListener("click", aw.__scoopMobileConsentTermsNavHandler, true);
+        doc.addEventListener("touchstart", aw.__scoopMobileConsentTermsNavHandler, {{ passive: false, capture: true }});
+        doc.addEventListener("pointerdown", aw.__scoopMobileConsentTermsNavHandler, true);
+    }}
+}})();
+</script>
+""",
+        height=0,
+    )
+
+
 def render_terms_gate(
     st_module,
     consent_key: str,
@@ -768,6 +845,7 @@ def render_terms_gate(
         return True
 
     st_module.warning(warning_text)
+    inject_mobile_consent_terms_nav_bridge(st_module)
     if st_module.checkbox(checkbox_label, key=f"{consent_key}__widget"):
         st_module.session_state[flag] = True
         persist_terms_to_browser(consent_key)

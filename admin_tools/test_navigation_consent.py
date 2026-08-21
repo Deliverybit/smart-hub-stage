@@ -21,6 +21,16 @@ class _SessionState(dict):
         return super().get(key, default)
 
 
+class _FakeComponentsHtml:
+    @staticmethod
+    def html(*_args, **_kwargs) -> None:
+        return None
+
+
+class _FakeComponents:
+    v1 = _FakeComponentsHtml
+
+
 class _FakeSt:
     def __init__(
         self,
@@ -30,6 +40,7 @@ class _FakeSt:
     ) -> None:
         self.session_state = _SessionState()
         self.query_params = dict(query_params or {})
+        self.components = _FakeComponents()
         headers = {}
         if cookie_data is not None:
             encoded = quote(json.dumps(cookie_data))

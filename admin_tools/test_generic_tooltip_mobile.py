@@ -63,7 +63,8 @@ def test_name_tooltip_override_css_and_page_snippet() -> None:
     assert "translateX(-50%)" in css
     assert ".tip-wrap:not(.headlines-tip) .tip-text" in css
     assert "background: #1e1e2f !important" in css
-    assert "opacity: 1 !important" not in css
+    assert "scoop-mobile-tip-open" in css
+    assert ".scoop-mobile-tip-open .tip-text" in css
     assert NAME_VALUE_TOOLTIP_PAGE_SNIPPET == ""
 
 
@@ -122,11 +123,16 @@ def test_mobile_generic_tip_positioning_js() -> None:
     assert "applyOtherMobileHorizontalCenter" in js
     assert "--scoop-mobile-tip-top" in js
     assert "bindMobileGenericTips" in js
+    assert "scoop-mobile-tip-open" in js
+    assert "closeAllMobileGenericTips" in js
+    assert "openMobileGenericTip" in js
+    assert "__scoopMobileGenericTipBindVersion === 5" in js
+    assert 'addEventListener("pointerenter"' not in js
 
 
 def test_version_bumps_for_asset_refresh() -> None:
-    assert GENERIC_TOOLTIP_CSS_VERSION >= 16
-    assert TOOLTIP_SCRIPT_VERSION >= 27
+    assert GENERIC_TOOLTIP_CSS_VERSION >= 17
+    assert TOOLTIP_SCRIPT_VERSION >= 28
 
 
 def test_ipad_mini_headlines_use_tablet_pro_popup() -> None:

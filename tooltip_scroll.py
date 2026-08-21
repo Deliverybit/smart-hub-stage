@@ -13,6 +13,7 @@ from admin_tools.tablet_mobile_layout_css import (
     DESKTOP_SIDEBAR_LAYOUT,
     DESKTOP_SIDEBAR_NAV_MARKET,
     DESKTOP_ZOOM_LAYOUT,
+    MOBILE_CONSENT_TERMS_MAIN_VIEW_CSS,
     MOBILE_CARD_FIELD_ORDER,
     MOBILE_HEADLINES_CARD_OVERLAY,
     DARK_RESPONSIVE_NAME_VALUE_TIP_UNDERLINE_CSS,
@@ -147,7 +148,7 @@ _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
 
     const resetGenericTooltips = () => {
         document.querySelectorAll(".tip-wrap:not(.headlines-tip)").forEach((wrap) => {
-            wrap.classList.remove("generic-tip-open");
+            wrap.classList.remove("generic-tip-open", "scoop-mobile-tip-open");
             const tip = wrap.querySelector(":scope > .tip-text");
             if (!tip) {
                 return;
@@ -186,7 +187,7 @@ _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
 
 _GENERIC_TOOLTIP_MOBILE_JS = _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS
 
-GENERIC_TOOLTIP_CSS_VERSION = 16
+GENERIC_TOOLTIP_CSS_VERSION = 17
 GENERIC_TOOLTIP_CSS_KEY = "_scoop_generic_tooltip_css_version"
 
 _DARK_RESPONSIVE_TIP_UNDERLINE_CSS = (
@@ -588,6 +589,25 @@ const __scoopIsScreenerPage = () => {
     } catch (e) {
         return false;
     }
+};
+const __scoopIsTermsPage = () => {
+    try {
+        return /Terms_of_Service/i.test(__scoopGetAppWin().location.pathname || "");
+    } catch (e) {
+        return false;
+    }
+};
+const __scoopIsPhoneViewport = () => __scoopViewportWidth() <= 743;
+const __scoopResolveTermsUrl = (link, appWin) => {
+    const href = (link && (link.getAttribute("href") || link.href)) || "/Terms_of_Service";
+    if (/^https?:\\/\\//i.test(href)) {
+        return href;
+    }
+    const path = href.startsWith("/") ? href : `/${href}`;
+    return `${appWin.location.origin}${path}`;
+};
+const __scoopNavigateMobileTerms = (link, appWin) => {
+    appWin.location.assign(__scoopResolveTermsUrl(link, appWin));
 };
 """
 
@@ -1034,10 +1054,115 @@ _PAGE_NAV_LAYOUT_RESYNC_JS = (
         syncAnalyzePageFlag();
         syncScreenerPageFlag();
         syncTermsPageFlag();
+        holdMobileTermsMainView();
         layout()?.syncSidebarLayout?.();
         syncMarketNavActive();
         resetScroll();
     };
+
+    const TERMS_NAV_COLLAPSE_KEY = "scoop-terms-nav-collapse";
+    const TERMS_NAV_SUPPRESS_MS = 15000;
+    const PAGE_NAV_BIND_VERSION = 3;
+
+    const enforceMobileTermsMainView = () => {
+        if (!__scoopIsPhoneViewport()) {
+            return;
+        }
+        doc.documentElement.removeAttribute("data-scoop-screener-gated");
+        doc.documentElement.removeAttribute("data-scoop-desktop-layout");
+        layout()?.clearDesktopInlineLayout?.();
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+        if (sidebar) {
+            sidebar.setAttribute("aria-expanded", "false");
+        }
+        const view = doc.querySelector('[data-testid="stAppViewContainer"]');
+        if (view) {
+            view.style.setProperty("display", "block", "important");
+            view.style.setProperty("width", "100%", "important");
+            view.style.setProperty("max-width", "100vw", "important");
+        }
+        layout()?.syncSidebarLayout?.();
+    };
+
+    const markMobileTermsNav = () => {
+        if (!__scoopIsPhoneViewport()) {
+            return;
+        }
+        try {
+            appWin.sessionStorage.setItem(TERMS_NAV_COLLAPSE_KEY, "1");
+            appWin.sessionStorage.setItem("scoop-responsive-sidebar-ready", "1");
+        } catch (e) {}
+        appWin.__scoopSuppressSidebarExpand = Date.now() + TERMS_NAV_SUPPRESS_MS;
+        if (typeof appWin.__scoopClearResponsiveExpandTimers === "function") {
+            appWin.__scoopClearResponsiveExpandTimers();
+        }
+        enforceMobileTermsMainView();
+    };
+
+    const holdMobileTermsMainView = () => {
+        if (!__scoopIsPhoneViewport()) {
+            return;
+        }
+        const hold =
+            __scoopIsTermsPage() ||
+            (() => {
+                try {
+                    return appWin.sessionStorage.getItem(TERMS_NAV_COLLAPSE_KEY) === "1";
+                } catch (e) {
+                    return false;
+                }
+            })();
+        if (!hold) {
+            return;
+        }
+        try {
+            appWin.sessionStorage.removeItem(TERMS_NAV_COLLAPSE_KEY);
+        } catch (e) {}
+        appWin.__scoopSuppressSidebarExpand = Date.now() + TERMS_NAV_SUPPRESS_MS;
+        enforceMobileTermsMainView();
+    };
+
+    const handleMobileTermsNavPointer = (event) => {
+        const target = event.target;
+        const el =
+            target && target.nodeType === 1 ? target : target && target.parentElement;
+        if (!el || typeof el.closest !== "function") {
+            return;
+        }
+        const link = el.closest(
+            '[data-testid="stPageLink"] a, [data-testid="stSidebarNav"] a, a[href*="Top_10"], a[href*="Terms_of_Service"]'
+        );
+        if (!link) {
+            return;
+        }
+        if (/Terms_of_Service/i.test(link.getAttribute("href") || "")) {
+            if (__scoopIsPhoneViewport()) {
+                event.preventDefault();
+                event.stopPropagation();
+                markMobileTermsNav();
+                __scoopNavigateMobileTerms(link, appWin);
+            }
+            return;
+        }
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+        if (sidebar) {
+            sidebar.setAttribute("aria-expanded", "false");
+        }
+        layout()?.syncSidebarLayout?.();
+    };
+
+    if (appWin.__scoopPageNavBindVersion !== PAGE_NAV_BIND_VERSION) {
+        if (appWin.__scoopPageNavClickHandler) {
+            doc.removeEventListener("click", appWin.__scoopPageNavClickHandler, true);
+            doc.removeEventListener("touchstart", appWin.__scoopPageNavClickHandler, true);
+            doc.removeEventListener("pointerdown", appWin.__scoopPageNavClickHandler, true);
+        }
+        appWin.__scoopPageNavClickHandler = handleMobileTermsNavPointer;
+        doc.addEventListener("click", appWin.__scoopPageNavClickHandler, true);
+        doc.addEventListener("touchstart", appWin.__scoopPageNavClickHandler, { passive: true, capture: true });
+        doc.addEventListener("pointerdown", appWin.__scoopPageNavClickHandler, true);
+        appWin.__scoopPageNavBindVersion = PAGE_NAV_BIND_VERSION;
+    }
 
     resync();
     appWin.requestAnimationFrame(() => {
@@ -1075,32 +1200,6 @@ _PAGE_NAV_LAYOUT_RESYNC_JS = (
         }, 200);
     }
 
-    if (!appWin.__scoopPageNavBound) {
-        appWin.__scoopPageNavBound = true;
-        doc.addEventListener(
-            "click",
-            (event) => {
-                const target = event.target;
-                const el =
-                    target && target.nodeType === 1 ? target : target && target.parentElement;
-                if (!el || typeof el.closest !== "function") {
-                    return;
-                }
-                const link = el.closest(
-                    '[data-testid="stPageLink"] a, [data-testid="stSidebarNav"] a, a[href*="Top_10"], a[href*="Terms_of_Service"]'
-                );
-                if (!link) {
-                    return;
-                }
-                const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
-                if (sidebar) {
-                    sidebar.setAttribute("aria-expanded", "false");
-                }
-                layout()?.syncSidebarLayout?.();
-            },
-            true
-        );
-    }
 })();
 """
 )
@@ -1348,6 +1447,8 @@ _RESPONSIVE_SIDEBAR_JS = (
     const ANALYZE_RETURN_KEY = "scoop-return-from-analyze";
     const POST_CONSENT_KEY = "scoop-post-consent-collapse";
     const SIDEBAR_BOOTSTRAP_KEY = "scoop-responsive-sidebar-ready";
+    const TERMS_NAV_COLLAPSE_KEY = "scoop-terms-nav-collapse";
+    const TERMS_NAV_SUPPRESS_MS = 15000;
 
     const markSidebarBootstrapped = () => {
         tabletBootstrapped = true;
@@ -1432,6 +1533,63 @@ _RESPONSIVE_SIDEBAR_JS = (
         layout()?.syncSidebarLayout?.();
         removeLegacyCloseButton();
         return true;
+    };
+
+    const shouldHoldMobileTermsMainView = () => {
+        if (!__scoopIsPhoneViewport()) {
+            return false;
+        }
+        if (__scoopIsTermsPage()) {
+            return true;
+        }
+        try {
+            return appWin.sessionStorage.getItem(TERMS_NAV_COLLAPSE_KEY) === "1";
+        } catch (e) {
+            return false;
+        }
+    };
+
+    const holdMainViewForMobileTerms = () => {
+        if (!shouldHoldMobileTermsMainView()) {
+            return false;
+        }
+        try {
+            appWin.sessionStorage.removeItem(TERMS_NAV_COLLAPSE_KEY);
+        } catch (e) {}
+        appWin.__scoopSuppressSidebarExpand = Date.now() + TERMS_NAV_SUPPRESS_MS;
+        markSidebarBootstrapped();
+        doc.documentElement.removeAttribute("data-scoop-screener-gated");
+        doc.documentElement.removeAttribute("data-scoop-desktop-layout");
+        layout()?.clearDesktopInlineLayout?.();
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+        if (sidebar && sidebar.getAttribute("aria-expanded") !== "false") {
+            sidebar.setAttribute("aria-expanded", "false");
+        }
+        const view = doc.querySelector('[data-testid="stAppViewContainer"]');
+        if (view) {
+            view.style.setProperty("display", "block", "important");
+            view.style.setProperty("width", "100%", "important");
+            view.style.setProperty("max-width", "100vw", "important");
+        }
+        layout()?.syncSidebarLayout?.();
+        removeLegacyCloseButton();
+        return true;
+    };
+
+    const scheduleCollapseAfterMobileTermsNav = () => {
+        if (appWin.__scoopMobileTermsNavCollapseTimers) {
+            appWin.__scoopMobileTermsNavCollapseTimers.forEach((timerId) => {
+                appWin.clearTimeout(timerId);
+            });
+        }
+        appWin.__scoopMobileTermsNavCollapseTimers = [];
+        const run = () => holdMainViewForMobileTerms();
+        run();
+        appWin.requestAnimationFrame(run);
+        [150, 500, 1200, 2500].forEach((delay) => {
+            const timerId = appWin.setTimeout(run, delay);
+            appWin.__scoopMobileTermsNavCollapseTimers.push(timerId);
+        });
     };
 
     const ensureScreenerContentVisible = () => {
@@ -1606,6 +1764,11 @@ _RESPONSIVE_SIDEBAR_JS = (
             scheduleCollapseAfterConsent();
             return;
         }
+        if (shouldHoldMobileTermsMainView()) {
+            markSidebarBootstrapped();
+            scheduleCollapseAfterMobileTermsNav();
+            return;
+        }
         if (tabletBootstrapped) {
             layout()?.syncSidebarLayout();
             return;
@@ -1647,6 +1810,12 @@ _RESPONSIVE_SIDEBAR_JS = (
             });
             appWin.__scoopPostConsentCollapseTimers = [];
         }
+        if (appWin.__scoopMobileTermsNavCollapseTimers) {
+            appWin.__scoopMobileTermsNavCollapseTimers.forEach((timerId) => {
+                appWin.clearTimeout(timerId);
+            });
+            appWin.__scoopMobileTermsNavCollapseTimers = [];
+        }
     };
     if (
         !isAnalyzeReturnSuppressed() &&
@@ -1687,6 +1856,13 @@ _TOOLTIP_SCROLL_JS = """
     const DESKTOP_HEADLINES_WIDTH_TRIM = 70;
     const DESKTOP_HEADLINES_TOP = 100;
     const DESKTOP_HEADLINES_ANCHOR_GAP = 10;
+    const MOBILE_GENERIC_TIP_MAX = 768;
+    const isMobileGenericTipViewport = () => window.innerWidth <= MOBILE_GENERIC_TIP_MAX;
+    const closeAllMobileGenericTips = () => {
+        document.querySelectorAll(".tip-wrap.scoop-mobile-tip-open").forEach((wrap) => {
+            wrap.classList.remove("scoop-mobile-tip-open");
+        });
+    };
 
     if (!window.__scoopDesktopHeadlinesHideTimers) {
         window.__scoopDesktopHeadlinesHideTimers = new WeakMap();
@@ -1848,6 +2024,9 @@ _TOOLTIP_SCROLL_JS = """
             root.classList.remove(className);
             document.body.classList.remove(className);
             return;
+        }
+        if (isMobileGenericTipViewport()) {
+            closeAllMobileGenericTips();
         }
         root.classList.add(className);
         document.body.classList.add(className);
@@ -2761,7 +2940,7 @@ _TOOLTIP_SCROLL_JS = """
 
     const resetGenericTooltips = () => {
         document.querySelectorAll(".tip-wrap:not(.headlines-tip)").forEach((wrap) => {
-            wrap.classList.remove("generic-tip-open");
+            wrap.classList.remove("generic-tip-open", "scoop-mobile-tip-open");
             const tip = wrap.querySelector(":scope > .tip-text");
             if (!tip) {
                 return;
@@ -2789,10 +2968,8 @@ _TOOLTIP_SCROLL_JS = """
         });
     };
 
-    const MOBILE_GENERIC_TIP_MAX = 768;
     const IPHONE_SE_MAX = 375;
     const MOBILE_GENERIC_TIP_GAP = 20;
-    const isMobileGenericTipViewport = () => window.innerWidth <= MOBILE_GENERIC_TIP_MAX;
     const isIphoneSEViewport = () => window.innerWidth <= IPHONE_SE_MAX;
     const isOtherMobileViewport = () =>
         window.innerWidth > IPHONE_SE_MAX && window.innerWidth <= MOBILE_GENERIC_TIP_MAX;
@@ -2876,25 +3053,37 @@ _TOOLTIP_SCROLL_JS = """
         window.requestAnimationFrame(() => positionMobileGenericTip(wrap, event));
     };
 
-    const bindMobileGenericTips = () => {
-        if (window.__scoopMobileGenericTipBindVersion === 4) {
+    const openMobileGenericTip = (wrap, event) => {
+        if (!isMobileGenericTipViewport() || !isMobileGenericTipWrap(wrap)) {
             return;
         }
-        window.__scoopMobileGenericTipBindVersion = 4;
+        closeAllMobileGenericTips();
+        wrap.classList.add("scoop-mobile-tip-open");
+        scheduleMobileGenericTip(wrap, event);
+    };
 
-        const handleMobileGenericTipEvent = (event) => {
+    const bindMobileGenericTips = () => {
+        if (window.__scoopMobileGenericTipBindVersion === 5) {
+            return;
+        }
+        window.__scoopMobileGenericTipBindVersion = 5;
+
+        const handleMobileGenericTipPointer = (event) => {
+            if (!isMobileGenericTipViewport()) {
+                return;
+            }
             const wrap = event.target && event.target.closest
                 ? event.target.closest(".tip-wrap:not(.headlines-tip)")
                 : null;
-            if (!wrap || !isMobileGenericTipWrap(wrap)) {
+            if (wrap && isMobileGenericTipWrap(wrap)) {
+                openMobileGenericTip(wrap, event);
                 return;
             }
-            scheduleMobileGenericTip(wrap, event);
+            closeAllMobileGenericTips();
         };
 
-        document.addEventListener("pointerenter", handleMobileGenericTipEvent, true);
-        document.addEventListener("pointerdown", handleMobileGenericTipEvent, true);
-        document.addEventListener("touchstart", handleMobileGenericTipEvent, { passive: true, capture: true });
+        document.addEventListener("pointerdown", handleMobileGenericTipPointer, true);
+        document.addEventListener("touchstart", handleMobileGenericTipPointer, { passive: true, capture: true });
     };
 
     bindMobileGenericTips();
@@ -2904,22 +3093,11 @@ _TOOLTIP_SCROLL_JS = """
             resetGenericTooltips();
             return;
         }
-        document.querySelectorAll(".tip-wrap:not(.headlines-tip)").forEach((wrap) => {
+        document.querySelectorAll(".tip-wrap.scoop-mobile-tip-open").forEach((wrap) => {
             if (!isMobileGenericTipWrap(wrap)) {
                 return;
             }
-            const tip = wrap.querySelector(":scope > .tip-text");
-            if (!tip) {
-                return;
-            }
-            const visible =
-                tip.matches(":hover") ||
-                wrap.matches(":hover") ||
-                wrap.matches(":active") ||
-                wrap.matches(":focus-within");
-            if (visible) {
-                scheduleMobileGenericTip(wrap, null);
-            }
+            scheduleMobileGenericTip(wrap, null);
         });
     };
 
@@ -3256,8 +3434,8 @@ def _inject_responsive_bootstrap_css() -> str:
 BOOTSTRAP_INSTALLED_KEY = "_scoop_responsive_bootstrap_installed"
 BOOTSTRAP_SCRIPT_VERSION = 4
 TOOLTIP_INSTALLED_KEY = "_scoop_tooltip_scroll_installed"
-TOOLTIP_SCRIPT_VERSION = 27
-SIDEBAR_HANDLER_INSTALLED_KEY = "_scoop_responsive_sidebar_handler_installed"
+TOOLTIP_SCRIPT_VERSION = 28
+SIDEBAR_HANDLER_INSTALLED_KEY = "_scoop_responsive_sidebar_handler_v3"
 
 
 def _responsive_bootstrap_markup() -> str:
@@ -3329,6 +3507,7 @@ def inject_desktop_sidebar_nav_market() -> None:
         f"<style id='scoop-desktop-screener-gating-layout-css'>{DESKTOP_SCREENER_GATING_LAYOUT}</style>"
         f"<style id='scoop-responsive-screener-top-compact-css'>{RESPONSIVE_SCREENER_TOP_COMPACT}</style>"
         f"<style id='scoop-responsive-terms-top-compact-css'>{RESPONSIVE_TERMS_TOP_COMPACT}</style>"
+        f"<style id='scoop-mobile-consent-terms-main-view-css'>{MOBILE_CONSENT_TERMS_MAIN_VIEW_CSS}</style>"
         f"<style id='scoop-desktop-terms-top-compact-css'>{DESKTOP_TERMS_TOP_COMPACT}</style>"
         f"<style id='scoop-responsive-sidebar-brand-toggle-buffer-css'>{RESPONSIVE_SIDEBAR_BRAND_TOGGLE_BUFFER}</style>"
         f"<style id='scoop-desktop-sidebar-brand-toggle-buffer-css'>{DESKTOP_SIDEBAR_BRAND_TOGGLE_BUFFER}</style>",

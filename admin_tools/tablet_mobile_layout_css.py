@@ -479,7 +479,7 @@ _MOBILE_FIXED_GENERIC_TIP_TEXT = f"""
             font-weight: 400 !important;
             white-space: normal !important;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
-            pointer-events: auto !important;
+            pointer-events: none !important;
             max-height: min(72vh, 28rem) !important;
             overflow-x: hidden !important;
             overflow-y: auto !important;
@@ -516,9 +516,27 @@ _OTHER_MOBILE_FIXED_GENERIC_TIP_TEXT = f"""
         }}
 """
 
+# Mobile (≤768px): JS-controlled open/close — suppress sticky :hover/:active show.
+_MOBILE_GENERIC_TIP_OPEN_CLOSE_CSS = f"""
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open) .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):hover .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):active .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):focus-within .tip-text {{
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }}
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open .tip-text {{
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }}
+"""
+
 RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS = f"""
 @media (max-width: 768px) {{
 {_MOBILE_FIXED_GENERIC_TIP_TEXT}
+{_MOBILE_GENERIC_TIP_OPEN_CLOSE_CSS}
 }}
 @media (max-width: 375px) {{
 {_IPHONE_SE_FIXED_GENERIC_TIP_TEXT}
@@ -2236,6 +2254,39 @@ RESPONSIVE_TERMS_TOP_COMPACT = f"""
 @media (max-width: 1366px) {{
 {_RESPONSIVE_TERMS_TOP_COMPACT_RULES}
 }}
+"""
+
+# Phone mobile (≤743px): Terms page stays in overlay-sidebar layout (not desktop split).
+MOBILE_CONSENT_TERMS_MAIN_VIEW_CSS = """
+@media (max-width: 743px) {
+    html[data-scoop-terms-active="1"] [data-testid="stAppViewContainer"],
+    html[data-scoop-terms-active="1"][data-scoop-desktop-layout="1"] [data-testid="stAppViewContainer"],
+    html[data-scoop-terms-active="1"][data-scoop-screener-gated="1"] [data-testid="stAppViewContainer"] {
+        display: block !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+    }
+    html[data-scoop-terms-active="1"] [data-testid="stAppViewContainer"] > div:not([data-testid="stSidebar"]),
+    html[data-scoop-terms-active="1"] [data-testid="stAppViewContainer"] > section.main {
+        width: 100% !important;
+        max-width: 100vw !important;
+        flex: none !important;
+    }
+    html[data-scoop-terms-active="1"] section[data-testid="stSidebar"]:not([aria-expanded="true"]),
+    html[data-scoop-terms-active="1"][data-scoop-desktop-layout="1"] section[data-testid="stSidebar"]:not([aria-expanded="true"]) {
+        position: fixed !important;
+        transform: translateX(-100vw) !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+    html[data-scoop-terms-active="1"] .scoop-banner-desktop,
+    html[data-scoop-terms-active="1"][data-scoop-screener-gated="1"] .scoop-banner-desktop {
+        display: none !important;
+    }
+}
 """
 
 TABLET_SEARCH_MOBILE_LAYOUT = (

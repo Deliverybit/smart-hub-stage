@@ -16,6 +16,11 @@ render_environment_banner(st)
 install_theme_support()
 install_responsive_sidebar_handler()
 
+st.html(
+    '<script>document.documentElement.removeAttribute("data-scoop-screener-gated");</script>',
+    unsafe_allow_javascript=True,
+)
+
 # ── Global responsive styling (shared with other pages) ───────────────
 st.markdown(
     """
