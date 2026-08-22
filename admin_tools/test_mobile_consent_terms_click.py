@@ -29,7 +29,7 @@ def test_page_nav_intercepts_terms_on_phone() -> None:
     js = _PAGE_NAV_LAYOUT_RESYNC_JS
     assert "__scoopNavigateMobileTerms(link, appWin)" in js
     assert "event.preventDefault()" in js
-    assert "PAGE_NAV_BIND_VERSION = 3" in js
+    assert "PAGE_NAV_BIND_VERSION = 6" in js
 
 
 def test_mobile_terms_css_overrides_stale_desktop_flags() -> None:

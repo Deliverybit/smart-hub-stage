@@ -291,6 +291,86 @@ MOBILE_CARD_FIELD_ORDER = """
         .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] {
             order: 11 !important;
         }
+"""
+
+_TABLET_ANALYZE_SCOPE = (
+    'html body .stApp [data-testid="stAppViewContainer"] .stMarkdown'
+)
+
+# Tablet (744–1366px): blue underlined Analyze link, right-aligned in a white card row.
+TABLET_ANALYZE_LINK_CSS = f"""
+@media (min-width: 744px) and (max-width: 1366px) {{
+        {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table tbody td[data-label="Analyze"] {{
+            display: block !important;
+            grid-template-columns: minmax(0, 1fr) !important;
+            gap: 0 !important;
+            margin-top: 0.55rem !important;
+            padding: 0.62rem 0.85rem !important;
+            border: 1px solid #e5e7eb !important;
+            border-radius: 10px !important;
+            background: #ffffff !important;
+        }}
+        {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-label {{
+            display: none !important;
+        }}
+        {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-val {{
+            display: block !important;
+            text-align: right !important;
+            width: 100% !important;
+            min-width: 0 !important;
+        }}
+        {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-analyze-cell {{
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            width: 100% !important;
+            gap: 0.75rem !important;
+        }}
+        {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table .fr-analyze-cell .fr-analyze-mobile-tip {{
+            display: inline-block !important;
+            flex: 0 1 auto !important;
+            order: 1 !important;
+            cursor: help !important;
+            border-bottom: 1px dashed #888 !important;
+            color: inherit !important;
+            font-weight: 600 !important;
+            text-decoration: none !important;
+        }}
+        {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link,
+        {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link:link,
+        {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link:visited,
+        {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link:hover,
+        {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link:active,
+        {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link:focus {{
+            display: inline !important;
+            visibility: visible !important;
+            color: #2563eb !important;
+            background: transparent !important;
+            background-color: transparent !important;
+            border: none !important;
+            border-bottom: none !important;
+            border-radius: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            text-decoration: underline !important;
+            text-underline-offset: 0.14em !important;
+            font-weight: 600 !important;
+            font-size: inherit !important;
+            line-height: inherit !important;
+            white-space: nowrap !important;
+            box-shadow: none !important;
+            outline: none !important;
+            cursor: pointer !important;
+            flex: 0 0 auto !important;
+            order: 2 !important;
+            margin-left: auto !important;
+        }}
+}}
+"""
+
+# Phone (≤743px): dashed Analyze tooltip — unchanged from prior mobile/tablet card layout.
+PHONE_ANALYZE_MOBILE_TIP_CSS = """
+@media (max-width: 743px) {
         .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell .fr-analyze-link {
             display: none !important;
         }
@@ -302,6 +382,7 @@ MOBILE_CARD_FIELD_ORDER = """
             font-weight: 600 !important;
             text-decoration: none !important;
         }
+}
 """
 
 # Mobile/tablet: generic info tooltips mirror desktop (above trigger, CSS :hover only).
@@ -533,6 +614,33 @@ _MOBILE_GENERIC_TIP_OPEN_CLOSE_CSS = f"""
         }}
 """
 
+# Tablet (769–1366px): beat page-level hover/scroll rules so JS tap-open stays visible.
+_TABLET_PAGE_TIP_SCOPE = (
+    'html body .stApp [data-testid="stAppViewContainer"] .stMarkdown'
+)
+_TABLET_GENERIC_TIP_RELIABILITY_CSS = f"""
+        {_TABLET_PAGE_TIP_SCOPE} .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):hover .tip-text,
+        {_TABLET_PAGE_TIP_SCOPE} .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):active .tip-text,
+        {_TABLET_PAGE_TIP_SCOPE} .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):focus-within .tip-text,
+        {_TABLET_PAGE_TIP_SCOPE} .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open) .tip-text:hover,
+        {_TABLET_PAGE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):hover .tip-text,
+        {_TABLET_PAGE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):active .tip-text,
+        {_TABLET_PAGE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):hover .tip-text,
+        {_TABLET_PAGE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):active .tip-text,
+        {_TABLET_PAGE_TIP_SCOPE} [data-testid="stHorizontalBlock"] .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):hover .tip-text,
+        {_TABLET_PAGE_TIP_SCOPE} [data-testid="stHorizontalBlock"] .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):active .tip-text {{
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }}
+        html.scoop-tooltip-scrolling {_TABLET_PAGE_TIP_SCOPE} .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open .tip-text,
+        body.scoop-tooltip-scrolling {_TABLET_PAGE_TIP_SCOPE} .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open .tip-text {{
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }}
+"""
+
 RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS = f"""
 @media (max-width: 768px) {{
 {_MOBILE_FIXED_GENERIC_TIP_TEXT}
@@ -543,6 +651,18 @@ RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS = f"""
 }}
 @media (min-width: 376px) and (max-width: 768px) {{
 {_OTHER_MOBILE_FIXED_GENERIC_TIP_TEXT}
+}}
+@media (min-width: 769px) and (max-width: 1366px) {{
+{_MOBILE_FIXED_GENERIC_TIP_TEXT}
+{_MOBILE_GENERIC_TIP_OPEN_CLOSE_CSS}
+{_OTHER_MOBILE_FIXED_GENERIC_TIP_TEXT}
+{_TABLET_GENERIC_TIP_RELIABILITY_CSS}
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text::before,
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text::after {{
+            content: none !important;
+            display: none !important;
+            border: 0 !important;
+        }}
 }}
 """ + DARK_RESPONSIVE_NAME_VALUE_TIP_UNDERLINE_CSS
 
@@ -2336,6 +2456,39 @@ IPAD_MINI_PORTRAIT_LAYOUT = f"""
     @media (min-width: 744px) and (max-width: 768px) {{
 {SURFACE_DUO_SIDEBAR}
     }}
+"""
+
+# iPad Mini (744–768px): keep generic + headlines popups inside the viewport (no clip/off-page).
+_IPAD_MINI_POPUP_SCOPE = (
+    'html body .stApp [data-testid="stAppViewContainer"] .stMarkdown'
+)
+IPAD_MINI_POPUP_CLAMP_CSS = f"""
+@media (min-width: 744px) and (max-width: 768px) {{
+        {_IPAD_MINI_POPUP_SCOPE} .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open .tip-text {{
+            box-sizing: border-box !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            max-height: min(calc(100dvh - 1.5rem), calc(100vh - 1.5rem), var(--scoop-ipad-mini-tip-max-height, 28rem)) !important;
+        }}
+        {_IPAD_MINI_POPUP_SCOPE} .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text {{
+            box-sizing: border-box !important;
+            top: var(--hl-fixed-top, 90px) !important;
+            left: var(--hl-fixed-left, 50%) !important;
+            right: auto !important;
+            width: var(--hl-fixed-width, min(20rem, calc(100vw - 1.5rem))) !important;
+            max-width: var(--hl-fixed-width, min(20rem, calc(100vw - 1.5rem))) !important;
+            overflow: hidden !important;
+            max-height: min(var(--hl-fixed-max-height, calc(100dvh - 90px - 30px)), calc(100dvh - 90px - 30px), calc(100vh - 90px - 30px)) !important;
+        }}
+        {_IPAD_MINI_POPUP_SCOPE} .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll {{
+            min-height: 0 !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            overscroll-behavior-y: contain !important;
+        }}
+}}
 """
 
 # Injected early on every page (via theme_mode) so mobile/tablet overlay sidebar wins first paint.

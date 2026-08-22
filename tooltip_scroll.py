@@ -23,6 +23,9 @@ from admin_tools.tablet_mobile_layout_css import (
     SIDEBAR_NAV_COMPACT,
     RESPONSIVE_SIDEBAR_BRAND_TOGGLE_BUFFER,
     DESKTOP_SIDEBAR_BRAND_TOGGLE_BUFFER,
+    TABLET_ANALYZE_LINK_CSS,
+    PHONE_ANALYZE_MOBILE_TIP_CSS,
+    IPAD_MINI_POPUP_CLAMP_CSS,
 )
 
 _MOBILE_HEADLINES_CSS = f"""
@@ -187,7 +190,7 @@ _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
 
 _GENERIC_TOOLTIP_MOBILE_JS = _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS
 
-GENERIC_TOOLTIP_CSS_VERSION = 17
+GENERIC_TOOLTIP_CSS_VERSION = 27
 GENERIC_TOOLTIP_CSS_KEY = "_scoop_generic_tooltip_css_version"
 
 _DARK_RESPONSIVE_TIP_UNDERLINE_CSS = (
@@ -598,6 +601,10 @@ const __scoopIsTermsPage = () => {
     }
 };
 const __scoopIsPhoneViewport = () => __scoopViewportWidth() <= 743;
+const __scoopIsTabletViewport = () => {
+    const w = __scoopViewportWidth();
+    return w >= 744 && w <= 1366;
+};
 const __scoopResolveTermsUrl = (link, appWin) => {
     const href = (link && (link.getAttribute("href") || link.href)) || "/Terms_of_Service";
     if (/^https?:\\/\\//i.test(href)) {
@@ -1062,7 +1069,7 @@ _PAGE_NAV_LAYOUT_RESYNC_JS = (
 
     const TERMS_NAV_COLLAPSE_KEY = "scoop-terms-nav-collapse";
     const TERMS_NAV_SUPPRESS_MS = 15000;
-    const PAGE_NAV_BIND_VERSION = 3;
+    const PAGE_NAV_BIND_VERSION = 6;
 
     const enforceMobileTermsMainView = () => {
         if (!__scoopIsPhoneViewport()) {
@@ -1142,6 +1149,28 @@ _PAGE_NAV_LAYOUT_RESYNC_JS = (
                 markMobileTermsNav();
                 __scoopNavigateMobileTerms(link, appWin);
             }
+            return;
+        }
+        if (__scoopIsPhoneViewport()) {
+            event.preventDefault();
+            event.stopPropagation();
+            const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+            if (sidebar) {
+                sidebar.setAttribute("aria-expanded", "false");
+            }
+            layout()?.syncSidebarLayout?.();
+            appWin.location.assign(__scoopResolveTermsUrl(link, appWin));
+            return;
+        }
+        if (__scoopIsTabletViewport()) {
+            event.preventDefault();
+            event.stopPropagation();
+            const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+            if (sidebar) {
+                sidebar.setAttribute("aria-expanded", "false");
+            }
+            layout()?.syncSidebarLayout?.();
+            appWin.location.assign(__scoopResolveTermsUrl(link, appWin));
             return;
         }
         const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
@@ -1849,6 +1878,9 @@ _TOOLTIP_SCROLL_JS = """
     const RESPONSIVE_MAX = 1366;
     const IPAD_MINI_MIN = 744;
     const IPAD_MINI_MAX = 768;
+    const IPAD_MINI_HEADLINES_TOP = 90;
+    const IPAD_MINI_HEADLINES_BOTTOM = 30;
+    const IPAD_MINI_HEADLINES_MAX_WIDTH = 320;
     const VIEWPORT_PAD = 12;
     const GAP = 10;
     const HEADLINES_DESKTOP_OFFSET = 12;
@@ -1857,11 +1889,24 @@ _TOOLTIP_SCROLL_JS = """
     const DESKTOP_HEADLINES_TOP = 100;
     const DESKTOP_HEADLINES_ANCHOR_GAP = 10;
     const MOBILE_GENERIC_TIP_MAX = 768;
+    const TABLET_GENERIC_TIP_MIN = 769;
+    const TABLET_GENERIC_TIP_MAX = 1366;
+    const TABLET_GENERIC_TIP_OPEN_GRACE_MS = 450;
     const isMobileGenericTipViewport = () => window.innerWidth <= MOBILE_GENERIC_TIP_MAX;
+    const isTabletGenericTipViewport = () => {
+        const w = window.innerWidth;
+        return w >= TABLET_GENERIC_TIP_MIN && w <= TABLET_GENERIC_TIP_MAX;
+    };
+    const isTapGenericTipViewport = () =>
+        isMobileGenericTipViewport() || isTabletGenericTipViewport();
     const closeAllMobileGenericTips = () => {
         document.querySelectorAll(".tip-wrap.scoop-mobile-tip-open").forEach((wrap) => {
             wrap.classList.remove("scoop-mobile-tip-open");
         });
+    };
+    const clearTooltipScrollingHide = () => {
+        root.classList.remove(className);
+        document.body.classList.remove(className);
     };
 
     if (!window.__scoopDesktopHeadlinesHideTimers) {
@@ -1932,6 +1977,10 @@ _TOOLTIP_SCROLL_JS = """
 
     const isPhoneMobileHeadlinesOpen = () =>
         isPhoneMobileHeadlinesViewport() &&
+        !!document.querySelector(".full-results-wrap .tip-wrap.headlines-tip .hl-tip-cb:checked");
+
+    const isTabletProHeadlinesOpen = () =>
+        usesTabletProHeadlinesPopup() &&
         !!document.querySelector(".full-results-wrap .tip-wrap.headlines-tip .hl-tip-cb:checked");
 
     const isInsideDesktopHeadlinesPopup = (node) => {
@@ -2010,7 +2059,11 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const hideTooltips = (event) => {
-        if (isDesktopHeadlinesSessionOpen() || isPhoneMobileHeadlinesOpen()) {
+        if (
+            isDesktopHeadlinesSessionOpen() ||
+            isPhoneMobileHeadlinesOpen() ||
+            isTabletProHeadlinesOpen()
+        ) {
             root.classList.remove(className);
             document.body.classList.remove(className);
             return;
@@ -2023,6 +2076,26 @@ _TOOLTIP_SCROLL_JS = """
         if (event && isInsideDesktopHeadlinesPopup(event.target)) {
             root.classList.remove(className);
             document.body.classList.remove(className);
+            return;
+        }
+        if (isTabletGenericTipViewport()) {
+            const openedAt = window.__scoopTabletGenericTipOpenedAt || 0;
+            if (Date.now() - openedAt < TABLET_GENERIC_TIP_OPEN_GRACE_MS) {
+                return;
+            }
+            const openWrap = document.querySelector(".tip-wrap.scoop-mobile-tip-open");
+            if (
+                openWrap &&
+                event &&
+                event.target &&
+                event.target.closest &&
+                event.target.closest(".tip-wrap.scoop-mobile-tip-open")
+            ) {
+                return;
+            }
+            closeAllMobileGenericTips();
+            root.classList.add(className);
+            document.body.classList.add(className);
             return;
         }
         if (isMobileGenericTipViewport()) {
@@ -2729,6 +2802,70 @@ _TOOLTIP_SCROLL_JS = """
         unbindDesktopHeadlinesScrollWheel,
     };
 
+    const getIpadMiniHeadlinesSlot = () => {
+        const top = IPAD_MINI_HEADLINES_TOP;
+        const pad = VIEWPORT_PAD;
+        const viewRight = window.innerWidth - pad;
+        const viewLeft = pad;
+        const availableWidth = viewRight - viewLeft;
+
+        const width = Math.round(
+            Math.min(
+                availableWidth,
+                IPAD_MINI_HEADLINES_MAX_WIDTH,
+                Math.max(260, Math.round(window.innerWidth * 0.42))
+            )
+        );
+
+        let left = Math.round((window.innerWidth - width) / 2);
+        left = Math.max(viewLeft, Math.min(left, viewRight - width));
+
+        const maxHeight = Math.max(
+            160,
+            window.innerHeight - top - IPAD_MINI_HEADLINES_BOTTOM
+        );
+
+        return {
+            top,
+            left: Math.round(left),
+            width: Math.round(width),
+            maxHeight: Math.round(maxHeight),
+        };
+    };
+
+    const clampIpadMiniGenericTipInViewport = (tip, anchorY) => {
+        const pad = VIEWPORT_PAD;
+        const vh = window.innerHeight;
+        const maxPanelHeight = Math.max(120, vh - 2 * pad);
+
+        tip.style.setProperty("max-height", `${maxPanelHeight}px`, "important");
+        tip.style.setProperty("--scoop-ipad-mini-tip-max-height", `${maxPanelHeight}px`, "important");
+        tip.style.setProperty("overflow-y", "auto", "important");
+        tip.style.setProperty("overflow-x", "hidden", "important");
+
+        applyOtherMobileHorizontalCenter(tip);
+
+        let tipHeight = measureMobileGenericTipHeight(tip);
+        tipHeight = Math.min(tipHeight, maxPanelHeight);
+
+        const gap = MOBILE_GENERIC_TIP_GAP;
+        let top = anchorY - tipHeight - gap;
+        if (top < pad) {
+            const below = anchorY + gap;
+            if (below + tipHeight <= vh - pad) {
+                top = below;
+            } else {
+                top = Math.max(pad, vh - pad - tipHeight);
+            }
+        }
+        top = Math.max(pad, Math.min(top, vh - pad - tipHeight));
+
+        const fittedMaxHeight = Math.max(80, vh - top - pad);
+        tip.style.setProperty("--scoop-mobile-tip-top", `${Math.round(top)}px`, "important");
+        tip.style.setProperty("max-height", `${fittedMaxHeight}px`, "important");
+        tip.style.setProperty("--scoop-ipad-mini-tip-max-height", `${fittedMaxHeight}px`, "important");
+    };
+
     const getResponsiveHeadlinesSlot = () => {
         const header = document.querySelector('[data-testid="stHeader"]');
         const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
@@ -2905,7 +3042,9 @@ _TOOLTIP_SCROLL_JS = """
             return;
         }
 
-        const slot = getResponsiveHeadlinesSlot();
+        const slot = isIpadMiniViewport()
+            ? getIpadMiniHeadlinesSlot()
+            : getResponsiveHeadlinesSlot();
 
         tip.style.setProperty("--hl-fixed-top", `${slot.top}px`);
         tip.style.setProperty("--hl-fixed-left", `${slot.left}px`);
@@ -2973,6 +3112,8 @@ _TOOLTIP_SCROLL_JS = """
     const isIphoneSEViewport = () => window.innerWidth <= IPHONE_SE_MAX;
     const isOtherMobileViewport = () =>
         window.innerWidth > IPHONE_SE_MAX && window.innerWidth <= MOBILE_GENERIC_TIP_MAX;
+    const usesTapCenteredGenericTip = () =>
+        isOtherMobileViewport() || isTabletGenericTipViewport();
 
     const isMobileGenericTipWrap = (wrap) =>
         !!wrap && !wrap.classList.contains("headlines-tip");
@@ -2982,7 +3123,7 @@ _TOOLTIP_SCROLL_JS = """
         tip.style.setProperty("opacity", "1", "important");
         if (isIphoneSEViewport()) {
             tip.style.setProperty("top", "-9999px", "important");
-        } else if (isOtherMobileViewport()) {
+        } else if (usesTapCenteredGenericTip()) {
             tip.style.setProperty("top", "-9999px", "important");
         } else {
             tip.style.setProperty("position", "fixed", "important");
@@ -3014,7 +3155,7 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const applyOtherMobileHorizontalCenter = (tip) => {
-        if (!isOtherMobileViewport() || !tip) {
+        if (!usesTapCenteredGenericTip() || !tip) {
             return;
         }
         tip.style.setProperty("position", "fixed", "important");
@@ -3027,7 +3168,7 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const positionMobileGenericTip = (wrap, event) => {
-        if (!isMobileGenericTipViewport() || !isMobileGenericTipWrap(wrap)) {
+        if (!isTapGenericTipViewport() || !isMobileGenericTipWrap(wrap)) {
             return;
         }
         const tip = wrap.querySelector(":scope > .tip-text");
@@ -3040,6 +3181,10 @@ _TOOLTIP_SCROLL_JS = """
             (event && typeof event.clientY === "number" ? event.clientY : null) ??
             (touch ? touch.clientY : null) ??
             wrap.getBoundingClientRect().top;
+        if (isIpadMiniViewport()) {
+            clampIpadMiniGenericTipInViewport(tip, anchorY);
+            return;
+        }
         const tipHeight = measureMobileGenericTipHeight(tip);
         const maxTop = Math.max(8, window.innerHeight - tipHeight - 8);
         const top = Math.max(8, Math.min(anchorY - tipHeight - MOBILE_GENERIC_TIP_GAP, maxTop));
@@ -3062,11 +3207,22 @@ _TOOLTIP_SCROLL_JS = """
         scheduleMobileGenericTip(wrap, event);
     };
 
-    const bindMobileGenericTips = () => {
-        if (window.__scoopMobileGenericTipBindVersion === 5) {
+    const openTabletGenericTip = (wrap, event) => {
+        if (!isTabletGenericTipViewport() || !isMobileGenericTipWrap(wrap)) {
             return;
         }
-        window.__scoopMobileGenericTipBindVersion = 5;
+        closeAllMobileGenericTips();
+        wrap.classList.add("scoop-mobile-tip-open");
+        clearTooltipScrollingHide();
+        window.__scoopTabletGenericTipOpenedAt = Date.now();
+        scheduleMobileGenericTip(wrap, event);
+    };
+
+    const bindMobileGenericTips = () => {
+        if (window.__scoopMobileGenericTipBindVersion === 7) {
+            return;
+        }
+        window.__scoopMobileGenericTipBindVersion = 7;
 
         const handleMobileGenericTipPointer = (event) => {
             if (!isMobileGenericTipViewport()) {
@@ -3086,10 +3242,77 @@ _TOOLTIP_SCROLL_JS = """
         document.addEventListener("touchstart", handleMobileGenericTipPointer, { passive: true, capture: true });
     };
 
+    const bindTabletGenericTips = () => {
+        if (window.__scoopTabletGenericTipBindVersion === 1) {
+            return;
+        }
+        window.__scoopTabletGenericTipBindVersion = 1;
+
+        const handleTabletGenericTipTap = (event) => {
+            if (!isTabletGenericTipViewport()) {
+                return;
+            }
+            const wrap =
+                event.target && event.target.closest
+                    ? event.target.closest(".tip-wrap:not(.headlines-tip)")
+                    : null;
+            if (wrap && isMobileGenericTipWrap(wrap)) {
+                if (event.type === "pointerdown") {
+                    event.preventDefault();
+                }
+                openTabletGenericTip(wrap, event);
+                return;
+            }
+            if (event.type === "click") {
+                closeAllMobileGenericTips();
+            }
+        };
+
+        document.addEventListener("pointerdown", handleTabletGenericTipTap, true);
+        document.addEventListener("click", handleTabletGenericTipTap, true);
+    };
+
     bindMobileGenericTips();
+    bindTabletGenericTips();
+
+    const bindTabletHeadlinesTapReliability = () => {
+        if (window.__scoopTabletHeadlinesTapBindVersion === 1) {
+            return;
+        }
+        window.__scoopTabletHeadlinesTapBindVersion = 1;
+
+        const handleTabletHeadlinesTap = (event) => {
+            if (!usesTabletProHeadlinesPopup()) {
+                return;
+            }
+            const label =
+                event.target && event.target.closest
+                    ? event.target.closest(".hl-tip-count")
+                    : null;
+            if (!label) {
+                return;
+            }
+            clearTooltipScrollingHide();
+            window.__scoopTabletHeadlinesTappedAt = Date.now();
+            const wrap = label.closest(".tip-wrap.headlines-tip");
+            const checkbox = wrap?.querySelector(".hl-tip-cb");
+            window.requestAnimationFrame(() => {
+                if (!checkbox || !checkbox.checked || !wrap) {
+                    return;
+                }
+                scheduleResponsiveHeadlinesPosition(wrap);
+                updateHeadlinesHeading(wrap);
+            });
+        };
+
+        document.addEventListener("pointerdown", handleTabletHeadlinesTap, { capture: true, passive: true });
+        document.addEventListener("click", handleTabletHeadlinesTap, { capture: true, passive: true });
+    };
+
+    bindTabletHeadlinesTapReliability();
 
     const repositionVisibleGenericTooltips = () => {
-        if (!isMobileGenericTipViewport()) {
+        if (!isTapGenericTipViewport()) {
             resetGenericTooltips();
             return;
         }
@@ -3434,7 +3657,7 @@ def _inject_responsive_bootstrap_css() -> str:
 BOOTSTRAP_INSTALLED_KEY = "_scoop_responsive_bootstrap_installed"
 BOOTSTRAP_SCRIPT_VERSION = 4
 TOOLTIP_INSTALLED_KEY = "_scoop_tooltip_scroll_installed"
-TOOLTIP_SCRIPT_VERSION = 28
+TOOLTIP_SCRIPT_VERSION = 40
 SIDEBAR_HANDLER_INSTALLED_KEY = "_scoop_responsive_sidebar_handler_v3"
 
 
@@ -3459,6 +3682,15 @@ def _inject_name_tooltip_override() -> None:
     )
 
 
+def _inject_tablet_analyze_link_css() -> None:
+    """Tablet Analyze row: blue underlined link in a white card (744–1366px only)."""
+    st.markdown(
+        f"<style id='scoop-tablet-analyze-link-css'>{TABLET_ANALYZE_LINK_CSS}</style>"
+        f"<style id='scoop-phone-analyze-mobile-tip-css'>{PHONE_ANALYZE_MOBILE_TIP_CSS}</style>",
+        unsafe_allow_html=True,
+    )
+
+
 def _inject_desktop_headlines_css() -> None:
     """Always inject desktop Headlines count styling (survives tooltip handler early return)."""
     st.markdown(
@@ -3470,7 +3702,8 @@ def _inject_desktop_headlines_css() -> None:
 def _inject_ipad_mini_headlines_css() -> None:
     """Always inject iPad Mini Headlines popup styling after page CSS."""
     st.markdown(
-        f"<style id='scoop-ipad-mini-headlines-css'>{_IPAD_MINI_HEADLINES_CSS}</style>",
+        f"<style id='scoop-ipad-mini-headlines-css'>{_IPAD_MINI_HEADLINES_CSS}</style>"
+        f"<style id='scoop-ipad-mini-popup-clamp-css'>{IPAD_MINI_POPUP_CLAMP_CSS}</style>",
         unsafe_allow_html=True,
     )
 
@@ -3560,6 +3793,7 @@ def install_tooltip_scroll_handler() -> None:
 
     if st.session_state.get(TOOLTIP_INSTALLED_KEY) == TOOLTIP_SCRIPT_VERSION:
         _inject_name_tooltip_override()
+        _inject_tablet_analyze_link_css()
         inject_dark_mode_styles()
         inject_desktop_sidebar_nav_market()
         install_page_layout_resync()
@@ -3586,6 +3820,7 @@ def install_tooltip_scroll_handler() -> None:
     inject_desktop_sidebar_nav_market()
     st.session_state[TOOLTIP_INSTALLED_KEY] = TOOLTIP_SCRIPT_VERSION
     _inject_name_tooltip_override()
+    _inject_tablet_analyze_link_css()
     from theme_mode import inject_dark_mode_styles
 
     inject_dark_mode_styles()

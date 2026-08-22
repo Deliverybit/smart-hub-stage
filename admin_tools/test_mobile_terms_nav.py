@@ -19,8 +19,10 @@ from tooltip_scroll import (  # noqa: E402
 
 def test_phone_viewport_helper_exists() -> None:
     assert "__scoopIsPhoneViewport" in _RESPONSIVE_DOC_HELPER_JS
+    assert "__scoopIsTabletViewport" in _RESPONSIVE_DOC_HELPER_JS
     assert "__scoopIsTermsPage" in _RESPONSIVE_DOC_HELPER_JS
     assert "__scoopViewportWidth() <= 743" in _RESPONSIVE_DOC_HELPER_JS
+    assert "w >= 744 && w <= 1366" in _RESPONSIVE_DOC_HELPER_JS
 
 
 def test_page_nav_marks_mobile_terms_click() -> None:
@@ -31,7 +33,7 @@ def test_page_nav_marks_mobile_terms_click() -> None:
     assert "holdMobileTermsMainView" in js
     assert "removeAttribute(\"data-scoop-screener-gated\")" in js
     assert "removeAttribute(\"data-scoop-desktop-layout\")" in js
-    assert "PAGE_NAV_BIND_VERSION = 3" in js
+    assert "PAGE_NAV_BIND_VERSION = 6" in js
     assert "preventDefault" in js
     assert "__scoopNavigateMobileTerms" in js
     assert "touchstart" in js
@@ -76,6 +78,23 @@ def test_tablet_desktop_untouched_by_phone_guard() -> None:
     assert "if (!__scoopIsPhoneViewport())" in js
 
 
+def test_phone_market_nav_assigns_location() -> None:
+    js = _PAGE_NAV_LAYOUT_RESYNC_JS
+    assert "PAGE_NAV_BIND_VERSION = 6" in js
+    pointer_idx = js.index("handleMobileTermsNavPointer")
+    phone_idx = js.index("if (__scoopIsPhoneViewport()) {", pointer_idx)
+    assign_idx = js.index("appWin.location.assign(__scoopResolveTermsUrl(link, appWin))", phone_idx)
+    assert assign_idx > phone_idx
+
+
+def test_tablet_market_nav_assigns_location() -> None:
+    js = _PAGE_NAV_LAYOUT_RESYNC_JS
+    pointer_idx = js.index("handleMobileTermsNavPointer")
+    tablet_idx = js.index("if (__scoopIsTabletViewport()) {", pointer_idx)
+    assign_idx = js.index("appWin.location.assign(__scoopResolveTermsUrl(link, appWin))", tablet_idx)
+    assert assign_idx > tablet_idx
+
+
 def main() -> int:
     tests = [
         test_phone_viewport_helper_exists,
@@ -84,6 +103,8 @@ def main() -> int:
         test_consent_bridge_injects_on_gate,
         test_sidebar_holds_main_view_on_mobile_terms,
         test_tablet_desktop_untouched_by_phone_guard,
+        test_phone_market_nav_assigns_location,
+        test_tablet_market_nav_assigns_location,
     ]
     for fn in tests:
         fn()
