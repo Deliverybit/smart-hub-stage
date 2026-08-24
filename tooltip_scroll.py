@@ -24,6 +24,8 @@ from admin_tools.tablet_mobile_layout_css import (
     SIDEBAR_NAV_COMPACT,
     RESPONSIVE_SIDEBAR_BRAND_TOGGLE_BUFFER,
     DESKTOP_SIDEBAR_BRAND_TOGGLE_BUFFER,
+    DESKTOP_SIDEBAR_LOGO_RULES,
+    DESKTOP_TABLET_DISCLAIMER_FLOW,
     TABLET_ANALYZE_LINK_CSS,
     PHONE_ANALYZE_MOBILE_TIP_CSS,
     IPAD_MINI_POPUP_CLAMP_CSS,
@@ -3689,6 +3691,33 @@ def _inject_responsive_bootstrap_css() -> str:
         }} else {{
             targetDoc.documentElement.removeAttribute("data-scoop-tab-nav");
         }}
+        const hideTabNavSidebarControls = () => {{
+            const w = (targetDoc.defaultView && targetDoc.defaultView.innerWidth) || 0;
+            if (w <= 0 || w > 1366) {{
+                return;
+            }}
+            const sel =
+                '[data-testid="stExpandSidebarButton"], [data-testid="stSidebarCollapseButton"], [data-testid="collapsedControl"]';
+            targetDoc.querySelectorAll(sel).forEach((node) => {{
+                node.style.setProperty("display", "none", "important");
+                node.style.setProperty("visibility", "hidden", "important");
+                node.style.setProperty("opacity", "0", "important");
+                node.style.setProperty("pointer-events", "none", "important");
+                node.style.setProperty("width", "0", "important");
+                node.style.setProperty("height", "0", "important");
+            }});
+        }};
+        hideTabNavSidebarControls();
+        if (!targetDoc.__scoopTabNavSidebarHideBound) {{
+            targetDoc.__scoopTabNavSidebarHideBound = true;
+            const root = targetDoc.documentElement;
+            const observer = new MutationObserver(() => hideTabNavSidebarControls());
+            observer.observe(root, {{ childList: true, subtree: true, attributes: true }});
+            const appWin = targetDoc.defaultView;
+            if (appWin) {{
+                appWin.addEventListener("resize", hideTabNavSidebarControls);
+            }}
+        }}
     }}
     let parentDoc = null;
     try {{
@@ -3866,7 +3895,16 @@ def inject_desktop_sidebar_nav_market() -> None:
         f"<style id='scoop-mobile-consent-terms-main-view-css'>{MOBILE_CONSENT_TERMS_MAIN_VIEW_CSS}</style>"
         f"<style id='scoop-desktop-terms-top-compact-css'>{DESKTOP_TERMS_TOP_COMPACT}</style>"
         f"<style id='scoop-responsive-sidebar-brand-toggle-buffer-css'>{RESPONSIVE_SIDEBAR_BRAND_TOGGLE_BUFFER}</style>"
-        f"<style id='scoop-desktop-sidebar-brand-toggle-buffer-css'>{DESKTOP_SIDEBAR_BRAND_TOGGLE_BUFFER}</style>",
+        f"<style id='scoop-desktop-sidebar-brand-toggle-buffer-css'>{DESKTOP_SIDEBAR_BRAND_TOGGLE_BUFFER}</style>"
+        f"<style id='scoop-desktop-sidebar-logo-css'>{DESKTOP_SIDEBAR_LOGO_RULES}</style>",
+        unsafe_allow_javascript=True,
+    )
+
+
+def inject_desktop_tablet_disclaimer_flow() -> None:
+    """Flow disclaimer below content on tablet/desktop (no fixed overlay bar)."""
+    st.html(
+        f"<style id='scoop-desktop-tablet-disclaimer-flow-css'>{DESKTOP_TABLET_DISCLAIMER_FLOW}</style>",
         unsafe_allow_javascript=True,
     )
 
@@ -3919,6 +3957,7 @@ def install_tooltip_scroll_handler() -> None:
         _inject_tablet_analyze_link_css()
         inject_dark_mode_styles()
         inject_desktop_sidebar_nav_market()
+        inject_desktop_tablet_disclaimer_flow()
         install_page_layout_resync()
         return
     st.html(
@@ -3942,6 +3981,7 @@ def install_tooltip_scroll_handler() -> None:
         unsafe_allow_javascript=True,
     )
     inject_desktop_sidebar_nav_market()
+    inject_desktop_tablet_disclaimer_flow()
     st.session_state[TOOLTIP_INSTALLED_KEY] = TOOLTIP_SCRIPT_VERSION
     _inject_name_tooltip_override()
     _inject_tablet_analyze_link_css()

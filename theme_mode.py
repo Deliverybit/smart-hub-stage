@@ -381,7 +381,7 @@ def render_dark_mode_toggle() -> None:
     _apply_current_theme()
 
 
-def render_dark_mode_toggle_main() -> None:
+def render_dark_mode_toggle_main(*, label: str = "Dark") -> None:
     """Main-area toggle for mobile/tablet tab navigation header."""
     if not _theme_known_in_session():
         return
@@ -399,7 +399,7 @@ def render_dark_mode_toggle_main() -> None:
         _write_theme_to_storage("dark" if dark else "light")
 
     st.toggle(
-        "Dark",
+        label,
         key=main_key,
         help="Switch light/dark colors.",
         on_change=_on_main_toggle_change,

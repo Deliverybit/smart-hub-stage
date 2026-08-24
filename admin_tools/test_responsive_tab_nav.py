@@ -14,6 +14,32 @@ from admin_tools.tablet_mobile_layout_css import RESPONSIVE_TAB_NAV_BOOTSTRAP  #
 import landing_page  # noqa: E402
 
 
+def test_tab_nav_hides_sidebar_controls_on_mobile() -> None:
+    from admin_tools.tablet_mobile_layout_css import (
+        RESPONSIVE_SIDEBAR_BOOTSTRAP,
+        RESPONSIVE_TAB_NAV_BOOTSTRAP,
+    )
+
+    css = RESPONSIVE_TAB_NAV_BOOTSTRAP
+    assert "html[data-scoop-tab-nav=\"1\"] [data-testid=\"stExpandSidebarButton\"]" in css
+    assert "html[data-scoop-tab-nav=\"1\"] [data-testid=\"collapsedControl\"]" in css
+    assert "left: -9999px !important" in css
+    assert 'html:not([data-scoop-tab-nav="1"])' in RESPONSIVE_SIDEBAR_BOOTSTRAP
+
+
+def test_shared_mobile_tablet_toggle_in_tab_nav_bootstrap() -> None:
+    from admin_tools.tablet_mobile_layout_css import (
+        MOBILE_TABLET_TOGGLE_STYLE,
+        RESPONSIVE_TAB_NAV_BOOTSTRAP,
+        _MOBILE_TAB_TOGGLE_WRAP,
+    )
+
+    assert MOBILE_TABLET_TOGGLE_STYLE in RESPONSIVE_TAB_NAV_BOOTSTRAP
+    assert 'html[data-scoop-tab-nav="1"][data-scoop-home-page="1"]' in RESPONSIVE_TAB_NAV_BOOTSTRAP
+    assert _MOBILE_TAB_TOGGLE_WRAP.split(",")[0].strip() in RESPONSIVE_TAB_NAV_BOOTSTRAP
+    assert ".scoop-mobile-inner-top-toggle" in RESPONSIVE_TAB_NAV_BOOTSTRAP
+
+
 def test_tab_nav_hides_sidebar_on_mobile() -> None:
     css = RESPONSIVE_TAB_NAV_BOOTSTRAP
     assert 'html[data-scoop-tab-nav="1"]' in css
@@ -50,39 +76,80 @@ def test_mobile_tablet_defaults_mobile_safe() -> None:
     assert landing_page.is_mobile_tablet_viewport() is True
 
 
-def test_landing_uses_home_shell_without_tabs() -> None:
+def test_landing_uses_sidebar_style_home() -> None:
     import inspect
 
     home_source = inspect.getsource(landing_page.render_mobile_tablet_home)
-    assert "render_mobile_home_shell" in home_source
+    assert "sidebar-brand" in home_source
+    assert "sidebar-brand-text" in home_source
+    assert "scoop-mobile-inner-top-toggle" in home_source
+    assert "Dark mode" in home_source
+    assert 'st.markdown("---")' in home_source
+    assert "SCOOP_52_DESCRIPTION" in home_source
+    assert "HOME_NAV_MARKETS" in home_source
+    assert "Welcome to The Scoop 52" not in home_source
+    assert "scoop-mobile-home-title" not in home_source
     assert "use_container_width=True" in home_source
     assert "render_mobile_tab_nav_shell" not in home_source
 
 
 def test_home_landing_page_css_scoped() -> None:
-    from admin_tools.tablet_mobile_layout_css import RESPONSIVE_HOME_LANDING
+    from admin_tools.tablet_mobile_layout_css import (
+        RESPONSIVE_HOME_LANDING,
+        RESPONSIVE_TAB_NAV_BOOTSTRAP,
+        _DESKTOP_MARKET_NAV_GAP,
+        _HOME_LOGO_MAX,
+        _HOME_MARKET_NAV_GAP_SPACER_RULES,
+        _HOME_MARKET_NAV_LIGHT_RULES,
+        _MOBILE_TAB_TOGGLE_WRAP,
+        _mirror_sidebar_nav_css_for_home,
+    )
 
     css = RESPONSIVE_HOME_LANDING
+    bootstrap = RESPONSIVE_TAB_NAV_BOOTSTRAP
     assert 'html[data-scoop-home-page="1"]' in css
-    assert "[data-testid=\"stPageLink\"]" in css
-    assert "[data-scoop-nav-active]" in css
+    assert ".sidebar-brand-text" in css
+    assert "--scoop-home-side-padding: 20px" in css
+    assert _HOME_LOGO_MAX in css
+    assert "background: #ffffff !important" in css
+    assert "clamp(300px, 38vw, 420px)" in css
+    assert "clamp(2rem, 10vw, 3.75rem)" in css
+    assert "background: transparent !important" in bootstrap
+    assert "display: none !important" in bootstrap
+    assert "html[data-scoop-home-page=\"1\"]" in bootstrap
+    assert "padding: 0.5rem 0.8rem !important" in bootstrap
+    assert "#0f172a" in bootstrap
+    assert 'div[data-testid="stCheckbox"]' in bootstrap
+    assert "margin-top: 12px !important" in css
+    assert "padding-left: var(--scoop-home-side-padding, 20px)" in css
+    assert "#111827" in css
+    assert "#f0f2f6" in css
+    assert _DESKTOP_MARKET_NAV_GAP in css
+    assert _HOME_MARKET_NAV_GAP_SPACER_RULES.strip() in css
+    assert 'a[href*="Top_10"]' in css
+    assert _HOME_MARKET_NAV_LIGHT_RULES.strip() in css
+    assert 'html:not([data-scoop-theme="dark"])[data-scoop-home-page="1"]' in _HOME_MARKET_NAV_LIGHT_RULES
+    assert "html:not([data-scoop-theme=\"dark\"]) html[data-scoop-home-page=\"1\"]" not in _HOME_MARKET_NAV_LIGHT_RULES
+    assert "Terms_of_Service" in css
 
 
 def test_back_home_helper_skips_on_landing() -> None:
     import inspect
 
-    source = inspect.getsource(landing_page.render_mobile_inner_top_bar)
+    source = inspect.getsource(landing_page.render_mobile_back_home_bar)
     assert "HOME_PAGE" in source
-    assert "scoop-mobile-inner-top" in source
+    assert "scoop-mobile-back-home-bar" in source
 
 
 def main() -> int:
     tests = [
+        test_shared_mobile_tablet_toggle_in_tab_nav_bootstrap,
         test_tab_nav_hides_sidebar_on_mobile,
+        test_tab_nav_hides_sidebar_controls_on_mobile,
         test_tab_nav_shell_hidden_on_desktop,
         test_app_nav_pages_include_home_and_markets,
         test_mobile_tablet_defaults_mobile_safe,
-        test_landing_uses_home_shell_without_tabs,
+        test_landing_uses_sidebar_style_home,
         test_home_landing_page_css_scoped,
         test_back_home_helper_skips_on_landing,
     ]

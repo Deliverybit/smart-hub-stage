@@ -19,14 +19,21 @@ APP_NAV_PAGES: tuple[tuple[str, str], ...] = (
     ("pages/6_ICE_Top_10.py", "🛢️ ICE"),
 )
 
-HOME_MARKET_CARDS: tuple[tuple[str, str], ...] = (
-    ("pages/1_NYSE_Top_10.py", "📊 NYSE Top 10"),
-    ("pages/2_NASDAQ_Top_10.py", "💹 NASDAQ Top 10"),
-    ("pages/3_Crypto_Top_10.py", "🪙 Crypto Top 10"),
-    ("pages/5_CME_Top_10.py", "🌾 CME Commodities"),
-    ("pages/6_ICE_Top_10.py", "🛢️ ICE Commodities"),
-    (TERMS_PAGE, "📜 Terms of Service"),
+HOME_NAV_MARKETS: tuple[tuple[str, str], ...] = (
+    ("pages/1_NYSE_Top_10.py", "📊 NYSE 10"),
+    ("pages/2_NASDAQ_Top_10.py", "💹 NASDAQ 10"),
+    ("pages/3_Crypto_Top_10.py", "🪙 Crypto 10"),
+    ("pages/5_CME_Top_10.py", "🌾 CME Commodities 10"),
+    ("pages/6_ICE_Top_10.py", "🛢️ ICE Commodities 10"),
 )
+
+SCOOP_52_DESCRIPTION = (
+    "Screen major markets for assets trading at or near their 52-week lows — "
+    "with headline sentiment checks to filter out fraud and bankruptcy signals."
+)
+
+# Backward-compatible alias (legacy landing labels).
+HOME_MARKET_CARDS = HOME_NAV_MARKETS + ((TERMS_PAGE, "📜 Terms of Service"),)
 
 
 def _responsive_viewport_js() -> str:
@@ -111,21 +118,41 @@ def render_desktop_sidebar_nav() -> None:
     )
     render_dark_mode_toggle()
     st.sidebar.markdown("---")
-    st.sidebar.page_link("pages/1_NYSE_Top_10.py", label="📊 NYSE 10")
-    st.sidebar.page_link("pages/2_NASDAQ_Top_10.py", label="💹 NASDAQ 10")
-    st.sidebar.page_link("pages/3_Crypto_Top_10.py", label="🪙 Crypto 10")
-    st.sidebar.page_link("pages/5_CME_Top_10.py", label="🌾 CME Commodities 10")
-    st.sidebar.page_link("pages/6_ICE_Top_10.py", label="🛢️ ICE Commodities 10")
+    for path, label in HOME_NAV_MARKETS:
+        st.sidebar.page_link(path, label=label)
     st.sidebar.markdown("---")
     st.sidebar.page_link(TERMS_PAGE, label="📜 Terms of Service")
+
+
+def render_mobile_back_home_bar(*, current_page: str | None) -> None:
+    """Fixed top-left back link on inner pages; CSS hides on desktop (1367px+)."""
+    if not current_page or current_page == HOME_PAGE:
+        return
+    from admin_tools.tablet_mobile_layout_css import MOBILE_BACK_HOME_BAR
+
+    st.markdown(
+        f'<style id="scoop-mobile-back-home-css">{MOBILE_BACK_HOME_BAR}</style>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        (
+            '<div class="scoop-mobile-back-home-bar">'
+            '<a class="scoop-mobile-back-home" href="/" target="_self">← Back to Home</a>'
+            "</div>"
+            '<div class="scoop-mobile-back-home-spacer" aria-hidden="true"></div>'
+        ),
+        unsafe_allow_html=True,
+    )
 
 
 def render_mobile_inner_top_bar(
     *,
     current_page: str | None,
 ) -> None:
-    """Mobile/tablet inner pages: compact back link + dark mode (no extra header/tabs)."""
+    """Mobile/tablet inner pages: dark mode toggle row (back link is a separate fixed bar)."""
     if not current_page or current_page == HOME_PAGE:
+        return
+    if not is_mobile_tablet_viewport():
         return
     from admin_tools.tablet_mobile_layout_css import MOBILE_INNER_TOP_BAR
     from theme_mode import inject_dark_mode_styles, render_dark_mode_toggle_main
@@ -142,22 +169,17 @@ def render_mobile_inner_top_bar(
         unsafe_allow_html=True,
     )
     st.markdown('<div class="scoop-mobile-inner-top">', unsafe_allow_html=True)
-    bar = st.columns([5, 2], gap="small")
-    with bar[0]:
-        st.markdown(
-            '<a class="scoop-mobile-back-home" href="/" target="_self">← Back to Home</a>',
-            unsafe_allow_html=True,
-        )
-    with bar[1]:
+    toggle_row = st.columns([1], gap="small")
+    with toggle_row[0]:
         st.markdown('<div class="scoop-mobile-inner-top-toggle">', unsafe_allow_html=True)
-        render_dark_mode_toggle_main()
+        render_dark_mode_toggle_main(label="Dark mode")
         st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_mobile_back_home_link(*, current_page: str | None) -> None:
-    """Backward-compatible alias — use render_mobile_inner_top_bar."""
-    render_mobile_inner_top_bar(current_page=current_page)
+    """Backward-compatible alias — use render_mobile_back_home_bar."""
+    render_mobile_back_home_bar(current_page=current_page)
 
 
 def prepare_mobile_home_landing() -> None:
@@ -177,20 +199,38 @@ def prepare_mobile_home_landing() -> None:
     )
 
 
-def render_mobile_home_shell() -> None:
-    """Mobile/tablet landing header — logo + dark mode only (title is in welcome h1)."""
+def render_mobile_tablet_home() -> None:
+    """Mobile/tablet home: sidebar-style landing (logo, title, dark mode, description, nav)."""
     from branding import logo_path_str
     from theme_mode import inject_dark_mode_styles, render_dark_mode_toggle_main
 
     inject_dark_mode_styles()
 
-    header = st.columns([2, 1], gap="small")
-    with header[0]:
-        st.image(logo_path_str(), width=96)
-    with header[1]:
-        st.markdown('<div class="scoop-mobile-home-toggle">', unsafe_allow_html=True)
-        render_dark_mode_toggle_main()
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown('<div class="scoop-mobile-home-shell-marker" aria-hidden="true"></div>', unsafe_allow_html=True)
+    st.image(logo_path_str(), use_container_width=True)
+    st.markdown(
+        """
+        <div class="sidebar-brand">
+          <div class="sidebar-brand-row">
+            <span id="scoop-title" class="sidebar-brand-text" style="line-height:1.05 !important;">The Scoop 52</span>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown('<div class="scoop-mobile-inner-top">', unsafe_allow_html=True)
+    st.markdown('<div class="scoop-mobile-inner-top-toggle">', unsafe_allow_html=True)
+    render_dark_mode_toggle_main(label="Dark mode")
+    st.markdown("</div></div>", unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown(
+        f'<div class="scoop-home-landing"><p>{SCOOP_52_DESCRIPTION}</p></div>',
+        unsafe_allow_html=True,
+    )
+    for path, label in HOME_NAV_MARKETS:
+        st.page_link(path, label=label, use_container_width=True)
+    st.markdown("---")
+    st.page_link(TERMS_PAGE, label="📜 Terms of Service", use_container_width=True)
 
 
 def render_mobile_tab_nav_shell(*, current_page: str | None = None) -> None:
@@ -217,7 +257,7 @@ def render_mobile_tab_nav_shell(*, current_page: str | None = None) -> None:
         )
     with header[2]:
         st.markdown('<div class="scoop-mobile-nav-toggle">', unsafe_allow_html=True)
-        render_dark_mode_toggle_main()
+        render_dark_mode_toggle_main(label="Dark mode")
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown('<div class="scoop-mobile-tab-row">', unsafe_allow_html=True)
@@ -229,30 +269,9 @@ def render_mobile_tab_nav_shell(*, current_page: str | None = None) -> None:
 
 
 def render_responsive_navigation(*, current_page: str | None = None) -> None:
-    """Render desktop sidebar or mobile/tablet compact top bar — never both."""
+    """Render desktop sidebar or mobile/tablet chrome — never both."""
+    render_mobile_back_home_bar(current_page=current_page)
     if is_mobile_tablet_viewport():
         render_mobile_inner_top_bar(current_page=current_page)
         return
     render_desktop_sidebar_nav()
-
-
-def render_mobile_tablet_home() -> None:
-    """Mobile/tablet home: landing page with market buttons (no top tab row)."""
-    render_mobile_home_shell()
-
-    st.markdown(
-        """
-        <div class="scoop-home-landing">
-          <h1>Welcome to The Scoop 52</h1>
-          <p>
-            Screen major markets for assets trading at or near their 52-week lows —
-            with headline sentiment checks to filter out fraud and bankruptcy signals.
-          </p>
-          <p>Select a market below to review the disclaimer and open the Top 10 screener.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    for path, label in HOME_MARKET_CARDS:
-        st.page_link(path, label=label, use_container_width=True)

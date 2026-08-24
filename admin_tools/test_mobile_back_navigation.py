@@ -25,9 +25,10 @@ INNER_PAGES = SCREENER_PAGES + ("pages/7_Terms_of_Service.py", "pages/_Analyze.p
 
 
 def test_back_link_helper_renders_for_inner_pages() -> None:
-    source = inspect.getsource(landing_page.render_mobile_inner_top_bar)
+    source = inspect.getsource(landing_page.render_mobile_back_home_bar)
     assert "← Back to Home" in source
     assert "HOME_PAGE" in source
+    assert "scoop-mobile-back-home-bar" in source
 
 
 def test_all_inner_pages_use_responsive_navigation() -> None:
@@ -39,8 +40,8 @@ def test_all_inner_pages_use_responsive_navigation() -> None:
 
 def test_landing_skips_back_link() -> None:
     home_source = inspect.getsource(landing_page.render_mobile_tablet_home)
-    assert "render_mobile_home_shell" in home_source
-    assert "use_container_width=True" in home_source
+    assert "render_mobile_back_home_bar" not in home_source
+    assert "HOME_NAV_MARKETS" in home_source
 
 
 def test_analyze_has_market_back_button() -> None:
@@ -54,10 +55,17 @@ def test_back_link_hidden_on_desktop_via_tab_nav() -> None:
 
     css = RESPONSIVE_TAB_NAV_BOOTSTRAP
     assert ".scoop-mobile-back-home" in css
-    assert ".scoop-mobile-inner-top" in css
+    assert ".scoop-mobile-back-home-bar" in css
     assert MOBILE_BACK_HOME_BAR in css
     assert "@media (min-width: 1367px)" in MOBILE_BACK_HOME_BAR
     assert 'html[data-scoop-tab-nav="1"]' in css
+
+
+def test_back_bar_renders_independently_of_viewport_probe() -> None:
+    source = inspect.getsource(landing_page.render_responsive_navigation)
+    assert "render_mobile_back_home_bar" in source
+    back_block = source.split("is_mobile_tablet_viewport()")[0]
+    assert "render_mobile_back_home_bar" in back_block
 
 
 def test_desktop_skips_mobile_inner_top_bar() -> None:
@@ -72,7 +80,8 @@ def test_desktop_skips_mobile_inner_top_bar() -> None:
 def test_inner_top_bar_uses_compact_row() -> None:
     source = inspect.getsource(landing_page.render_mobile_inner_top_bar)
     assert "scoop-mobile-inner-top" in source
-    assert "← Back to Home" in source
+    assert "scoop-mobile-inner-top-toggle" in source
+    assert "← Back to Home" not in source
     assert "scoop-mobile-back-home-spacer" not in source
 
 
@@ -83,6 +92,7 @@ def main() -> int:
         test_landing_skips_back_link,
         test_analyze_has_market_back_button,
         test_back_link_hidden_on_desktop_via_tab_nav,
+        test_back_bar_renders_independently_of_viewport_probe,
         test_desktop_skips_mobile_inner_top_bar,
         test_inner_top_bar_uses_compact_row,
     ]

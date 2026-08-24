@@ -31,11 +31,24 @@ def test_screener_top_compact_does_not_touch_desktop() -> None:
     assert 'html[data-scoop-desktop-layout="1"]' not in css
 
 
+def test_screener_toggle_banner_gap_on_mobile_tablet() -> None:
+    css = RESPONSIVE_SCREENER_TOP_COMPACT
+    assert 'html[data-scoop-tab-nav="1"][data-scoop-screener-active="1"]' in css
+    assert '[data-testid="stCheckbox"]' in css
+    assert "font-size: 18px !important" in css
+    assert "font-size: 14px !important" in css
+    assert '[data-testid="stMarkdownContainer"]' in css
+    assert "margin-top: 12px !important" in css
+    assert "margin-bottom: 12px !important" in css
+    assert ".scoop-banner-compact" in css
+
+
 if __name__ == "__main__":
     tests = [
         test_screener_top_compact_scoped_to_mobile_tablet,
         test_screener_top_compact_targets_active_flag,
         test_screener_top_compact_does_not_touch_desktop,
+        test_screener_toggle_banner_gap_on_mobile_tablet,
     ]
     for fn in tests:
         fn()
