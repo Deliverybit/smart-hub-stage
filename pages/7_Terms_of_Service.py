@@ -4,8 +4,9 @@ Terms of Service & Financial Disclaimer
 
 import streamlit as st
 from branding import logo_path_str, render_environment_banner
-from theme_mode import install_theme_support, render_dark_mode_toggle, inject_dark_mode_styles
-from tooltip_scroll import install_responsive_sidebar_handler
+from landing_page import render_responsive_navigation
+from theme_mode import install_theme_support, inject_dark_mode_styles
+from tooltip_scroll import install_tooltip_scroll_handler
 
 st.set_page_config(
     page_title="Terms of Service",
@@ -14,7 +15,8 @@ st.set_page_config(
 )
 render_environment_banner(st)
 install_theme_support()
-install_responsive_sidebar_handler()
+render_responsive_navigation(current_page="pages/7_Terms_of_Service.py")
+install_tooltip_scroll_handler()
 
 st.html(
     '<script>document.documentElement.removeAttribute("data-scoop-screener-gated");</script>',
@@ -1910,28 +1912,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
-# ── Sidebar navigation ───────────────────────────────────────────────
-st.sidebar.image(logo_path_str(), use_container_width=True)
-st.sidebar.markdown(
-    """
-    <div class="sidebar-brand">
-      <div class="sidebar-brand-row">
-        <span id="scoop-title" class="sidebar-brand-text" style="line-height:1.05 !important;">The Scoop 52</span>
-      </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-render_dark_mode_toggle()
-st.sidebar.markdown("---")
-st.sidebar.page_link("pages/1_NYSE_Top_10.py", label="📊 NYSE 10")
-st.sidebar.page_link("pages/2_NASDAQ_Top_10.py", label="💹 NASDAQ 10")
-st.sidebar.page_link("pages/3_Crypto_Top_10.py", label="🪙 Crypto 10")
-st.sidebar.page_link("pages/5_CME_Top_10.py", label="🌾 CME Commodities 10")
-st.sidebar.page_link("pages/6_ICE_Top_10.py", label="🛢️ ICE Commodities 10")
-st.sidebar.page_link("pages/7_Terms_of_Service.py", label="📜 Terms of Service")
 
 # ── Financial Disclaimer ─────────────────────────────────────────────
 st.title("📜 Terms of Service & Financial Disclaimer")

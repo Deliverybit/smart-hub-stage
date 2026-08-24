@@ -381,6 +381,34 @@ def render_dark_mode_toggle() -> None:
     _apply_current_theme()
 
 
+def render_dark_mode_toggle_main() -> None:
+    """Main-area toggle for mobile/tablet tab navigation header."""
+    if not _theme_known_in_session():
+        return
+
+    main_key = f"{TOGGLE_KEY}_main"
+    if main_key not in st.session_state:
+        st.session_state[main_key] = is_dark_mode()
+
+    def _on_main_toggle_change() -> None:
+        dark = bool(st.session_state.get(main_key, False))
+        st.session_state[SESSION_KEY] = dark
+        st.session_state[HYDRATED_KEY] = True
+        st.session_state[PAGE_KEY] = _calling_page_id()
+        st.session_state[SKIP_HYDRATE_KEY] = True
+        _write_theme_to_storage("dark" if dark else "light")
+
+    st.toggle(
+        "Dark",
+        key=main_key,
+        help="Switch light/dark colors.",
+        on_change=_on_main_toggle_change,
+    )
+    st.session_state[SESSION_KEY] = bool(st.session_state[main_key])
+    st.session_state[HYDRATED_KEY] = True
+    _apply_current_theme()
+
+
 def chart_axis_colors() -> tuple[dict, dict]:
     """Plotly tick/title font colors for current theme."""
     color = "#e2e8f0" if is_dark_mode() else "#111827"

@@ -17,6 +17,31 @@ from tooltip_scroll import (  # noqa: E402
 )
 
 
+def test_tablet_sidebar_toggle_availability_css() -> None:
+    from admin_tools.tablet_mobile_layout_css import (
+        RESPONSIVE_SIDEBAR_BOOTSTRAP,
+        TABLET_SIDEBAR_TOGGLE_AVAILABILITY,
+    )
+
+    css = TABLET_SIDEBAR_TOGGLE_AVAILABILITY
+    assert "@media (min-width: 769px) and (max-width: 1366px)" in css
+    assert "stExpandSidebarButton" in css
+    assert "stSidebarCollapseButton" in css
+    assert TABLET_SIDEBAR_TOGGLE_AVAILABILITY.strip() in RESPONSIVE_SIDEBAR_BOOTSTRAP
+
+
+def test_tablet_sidebar_uses_native_toggle_clicks() -> None:
+    js = _RESPONSIVE_SIDEBAR_JS
+    helper = _RESPONSIVE_DOC_HELPER_JS
+    assert "__scoopIsTabletOnlyViewport" in js
+    assert "__scoopApplySidebarExpandedState" in js
+    assert "__scoopScheduleTabletSidebarLayoutSync" in js
+    assert "if (__scoopIsTabletOnlyViewport())" in js
+    assert "w >= 769 && w <= 1366" in helper
+    assert "__scoopScheduleTabletSidebarLayoutSync();" in js
+    assert "__scoopApplySidebarExpandedState(!!expandTarget);" in js
+
+
 def test_phone_viewport_helper_exists() -> None:
     assert "__scoopIsPhoneViewport" in _RESPONSIVE_DOC_HELPER_JS
     assert "__scoopIsTabletViewport" in _RESPONSIVE_DOC_HELPER_JS
@@ -55,7 +80,8 @@ def test_consent_bridge_injects_on_gate() -> None:
     from legal_consent_logger import inject_mobile_consent_terms_nav_bridge
 
     source = inspect.getsource(inject_mobile_consent_terms_nav_bridge)
-    assert "MOBILE_CONSENT_VIEW_MAX" in source
+    assert "RESPONSIVE_MAX_WIDTH" in source
+    assert 'getAttribute("data-scoop-tab-nav")' in source
     assert 'aw.__scoopMobileConsentTermsNavVersion = 2' in source
     assert "preventDefault" in source
     assert "location.assign" in source
@@ -102,6 +128,8 @@ def main() -> int:
         test_mobile_consent_terms_main_view_css_scoped,
         test_consent_bridge_injects_on_gate,
         test_sidebar_holds_main_view_on_mobile_terms,
+        test_tablet_sidebar_toggle_availability_css,
+        test_tablet_sidebar_uses_native_toggle_clicks,
         test_tablet_desktop_untouched_by_phone_guard,
         test_phone_market_nav_assigns_location,
         test_tablet_market_nav_assigns_location,

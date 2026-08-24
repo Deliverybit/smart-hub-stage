@@ -12,7 +12,7 @@ from textblob import TextBlob
 from datetime import datetime
 from legal_consent_logger import ensure_timezone_cookie, log_terms_acceptance, render_terms_gate, terms_accepted
 from branding import logo_path_str, render_environment_banner
-from theme_mode import install_theme_support, render_dark_mode_toggle
+from theme_mode import install_theme_support
 from market_data import MarketData
 from app_config import get_screener_symbol_limit, SCREENER_CACHE_VERSION
 from screener_headlines import display_results_need_headlines, enrich_headline_sentiment
@@ -27,6 +27,7 @@ from screener_selection import (
     sync_screener_gating_layout,
 )
 from screener_table import ANALYZE_COLUMN_TIP, analyze_link_html, build_source_ticker_map
+from landing_page import render_responsive_navigation
 from tooltip_scroll import install_tooltip_scroll_handler
 import html
 
@@ -38,6 +39,7 @@ st.set_page_config(
 )
 render_environment_banner(st)
 install_theme_support()
+render_responsive_navigation(current_page="pages/3_Crypto_Top_10.py")
 
 
 @st.cache_resource
@@ -4150,28 +4152,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# ── Custom sidebar navigation ─────────────────────────────────────────
-st.sidebar.image(logo_path_str(), use_container_width=True)
-st.sidebar.markdown(
-    """
-    <div class="sidebar-brand">
-      <div class="sidebar-brand-row">
-        <span id="scoop-title" class="sidebar-brand-text" style="line-height:1.05 !important;">The Scoop 52</span>
-      </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-render_dark_mode_toggle()
-st.sidebar.markdown("---")
-st.sidebar.page_link("pages/1_NYSE_Top_10.py", label="📊 NYSE 10")
-st.sidebar.page_link("pages/2_NASDAQ_Top_10.py", label="💹 NASDAQ 10")
-st.sidebar.page_link("pages/3_Crypto_Top_10.py", label="🪙 Crypto 10")
-st.sidebar.page_link("pages/5_CME_Top_10.py", label="🌾 CME Commodities 10")
-st.sidebar.page_link("pages/6_ICE_Top_10.py", label="🛢️ ICE Commodities 10")
-st.sidebar.markdown("---")
-st.sidebar.page_link("pages/7_Terms_of_Service.py", label="📜 Terms of Service")
 agreed = terms_accepted(st, "agree_terms_crypto_top10")
 sync_screener_gating_layout(st, gated=not agreed)
 ensure_timezone_cookie(st)

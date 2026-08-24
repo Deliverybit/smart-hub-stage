@@ -716,7 +716,7 @@ def _accept_terms_after_analyze_return(
 
 
 def mark_post_consent_collapsed_view() -> None:
-    """Mobile/tablet: keep sidebar collapsed after the consent checkbox rerun."""
+    """Mobile/tablet: no sidebar overlay after consent when tab navigation is active."""
     import streamlit as st
 
     storage_key = json.dumps(POST_CONSENT_COLLAPSE_KEY)
@@ -730,6 +730,10 @@ def mark_post_consent_collapsed_view() -> None:
             return;
         }}
         const aw = window.parent || window;
+        const doc = aw.document || document;
+        if (doc.documentElement.getAttribute("data-scoop-tab-nav") === "1") {{
+            return;
+        }}
         aw.sessionStorage.setItem({storage_key}, "1");
         aw.sessionStorage.setItem("scoop-responsive-sidebar-ready", "1");
         aw.__scoopSuppressSidebarExpand = Date.now() + 12000;
@@ -745,7 +749,7 @@ def mark_post_consent_collapsed_view() -> None:
 
 
 def inject_mobile_consent_terms_nav_bridge(st_module) -> None:
-    """Phone mobile: consent-page Disclaimer/Terms links keep main-view Terms navigation."""
+    """Mobile/tablet: consent-page Terms links navigate in main view (no slide-out sidebar)."""
     st_module.components.v1.html(
         f"""
 <script>
@@ -753,7 +757,7 @@ def inject_mobile_consent_terms_nav_bridge(st_module) -> None:
     const aw = window.parent || window;
     const doc = aw.document || document;
     const w = aw.innerWidth || window.innerWidth || 0;
-    if (w > {MOBILE_CONSENT_VIEW_MAX}) {{
+    if (w > {RESPONSIVE_MAX_WIDTH}) {{
         return;
     }}
     const TERMS_NAV_COLLAPSE_KEY = "scoop-terms-nav-collapse";
@@ -761,6 +765,13 @@ def inject_mobile_consent_terms_nav_bridge(st_module) -> None:
     const mark = () => {{
         try {{
             aw.sessionStorage.setItem(TERMS_NAV_COLLAPSE_KEY, "1");
+        }} catch (e) {{}}
+        if (doc.documentElement.getAttribute("data-scoop-tab-nav") === "1") {{
+            doc.documentElement.removeAttribute("data-scoop-screener-gated");
+            doc.documentElement.removeAttribute("data-scoop-desktop-layout");
+            return;
+        }}
+        try {{
             aw.sessionStorage.setItem("scoop-responsive-sidebar-ready", "1");
         }} catch (e) {{}}
         aw.__scoopSuppressSidebarExpand = Date.now() + TERMS_NAV_SUPPRESS_MS;

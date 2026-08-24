@@ -35,9 +35,9 @@ from theme_mode import (
     inject_dark_mode_styles,
     install_theme_support,
     is_dark_mode,
-    render_dark_mode_toggle,
 )
-from tooltip_scroll import install_responsive_sidebar_handler, install_tooltip_scroll_handler, inject_desktop_analyze_top_compact
+from landing_page import render_responsive_navigation
+from tooltip_scroll import install_tooltip_scroll_handler, inject_desktop_analyze_top_compact
 
 # Search price chart: axis tick/title sizes (px in Plotly). Mobile matches existing UI.
 _SEARCH_CHART_AXIS_TICK_MOBILE = 26
@@ -214,7 +214,7 @@ st.set_page_config(
 )
 render_environment_banner(st)
 install_theme_support()
-install_responsive_sidebar_handler()
+render_responsive_navigation(current_page="pages/_Analyze.py")
 if is_analyze_mode():
     inject_desktop_analyze_top_compact()
 capture_analyze_source_from_query()
@@ -2505,27 +2505,6 @@ def _cached_analyze_bundle(ticker: str, days, screener_key: str | None) -> dict 
     }
 
 
-# ── Sidebar ──────────────────────────────────────────────────────────
-st.sidebar.image(logo_path_str(), use_container_width=True)
-st.sidebar.markdown(
-    """
-    <div class="sidebar-brand">
-      <div class="sidebar-brand-row">
-        <span id="scoop-title" class="sidebar-brand-text" style="line-height:1.05 !important;">The Scoop 52</span>
-      </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-render_dark_mode_toggle()
-st.sidebar.markdown("---")
-st.sidebar.page_link("pages/1_NYSE_Top_10.py", label="📊 NYSE 10")
-st.sidebar.page_link("pages/2_NASDAQ_Top_10.py", label="💹 NASDAQ 10")
-st.sidebar.page_link("pages/3_Crypto_Top_10.py", label="🪙 Crypto 10")
-st.sidebar.page_link("pages/5_CME_Top_10.py", label="🌾 CME Commodities 10")
-st.sidebar.page_link("pages/6_ICE_Top_10.py", label="🛢️ ICE Commodities 10")
-st.sidebar.markdown("---")
-
 _analyze_mode = is_analyze_mode()
 _analyze_ticker = query_param_ticker()
 if _analyze_mode:
@@ -2558,9 +2537,6 @@ PERIOD_OPTIONS = {
     "5 years": 1825,
     "All Time": "max",
 }
-
-st.sidebar.page_link("pages/7_Terms_of_Service.py", label="📜 Terms of Service")
-
 
 @st.fragment(run_every=timedelta(minutes=15))
 def _render_search_dashboard(ticker: str) -> None:

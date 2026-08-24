@@ -2492,11 +2492,39 @@ IPAD_MINI_POPUP_CLAMP_CSS = f"""
 """
 
 # Injected early on every page (via theme_mode) so mobile/tablet overlay sidebar wins first paint.
+TABLET_SIDEBAR_TOGGLE_AVAILABILITY = """
+    /* Tablet (769–1366): keep Streamlit sidebar chevrons available for page navigation. */
+    @media (min-width: 769px) and (max-width: 1366px) {
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="false"]) [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="false"]) [data-testid="stHeader"] [data-testid="collapsedControl"] {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stHeader"] [data-testid="collapsedControl"] {
+            display: none !important;
+        }
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stSidebarCollapseButton"],
+        .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        section[data-testid="stSidebar"][aria-expanded="false"] [data-testid="stSidebarCollapseButton"] {
+            display: none !important;
+        }
+    }
+"""
+
 RESPONSIVE_SIDEBAR_BOOTSTRAP = f"""
 @media (max-width: 1366px) {{
 {TABLET_SIDEBAR}
 {OVERLAY_SIDEBAR_TOPBAR_LAYER}
 }}
+{TABLET_SIDEBAR_TOGGLE_AVAILABILITY}
 {PHONE_SIDEBAR_LAYOUT}
 {IPAD_MINI_PORTRAIT_LAYOUT}
 """
@@ -2575,3 +2603,462 @@ ASUS_ZENBOOK_FOLD_TERMS_LAYOUT = f"""
 {_ZENBOOK_DESKTOP_SIDEBAR_BEAT}
     }}
 """
+
+# Mobile/tablet tab navigation — replaces slide-out sidebar; desktop split sidebar unchanged.
+_RESPONSIVE_TAB_NAV_HIDE_SIDEBAR_RULES = """
+    html[data-scoop-tab-nav="1"] section[data-testid="stSidebar"],
+    html[data-scoop-tab-nav="1"] [data-testid="stSidebarBackdrop"],
+    html[data-scoop-tab-nav="1"] [data-testid="stSidebarNav"],
+    html[data-scoop-tab-nav="1"] [data-testid="stSidebarCollapseButton"],
+    html[data-scoop-tab-nav="1"] [data-testid="stExpandSidebarButton"],
+    html[data-scoop-tab-nav="1"] [data-testid="collapsedControl"],
+    html[data-scoop-tab-nav="1"] [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+    html[data-scoop-tab-nav="1"] [data-testid="stHeader"] [data-testid="collapsedControl"],
+    html[data-scoop-tab-nav="1"] [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        transform: none !important;
+    }
+    html[data-scoop-tab-nav="1"] [data-testid="stAppViewContainer"] {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+    }
+    html[data-scoop-tab-nav="1"] [data-testid="stAppViewContainer"] section.main,
+    html[data-scoop-tab-nav="1"] [data-testid="stAppViewContainer"] > div:not([data-testid="stSidebar"]) {
+        width: 100% !important;
+        max-width: 100vw !important;
+        margin-left: 0 !important;
+    }
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"],
+    html[data-scoop-tab-nav="1"] section.main > div,
+    html[data-scoop-tab-nav="1"] [data-testid="stAppViewContainer"] > section.main {
+        padding-top: 0.25rem !important;
+    }
+    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] [data-testid="stMainBlockContainer"],
+    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] section.main > div,
+    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] [data-testid="stAppViewContainer"] > section.main {
+        padding-top: 0 !important;
+    }
+"""
+
+RESPONSIVE_TAB_NAV_HIDE_SIDEBAR = f"""
+@media (max-width: 1366px) {{
+{_RESPONSIVE_TAB_NAV_HIDE_SIDEBAR_RULES}
+}}
+@media (width: 540px),
+       (width: 720px) and (max-height: 541px),
+       (min-width: 1110px) and (max-width: 1118px) and (max-height: 741px),
+       (min-width: 1028px) and (max-width: 1036px) and (min-height: 1370px),
+       (min-width: 1370px) and (max-width: 1382px) and (max-height: 1040px),
+       (min-width: 849px) and (max-width: 857px) and (min-height: 1276px) and (max-height: 1284px),
+       (min-width: 1276px) and (max-width: 1284px) and (min-height: 849px) and (max-height: 857px),
+       (min-width: 1700px) and (max-width: 1714px) and (min-height: 1000px) and (max-height: 1120px),
+       (min-width: 1910px) and (max-width: 1930px) and (min-height: 1270px) and (max-height: 1290px),
+       (min-width: 1270px) and (max-width: 1290px) and (min-height: 1910px) and (max-height: 1930px) {{
+{_RESPONSIVE_TAB_NAV_HIDE_SIDEBAR_RULES}
+}}
+"""
+
+RESPONSIVE_TAB_NAV_SHELL = """
+@media (max-width: 1366px) {
+    html[data-scoop-tab-nav="1"] .scoop-mobile-nav-shell {
+        display: block !important;
+    }
+}
+@media (min-width: 1367px) {
+    html[data-scoop-tab-nav="1"] .scoop-mobile-nav-shell {
+        display: none !important;
+    }
+}
+"""
+
+RESPONSIVE_TAB_NAV_BAR = """
+@media (max-width: 1366px) {
+    html[data-scoop-tab-nav="1"] .scoop-mobile-nav-shell {
+        margin: 0 0 0.75rem 0;
+        padding: 0 clamp(0.5rem, 2vw, 0.85rem);
+    }
+    html[data-scoop-tab-nav="1"] .scoop-mobile-nav-header {
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.65rem !important;
+        margin-bottom: 0.55rem !important;
+    }
+    html[data-scoop-tab-nav="1"] .scoop-mobile-nav-header [data-testid="stImage"] {
+        flex: 0 0 auto !important;
+        width: 3.25rem !important;
+        min-width: 3.25rem !important;
+    }
+    html[data-scoop-tab-nav="1"] .scoop-mobile-nav-header [data-testid="stImage"] img {
+        width: 100% !important;
+        height: auto !important;
+    }
+    html[data-scoop-tab-nav="1"] .scoop-mobile-nav-title {
+        flex: 1 1 auto !important;
+        font-size: 1.35rem !important;
+        font-weight: 800 !important;
+        line-height: 1.15 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    html[data-scoop-tab-nav="1"] .scoop-mobile-nav-toggle {
+        flex: 0 0 auto !important;
+        min-width: 6.5rem !important;
+    }
+    html[data-scoop-tab-nav="1"] .scoop-mobile-tab-row [data-testid="stHorizontalBlock"] {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        gap: 0.45rem !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+        padding-bottom: 0.15rem !important;
+    }
+    html[data-scoop-tab-nav="1"] .scoop-mobile-tab-row [data-testid="stHorizontalBlock"]::-webkit-scrollbar {
+        display: none !important;
+    }
+    html[data-scoop-tab-nav="1"] .scoop-mobile-tab-row [data-testid="column"] {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        min-width: max-content !important;
+    }
+    html:not([data-scoop-theme="dark"]) .scoop-mobile-tab-row [data-testid="stPageLink"] {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 999px !important;
+        background: #ffffff !important;
+        padding: 0.1rem 0.2rem !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+        white-space: nowrap !important;
+    }
+    html:not([data-scoop-theme="dark"]) .scoop-mobile-tab-row [data-testid="stPageLink"][data-scoop-nav-active] {
+        background: #dbeafe !important;
+        border-color: #60a5fa !important;
+    }
+    html:not([data-scoop-theme="dark"]) .scoop-mobile-tab-row [data-testid="stPageLink"] a {
+        padding: 0.35rem 0.7rem !important;
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
+        white-space: nowrap !important;
+    }
+    html[data-scoop-theme="dark"] .scoop-mobile-tab-row [data-testid="stPageLink"] {
+        border: 1px solid #404040 !important;
+        border-radius: 999px !important;
+        background: #000000 !important;
+        padding: 0.1rem 0.2rem !important;
+        white-space: nowrap !important;
+    }
+    html[data-scoop-theme="dark"] .scoop-mobile-tab-row [data-testid="stPageLink"][data-scoop-nav-active] {
+        background: #333333 !important;
+        border-color: #60a5fa !important;
+    }
+    html[data-scoop-theme="dark"] .scoop-mobile-tab-row [data-testid="stPageLink"] a {
+        padding: 0.35rem 0.7rem !important;
+        font-size: 0.82rem !important;
+        color: #ffffff !important;
+        white-space: nowrap !important;
+    }
+    html[data-scoop-tab-nav="1"] .scoop-mobile-back-home {
+        display: inline-flex !important;
+        align-items: center !important;
+        margin: 0 0 0.45rem 0 !important;
+        padding: 0.35rem 0.75rem !important;
+        border-radius: 999px !important;
+        border: 1px solid #cbd5e1 !important;
+        background: #f8fafc !important;
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        text-decoration: none !important;
+        color: #0f172a !important;
+    }
+    html[data-scoop-theme="dark"] .scoop-mobile-back-home {
+        border-color: #475569 !important;
+        background: #1e293b !important;
+        color: #f1f5f9 !important;
+    }
+    html[data-scoop-tab-nav="1"] .scoop-mobile-back-row {
+        margin: 0 0 0.45rem 0 !important;
+    }
+    html[data-scoop-tab-nav="1"] .scoop-mobile-back-row [data-testid="stPageLink"] {
+        width: fit-content !important;
+    }
+    html[data-scoop-tab-nav="1"] .scoop-mobile-back-row [data-testid="stPageLink"] a {
+        display: inline-flex !important;
+        align-items: center !important;
+        padding: 0.35rem 0.75rem !important;
+        border-radius: 999px !important;
+        border: 1px solid #cbd5e1 !important;
+        background: #f8fafc !important;
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        text-decoration: none !important;
+    }
+    html[data-scoop-theme="dark"] .scoop-mobile-back-row [data-testid="stPageLink"] a {
+        border-color: #475569 !important;
+        background: #1e293b !important;
+        color: #f1f5f9 !important;
+    }
+}
+"""
+
+MOBILE_INNER_TOP_BAR = """
+@media (max-width: 1366px) {
+    .scoop-mobile-inner-top {
+        display: block !important;
+        margin: 0 0 0.35rem 0 !important;
+        padding: 0 !important;
+    }
+    .scoop-mobile-inner-top [data-testid="stHorizontalBlock"] {
+        align-items: center !important;
+        gap: 0.35rem !important;
+        margin: 0 !important;
+    }
+    .scoop-mobile-inner-top [data-testid="column"]:first-child {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+    }
+    .scoop-mobile-inner-top-toggle {
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        min-width: 0 !important;
+    }
+    .scoop-mobile-inner-top .scoop-mobile-back-home {
+        display: inline-flex !important;
+        align-items: center !important;
+        margin: 0 !important;
+        padding: 0.35rem 0.75rem !important;
+        border-radius: 999px !important;
+        border: 1px solid #cbd5e1 !important;
+        background: #f8fafc !important;
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        text-decoration: none !important;
+        color: #0f172a !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+        white-space: nowrap !important;
+    }
+    html[data-scoop-theme="dark"] .scoop-mobile-inner-top .scoop-mobile-back-home {
+        border-color: #475569 !important;
+        background: #1e293b !important;
+        color: #f1f5f9 !important;
+    }
+    html[data-scoop-tab-nav="1"]:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"],
+    html[data-scoop-tab-nav="1"]:not([data-scoop-home-page="1"]) section.main > div,
+    html[data-scoop-tab-nav="1"]:not([data-scoop-home-page="1"]) [data-testid="stAppViewContainer"] > section.main {
+        padding-top: 0.25rem !important;
+    }
+}
+@media (min-width: 1367px) {
+    .scoop-mobile-inner-top {
+        display: none !important;
+    }
+}
+"""
+
+# Backward-compatible alias for tests and imports.
+MOBILE_BACK_HOME_BAR = MOBILE_INNER_TOP_BAR
+
+RESPONSIVE_HOME_LANDING = """
+@media (max-width: 1366px) {
+    html[data-scoop-home-page="1"] section[data-testid="stSidebar"] {
+        display: none !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+    }
+    html[data-scoop-home-page="1"] .stApp,
+    html[data-scoop-home-page="1"] [data-testid="stAppViewContainer"] {
+        display: block !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow-x: hidden !important;
+        box-sizing: border-box !important;
+    }
+    html[data-scoop-home-page="1"] [data-testid="stAppViewContainer"] > section.main,
+    html[data-scoop-home-page="1"] [data-testid="stAppViewContainer"] > div:not([data-testid="stSidebar"]),
+    html[data-scoop-home-page="1"] [data-testid="stMainBlockContainer"],
+    html[data-scoop-home-page="1"] section.main > div,
+    html[data-scoop-home-page="1"] section.main .block-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: clamp(1rem, 4vw, 1.35rem) !important;
+        padding-right: clamp(1rem, 4vw, 1.35rem) !important;
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+        box-sizing: border-box !important;
+    }
+    html[data-scoop-home-page="1"] [data-testid="stVerticalBlock"],
+    html[data-scoop-home-page="1"] [data-testid="block-container"] {
+        gap: 0.65rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    html[data-scoop-home-page="1"] [data-testid="element-container"] {
+        margin-bottom: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    html[data-scoop-home-page="1"] [data-testid="stCustomComponentV1"] {
+        min-height: 0 !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    html[data-scoop-home-page="1"] [data-testid="stCustomComponentV1"] iframe,
+    html[data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] iframe {
+        display: block !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        overflow: hidden !important;
+    }
+    html[data-scoop-home-page="1"] [data-testid="stSidebarNav"] {
+        display: none !important;
+    }
+    html[data-scoop-home-page="1"] .scoop-env-banner {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 0 0.65rem 0 !important;
+        box-sizing: border-box !important;
+    }
+    html[data-scoop-home-page="1"] [data-testid="stHorizontalBlock"]:has([data-testid="stImage"]):not(:has([data-testid="stPageLink"])) {
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+        margin: 0 0 0.35rem 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    html[data-scoop-home-page="1"] [data-testid="stHorizontalBlock"]:has([data-testid="stImage"]):not(:has([data-testid="stPageLink"])) [data-testid="column"] {
+        min-width: 0 !important;
+    }
+    html[data-scoop-home-page="1"] [data-testid="stHorizontalBlock"]:has([data-testid="stImage"]):not(:has([data-testid="stPageLink"])) [data-testid="column"]:first-child {
+        flex: 0 0 auto !important;
+    }
+    html[data-scoop-home-page="1"] [data-testid="stHorizontalBlock"]:has([data-testid="stImage"]):not(:has([data-testid="stPageLink"])) [data-testid="column"]:last-child {
+        flex: 1 1 auto !important;
+        display: flex !important;
+        justify-content: flex-end !important;
+    }
+    html[data-scoop-home-page="1"] [data-testid="stHorizontalBlock"]:has([data-testid="stImage"]):not(:has([data-testid="stPageLink"])) [data-testid="stImage"] {
+        width: clamp(4.5rem, 16vw, 6rem) !important;
+        min-width: clamp(4.5rem, 16vw, 6rem) !important;
+        max-width: clamp(4.5rem, 16vw, 6rem) !important;
+        margin: 0 !important;
+    }
+    html[data-scoop-home-page="1"] [data-testid="stHorizontalBlock"]:has([data-testid="stImage"]):not(:has([data-testid="stPageLink"])) [data-testid="stImage"] img {
+        width: 100% !important;
+        height: auto !important;
+    }
+    html[data-scoop-home-page="1"] .scoop-mobile-home-toggle {
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+    html[data-scoop-home-page="1"] .scoop-mobile-home-toggle label {
+        font-size: clamp(0.95rem, 3vw, 1.1rem) !important;
+    }
+    html[data-scoop-home-page="1"] .scoop-home-landing {
+        padding: 0 0 0.85rem !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    html[data-scoop-home-page="1"] .scoop-home-landing h1 {
+        font-size: clamp(1.75rem, 6vw, 2.35rem) !important;
+        font-weight: 800 !important;
+        margin: 0 0 0.65rem 0 !important;
+        line-height: 1.2 !important;
+    }
+    html[data-scoop-home-page="1"] .scoop-home-landing p {
+        font-size: clamp(1.05rem, 3.2vw, 1.2rem) !important;
+        line-height: 1.55 !important;
+        margin: 0 0 0.85rem 0 !important;
+        color: #334155;
+    }
+    html[data-scoop-theme="dark"] .scoop-home-landing p {
+        color: #cbd5e1;
+    }
+    html[data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stPageLink"] {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        border-radius: 0.85rem !important;
+        border: 2px solid #cbd5e1 !important;
+        background: #ffffff !important;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08) !important;
+        box-sizing: border-box !important;
+    }
+    html[data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stPageLink"] a {
+        display: block !important;
+        width: 100% !important;
+        padding: clamp(0.85rem, 3vw, 1rem) clamp(1rem, 3.5vw, 1.15rem) !important;
+        font-size: clamp(1.05rem, 3.2vw, 1.18rem) !important;
+        font-weight: 700 !important;
+        line-height: 1.25 !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
+    }
+    html[data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stPageLink"][data-scoop-nav-active] {
+        background: #dbeafe !important;
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.18) !important;
+    }
+    html[data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stPageLink"][data-scoop-nav-active] a {
+        color: #1e40af !important;
+    }
+    html[data-scoop-theme="dark"] [data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stPageLink"] {
+        border-color: #475569 !important;
+        background: #0f172a !important;
+        box-shadow: none !important;
+    }
+    html[data-scoop-theme="dark"] [data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stPageLink"] a {
+        color: #f1f5f9 !important;
+    }
+    html[data-scoop-theme="dark"] [data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stPageLink"][data-scoop-nav-active] {
+        background: #1e3a5f !important;
+        border-color: #60a5fa !important;
+        box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.25) !important;
+    }
+    html[data-scoop-theme="dark"] [data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stPageLink"][data-scoop-nav-active] a {
+        color: #ffffff !important;
+    }
+}
+@media (min-width: 744px) and (max-width: 1366px) {
+    html[data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"]:has([data-testid="stPageLink"]) {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 0.75rem !important;
+        width: 100% !important;
+    }
+    html[data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"]:has([data-testid="stPageLink"]) > div {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+    }
+}
+"""
+
+RESPONSIVE_TAB_NAV_BOOTSTRAP = (
+    RESPONSIVE_TAB_NAV_HIDE_SIDEBAR
+    + RESPONSIVE_TAB_NAV_SHELL
+    + RESPONSIVE_TAB_NAV_BAR
+    + MOBILE_INNER_TOP_BAR
+    + RESPONSIVE_HOME_LANDING
+)

@@ -19,6 +19,7 @@ from admin_tools.tablet_mobile_layout_css import (  # noqa: E402
 from tooltip_scroll import (  # noqa: E402
     GENERIC_TOOLTIP_CSS_VERSION,
     TOOLTIP_SCRIPT_VERSION,
+    _DESKTOP_TOOLTIP_TYPE_CSS,
     _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS,
     _IPAD_MINI_HEADLINES_CSS,
     _MOBILE_HEADLINES_CSS,
@@ -196,7 +197,7 @@ def test_ipad_mini_popup_clamp_js() -> None:
 
 def test_version_bumps_for_asset_refresh() -> None:
     assert GENERIC_TOOLTIP_CSS_VERSION >= 27
-    assert TOOLTIP_SCRIPT_VERSION >= 40
+    assert TOOLTIP_SCRIPT_VERSION >= 41
 
 
 def test_ipad_mini_headlines_use_tablet_pro_popup() -> None:
@@ -207,6 +208,16 @@ def test_ipad_mini_headlines_use_tablet_pro_popup() -> None:
     assert "position: fixed !important" in _IPAD_MINI_HEADLINES_CSS
     assert "isIpadMiniViewport()" in _TOOLTIP_SCROLL_JS
     assert "isResponsiveHeadlinesViewport() || isIpadMiniViewport()" in _TOOLTIP_SCROLL_JS
+
+
+def test_desktop_tooltip_type_css_larger_fonts() -> None:
+    css = _DESKTOP_TOOLTIP_TYPE_CSS
+    assert "@media (min-width: 1367px)" in css
+    assert "font-size: 1.25rem !important" in css
+    assert "font-size: 1.65rem !important" in css
+    assert "min-width: 24rem !important" in css
+    assert "scoop-desktop-tooltip-type-css" not in css
+    assert "max-width: 1366px" not in css
 
 
 def test_phone_mobile_headlines_top_panel() -> None:
@@ -239,6 +250,7 @@ def main() -> int:
         test_ipad_mini_headlines_use_tablet_pro_popup,
         test_ipad_mini_popup_clamp_css,
         test_ipad_mini_popup_clamp_js,
+        test_desktop_tooltip_type_css_larger_fonts,
         test_phone_mobile_headlines_top_panel,
         test_version_bumps_for_asset_refresh,
     ]
