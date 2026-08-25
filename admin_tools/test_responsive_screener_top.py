@@ -43,12 +43,22 @@ def test_screener_toggle_banner_gap_on_mobile_tablet() -> None:
     assert ".scoop-banner-compact" in css
 
 
+def test_screener_banner_cards_full_width_on_mobile_tablet() -> None:
+    css = RESPONSIVE_SCREENER_TOP_COMPACT
+    assert 'div[style*="max-width:50%"]' in css
+    assert 'div[style*="max-width: 50%"]' in css
+    assert "min-width: 0 !important" in css
+    assert "flex: 1 1 100% !important" in css
+    assert "@media (min-width: 1367px)" not in css
+
+
 if __name__ == "__main__":
     tests = [
         test_screener_top_compact_scoped_to_mobile_tablet,
         test_screener_top_compact_targets_active_flag,
         test_screener_top_compact_does_not_touch_desktop,
         test_screener_toggle_banner_gap_on_mobile_tablet,
+        test_screener_banner_cards_full_width_on_mobile_tablet,
     ]
     for fn in tests:
         fn()

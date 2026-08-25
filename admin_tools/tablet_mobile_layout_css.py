@@ -2908,6 +2908,26 @@ _RESPONSIVE_SCREENER_TOP_COMPACT_RULES = """
         margin-bottom: 0 !important;
         padding-bottom: 0 !important;
     }
+    /* Market pages: index banner cards fill the viewport (desktop keeps inline 50%). */
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stMarkdownContainer"],
+    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stMarkdownContainer"] > div,
+    html[data-scoop-screener-active="1"] .scoop-banner-compact,
+    html[data-scoop-screener-active="1"] .scoop-banner-desktop,
+    html[data-scoop-screener-active="1"] [data-testid="stMarkdownContainer"] div[style*="display:flex"][style*="flex-wrap"][style*="margin-bottom"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    html[data-scoop-screener-active="1"] [data-testid="stMarkdownContainer"] div[style*="max-width:50%"],
+    html[data-scoop-screener-active="1"] [data-testid="stMarkdownContainer"] div[style*="max-width: 50%"],
+    html[data-scoop-screener-active="1"] .scoop-banner-compact > div,
+    html[data-scoop-screener-active="1"] .scoop-banner-desktop > div {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
 """
 
 # Mobile/tablet market pages: space between dark-mode row and index banner cards.
