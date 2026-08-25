@@ -117,9 +117,16 @@ def test_home_landing_page_css_scoped() -> None:
     assert "background: transparent !important" in bootstrap
     assert "display: none !important" in bootstrap
     assert "html[data-scoop-home-page=\"1\"]" in bootstrap
-    assert "padding: 0.5rem 0.8rem !important" in bootstrap
-    assert "#0f172a" in bootstrap
-    assert 'div[data-testid="stCheckbox"]' in bootstrap
+    assert "border-radius: 999px !important" in bootstrap
+    assert "width: fit-content !important" in bootstrap
+    assert "clamp(0.78rem, 2.2vw, 0.88rem)" in bootstrap
+    assert "background: #0f172a !important" in bootstrap
+    assert "border: 1px solid #334155 !important" in bootstrap
+    assert "color: #e2e8f0 !important" in bootstrap
+    assert "scoop-mobile-inner-top-toggle" in bootstrap
+    assert 'div[data-testid="stToggle"]' in bootstrap
+    assert "_MOBILE_TABLET_DARK_MODE_PILL_LAYOUT_FINAL" not in bootstrap
+    assert "margin-left: auto !important" in bootstrap
     assert "margin-top: 12px !important" in css
     assert "padding-left: var(--scoop-home-side-padding, 20px)" in css
     assert "#111827" in css

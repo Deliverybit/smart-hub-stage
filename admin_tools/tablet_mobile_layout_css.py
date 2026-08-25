@@ -1863,18 +1863,71 @@ _HOME_SIDE_PADDING = "20px"
 _HOME_LOGO_MAX = "clamp(190px, 48vw, 280px)"
 _HOME_LOGO_TABLET_MAX = "clamp(300px, 38vw, 420px)"
 _MOBILE_TAB_MAIN = 'html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"]'
+_MOBILE_TAB_DARK_MODE_SCOPE = f'{_MOBILE_TAB_MAIN} .scoop-mobile-inner-top-toggle'
 _MOBILE_TAB_TOGGLE_WRAP = (
-    f'{_MOBILE_TAB_MAIN} [data-testid="element-container"]:has([data-testid="stCheckbox"]), '
-    f'{_MOBILE_TAB_MAIN} [data-testid="stElementContainer"]:has([data-testid="stCheckbox"]), '
-    f'{_MOBILE_TAB_MAIN} [data-testid="element-container"]:has([data-testid="stToggle"]), '
-    f'{_MOBILE_TAB_MAIN} [data-testid="stElementContainer"]:has([data-testid="stToggle"])'
+    f'{_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="element-container"]:has([data-testid="stToggle"]), '
+    f'{_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stElementContainer"]:has([data-testid="stToggle"])'
 )
-_MOBILE_TAB_DARK_MODE_CONTAINER = (
-    f'{_MOBILE_TAB_MAIN} [data-testid="element-container"]:has([data-testid="stCheckbox"]), '
-    f'{_MOBILE_TAB_MAIN} [data-testid="stElementContainer"]:has([data-testid="stCheckbox"]), '
-    f'{_MOBILE_TAB_MAIN} [data-testid="element-container"]:has([data-testid="stToggle"]), '
-    f'{_MOBILE_TAB_MAIN} [data-testid="stElementContainer"]:has([data-testid="stToggle"])'
+# Streamlit renders the inner-top markdown wrappers as siblings — dark mode widget is the next row.
+_MOBILE_TAB_DARK_MODE_ROW = (
+    f'{_MOBILE_TAB_MAIN} [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle) + [data-testid="stElementContainer"]:has([data-testid="stToggle"]), '
+    f'{_MOBILE_TAB_MAIN} [data-testid="element-container"]:has(.scoop-mobile-inner-top-toggle) + [data-testid="element-container"]:has([data-testid="stToggle"]), '
+    f'{_MOBILE_TAB_MAIN} [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle) + [data-testid="stElementContainer"]:has([data-testid="stCheckbox"]), '
+    f'{_MOBILE_TAB_MAIN} [data-testid="element-container"]:has(.scoop-mobile-inner-top-toggle) + [data-testid="element-container"]:has([data-testid="stCheckbox"])'
 )
+_MOBILE_TAB_TERMS_CHECKBOX_ROW = (
+    f'{_MOBILE_TAB_MAIN} [data-testid="stElementContainer"]:has([data-testid="stCheckbox"]):has(+ [data-testid="stElementContainer"] .disclaimer-footer), '
+    f'{_MOBILE_TAB_MAIN} [data-testid="element-container"]:has([data-testid="stCheckbox"]):has(+ [data-testid="element-container"] .disclaimer-footer)'
+)
+_MOBILE_TAB_DARK_MODE_CONTAINER = _MOBILE_TAB_TOGGLE_WRAP
+
+# Mobile/tablet Dark mode pill — same shape/size as Back to Home (viewport-responsive).
+_MOBILE_TABLET_DARK_MODE_PILL_PADDING = "clamp(0.32rem, 1.2vw, 0.4rem) clamp(0.65rem, 2.4vw, 0.8rem)"
+_MOBILE_TABLET_DARK_MODE_PILL_FONT = "clamp(0.78rem, 2.2vw, 0.88rem)"
+_MOBILE_TABLET_DARK_MODE_TOGGLE_CHROME = f"""
+        display: inline-flex !important;
+        align-items: center !important;
+        width: fit-content !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        margin: 0 !important;
+        padding: {_MOBILE_TABLET_DARK_MODE_PILL_PADDING} !important;
+        border-radius: 999px !important;
+        border: 1px solid #334155 !important;
+        background: #0f172a !important;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12) !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+        font-size: {_MOBILE_TABLET_DARK_MODE_PILL_FONT} !important;
+        white-space: nowrap !important;
+"""
+_MOBILE_TABLET_DARK_MODE_TOGGLE_LABEL = f"""
+        color: #e2e8f0 !important;
+        font-weight: 700 !important;
+        font-size: {_MOBILE_TABLET_DARK_MODE_PILL_FONT} !important;
+        line-height: 1.2 !important;
+"""
+_MOBILE_TABLET_DARK_MODE_TOGGLE_LABEL_SHELL = f"""
+        font-size: {_MOBILE_TABLET_DARK_MODE_PILL_FONT} !important;
+        line-height: 1.2 !important;
+"""
+_MOBILE_TABLET_DARK_MODE_TOGGLE_TIP = """
+        font-size: clamp(0.72rem, 1.9vw, 0.82rem) !important;
+        width: clamp(0.72rem, 1.9vw, 0.82rem) !important;
+        height: clamp(0.72rem, 1.9vw, 0.82rem) !important;
+"""
+_MOBILE_TABLET_DARK_MODE_TOGGLE_SWITCH = """
+        width: clamp(1.85rem, 5vw, 2.15rem) !important;
+        height: clamp(1rem, 2.8vw, 1.15rem) !important;
+        min-width: clamp(1.85rem, 5vw, 2.15rem) !important;
+        min-height: clamp(1rem, 2.8vw, 1.15rem) !important;
+"""
+_MOBILE_TABLET_DARK_MODE_TOGGLE_SWITCH_KNOB = """
+        width: clamp(0.85rem, 2.4vw, 0.95rem) !important;
+        height: clamp(0.85rem, 2.4vw, 0.95rem) !important;
+"""
 _MOBILE_SCREENER_INDEX_BANNER_CONTAINER = (
     '[data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-banner-compact), '
     '[data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.scoop-banner-compact), '
@@ -1913,63 +1966,43 @@ _MOBILE_TABLET_TOGGLE_RULES = f"""
         border: none !important;
         border-radius: 0 !important;
         padding: 0 !important;
-        margin-top: 0 !important;
-        width: 100% !important;
+        margin-top: 12px !important;
+        margin-bottom: 12px !important;
+        width: auto !important;
         max-width: 100% !important;
         min-height: 0 !important;
         box-sizing: border-box !important;
         box-shadow: none !important;
     }}
-    {_MOBILE_TAB_MAIN} [data-testid="stToggle"] {{
-        background: transparent !important;
-        border: none !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        min-height: 0 !important;
-        box-sizing: border-box !important;
-        align-items: center !important;
+    {_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stToggle"] {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_CHROME}
     }}
-    {_MOBILE_TAB_MAIN} [data-testid="stToggle"] > label {{
-        width: 100% !important;
+    {_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stToggle"] > label {{
+        width: auto !important;
         min-height: 0 !important;
         align-items: center !important;
+        gap: 0.35rem !important;
     }}
-    html:not([data-scoop-theme="dark"])[data-scoop-tab-nav="1"] {_MOBILE_TAB_MAIN} [data-testid="stToggle"] [data-testid="stWidgetLabel"] p {{
-        color: #0f172a !important;
-        font-size: clamp(1rem, 4vw, 1.35rem) !important;
-        font-weight: 600 !important;
-        line-height: 1.2 !important;
+    {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] [data-testid="stWidgetLabel"] p,
+    {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] label p {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_LABEL}
     }}
-    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] {_MOBILE_TAB_MAIN} [data-testid="stToggle"] [data-testid="stWidgetLabel"] p {{
-        color: #e2e8f0 !important;
-        font-size: clamp(1rem, 4vw, 1.35rem) !important;
-        font-weight: 600 !important;
-        line-height: 1.2 !important;
-    }}
-    {_MOBILE_TAB_MAIN} [data-testid="stToggle"] [data-testid="stWidgetLabel"] {{
+    {_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stToggle"] [data-testid="stWidgetLabel"] {{
         min-height: 0 !important;
     }}
-    {_MOBILE_TAB_MAIN} [data-testid="stToggle"] [data-baseweb="switch"] {{
-        width: 3.25rem !important;
-        height: 1.85rem !important;
-        min-width: 3.25rem !important;
-        min-height: 1.85rem !important;
+    {_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stToggle"] [data-baseweb="switch"] {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_SWITCH}
     }}
-    {_MOBILE_TAB_MAIN} [data-testid="stToggle"] [data-baseweb="switch"] > div {{
-        width: 1.45rem !important;
-        height: 1.45rem !important;
+    {_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stToggle"] [data-baseweb="switch"] > div {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_SWITCH_KNOB}
     }}
-    {_MOBILE_TAB_MAIN} [data-testid="stToggle"] [data-testid="stTooltipIcon"] {{
-        font-size: 1.15rem !important;
-        width: 1.15rem !important;
-        height: 1.15rem !important;
+    {_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stToggle"] [data-testid="stTooltipIcon"] {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_TIP}
     }}
-    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] {_MOBILE_TAB_MAIN} [data-baseweb="switch"] {{
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} [data-baseweb="switch"] {{
         background-color: #334155 !important;
     }}
-    html:not([data-scoop-theme="dark"])[data-scoop-tab-nav="1"] {_MOBILE_TAB_MAIN} [data-testid="stToggle"] [data-baseweb="switch"] {{
+    html:not([data-scoop-theme="dark"])[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stToggle"] [data-baseweb="switch"] {{
         background-color: #cbd5e1 !important;
     }}
 """
@@ -1983,8 +2016,8 @@ MOBILE_TABLET_TOGGLE_STYLE = f"""
 # Final cascade — spacing + unboxed toggle on mobile/tablet home and market pages.
 _MOBILE_TABLET_TOGGLE_FINAL = f"""
 @media (max-width: 1366px) {{
-    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle):not(:has([data-testid="stCheckbox"])):not(:has([data-testid="stToggle"])),
-    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.scoop-mobile-inner-top-toggle):not(:has([data-testid="stCheckbox"])):not(:has([data-testid="stToggle"])) {{
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle):not(:has([data-testid="stToggle"])),
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.scoop-mobile-inner-top-toggle):not(:has([data-testid="stToggle"])) {{
         display: none !important;
         height: 0 !important;
         min-height: 0 !important;
@@ -2002,96 +2035,142 @@ _MOBILE_TABLET_TOGGLE_FINAL = f"""
         border: none !important;
         border-radius: 0 !important;
         padding: 0 !important;
-        margin-top: 0 !important;
-        width: 100% !important;
+        margin-top: 12px !important;
+        margin-bottom: 12px !important;
+        width: auto !important;
         max-width: 100% !important;
         min-height: 0 !important;
         box-sizing: border-box !important;
         box-shadow: none !important;
     }}
-    html[data-scoop-tab-nav="1"][data-scoop-screener-active="1"] {_MOBILE_TAB_DARK_MODE_CONTAINER},
-    html[data-scoop-tab-nav="1"][data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stCheckbox"]),
-    html[data-scoop-tab-nav="1"][data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stCheckbox"]) {{
-        margin-bottom: {_DESKTOP_MARKET_NAV_GAP} !important;
+    html[data-scoop-tab-nav="1"][data-scoop-screener-active="1"] {_MOBILE_TAB_DARK_MODE_ROW} {{
+        margin-top: 12px !important;
+        margin-bottom: 12px !important;
     }}
     html[data-scoop-tab-nav="1"][data-scoop-screener-active="1"] {_MOBILE_SCREENER_INDEX_BANNER_CONTAINER} {{
         margin-top: {_DESKTOP_MARKET_NAV_GAP} !important;
     }}
-    html:not([data-scoop-theme="dark"])[data-scoop-tab-nav="1"]:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-testid="stWidgetLabel"] p {{
-        color: #0f172a !important;
-    }}
-    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"]:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-testid="stWidgetLabel"] p {{
-        color: #e2e8f0 !important;
-    }}
 }}
 """
 
-# Shared dark-mode toggle chrome (mobile/tablet) — size/font only; no width/position.
-_MOBILE_TABLET_DARK_MODE_TOGGLE_CHROME = """
-        background: #0f172a !important;
-        border: 1px solid #334155 !important;
-        border-radius: 10px !important;
-        padding: 0.5rem 0.8rem !important;
+_MOBILE_TABLET_DARK_MODE_TOGGLE_WIDGET = f'{_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"]'
+_MOBILE_TABLET_DARK_MODE_TOGGLE_WRAP = (
+    f'{_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stElementContainer"]:has([data-testid="stToggle"]), '
+    f'{_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="element-container"]:has([data-testid="stToggle"])'
+)
+
+# Mobile/tablet main Dark mode pill — same shape/size as Back to Home (desktop unchanged).
+_MOBILE_TABLET_DARK_MODE_TOGGLE_BOXED = f"""
+@media (max-width: 1366px) {{
+    {_MOBILE_TAB_DARK_MODE_ROW} {{
+        margin-top: 12px !important;
+        margin-bottom: 12px !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        width: auto !important;
+        max-width: 100% !important;
         min-height: 0 !important;
         box-sizing: border-box !important;
-        box-shadow: none !important;
-        font-size: 18px !important;
-"""
-_MOBILE_TABLET_DARK_MODE_TOGGLE_LABEL = """
-        color: #e2e8f0 !important;
-        font-weight: 700 !important;
-        font-size: 14px !important;
-        line-height: 1.2 !important;
-"""
-_MOBILE_TABLET_DARK_MODE_TOGGLE_LABEL_SHELL = """
-        font-size: 14px !important;
-        line-height: 1.2 !important;
-"""
-_MOBILE_TABLET_DARK_MODE_TOGGLE_TIP = """
-        font-size: 14px !important;
-        width: 14px !important;
-        height: 14px !important;
-"""
-
-# Home landing only — navy boxed dark mode toggle (mobile/tablet).
-_HOME_MOBILE_TABLET_TOGGLE_BOXED = f"""
-@media (max-width: 1366px) {{
-    {_HOME_MAIN_SCOPE} div[data-testid="stCheckbox"] {{
-{_MOBILE_TABLET_DARK_MODE_TOGGLE_CHROME}
-        margin-top: 0.35rem !important;
-        width: fit-content !important;
-        max-width: 100% !important;
+        display: flex !important;
+        justify-content: flex-end !important;
     }}
-    {_HOME_MAIN_SCOPE} div[data-testid="stCheckbox"] [data-testid="stWidgetLabel"],
-    {_HOME_MAIN_SCOPE} div[data-testid="stCheckbox"] [data-testid="stMarkdownContainer"] {{
+    {_MOBILE_TAB_DARK_MODE_ROW} div[data-testid="stToggle"],
+    {_MOBILE_TAB_DARK_MODE_ROW} div[data-testid="stCheckbox"] {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_CHROME}
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }}
+    {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] [data-testid="stWidgetLabel"],
+    {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] [data-testid="stMarkdownContainer"] {{
 {_MOBILE_TABLET_DARK_MODE_TOGGLE_LABEL_SHELL}
     }}
-    {_HOME_MAIN_SCOPE} div[data-testid="stCheckbox"] [data-testid="stWidgetLabel"] p,
-    {_HOME_MAIN_SCOPE} div[data-testid="stCheckbox"] label p {{
+    {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] [data-testid="stWidgetLabel"] p,
+    {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] label p {{
 {_MOBILE_TABLET_DARK_MODE_TOGGLE_LABEL}
     }}
-    {_HOME_MAIN_SCOPE} div[data-testid="stCheckbox"] [data-testid="stTooltipIcon"] {{
+    {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] [data-testid="stTooltipIcon"] {{
 {_MOBILE_TABLET_DARK_MODE_TOGGLE_TIP}
+    }}
+    {_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stToggle"] [data-baseweb="switch"] {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_SWITCH}
+    }}
+    {_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stToggle"] [data-baseweb="switch"] > div {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_SWITCH_KNOB}
     }}
 }}
 """
 
-# Market screener pages — match landing toggle size/font; keep existing placement/width.
-_MARKET_MOBILE_TABLET_TOGGLE_BOXED = f"""
+# Home landing only — pill dark mode toggle (mobile/tablet).
+_HOME_MOBILE_TABLET_TOGGLE_BOXED = _MOBILE_TABLET_DARK_MODE_TOGGLE_BOXED
+
+# Market screener pages — same pill Dark mode as home (desktop unchanged).
+_MARKET_MOBILE_TABLET_TOGGLE_BOXED = _MOBILE_TABLET_DARK_MODE_TOGGLE_BOXED
+
+# Late cascade — pill layout + beat page-level font/width overrides (mobile/tablet dark mode only).
+_MOBILE_TABLET_DARK_MODE_PILL_LAYOUT_FINAL = f"""
 @media (max-width: 1366px) {{
-    html[data-scoop-tab-nav="1"][data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] div[data-testid="stCheckbox"] {{
+    html[data-scoop-tab-nav="1"] .scoop-mobile-inner-top-toggle {{
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }}
+    html[data-scoop-tab-nav="1"] .scoop-mobile-inner-top [data-testid="stHorizontalBlock"] {{
+        justify-content: flex-end !important;
+        width: 100% !important;
+    }}
+    html[data-scoop-tab-nav="1"] .scoop-mobile-inner-top [data-testid="stHorizontalBlock"] > div,
+    html[data-scoop-tab-nav="1"] .scoop-mobile-inner-top-toggle [data-testid="stVerticalBlock"],
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stElementContainer"]:has([data-testid="stToggle"]),
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="element-container"]:has([data-testid="stToggle"]) {{
+        width: fit-content !important;
+        max-width: 100% !important;
+        flex: 0 0 auto !important;
+        min-width: 0 !important;
+        margin-left: auto !important;
+        margin-right: 0 !important;
+    }}
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] {{
 {_MOBILE_TABLET_DARK_MODE_TOGGLE_CHROME}
     }}
-    html[data-scoop-tab-nav="1"][data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] div[data-testid="stCheckbox"] [data-testid="stWidgetLabel"],
-    html[data-scoop-tab-nav="1"][data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] div[data-testid="stCheckbox"] [data-testid="stMarkdownContainer"] {{
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] > label {{
+        width: auto !important;
+        min-height: 0 !important;
+        align-items: center !important;
+        gap: 0.35rem !important;
+    }}
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] [data-testid="stWidgetLabel"],
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] [data-testid="stMarkdownContainer"] {{
 {_MOBILE_TABLET_DARK_MODE_TOGGLE_LABEL_SHELL}
     }}
-    html[data-scoop-tab-nav="1"][data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] div[data-testid="stCheckbox"] [data-testid="stWidgetLabel"] p,
-    html[data-scoop-tab-nav="1"][data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] div[data-testid="stCheckbox"] label p {{
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] [data-testid="stWidgetLabel"] p,
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] label p {{
 {_MOBILE_TABLET_DARK_MODE_TOGGLE_LABEL}
     }}
-    html[data-scoop-tab-nav="1"][data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] div[data-testid="stCheckbox"] [data-testid="stTooltipIcon"] {{
-{_MOBILE_TABLET_DARK_MODE_TOGGLE_TIP}
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stToggle"] [data-baseweb="switch"] {{
+        background-color: #334155 !important;
+    }}
+    html:not([data-scoop-theme="dark"])[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stToggle"] [data-baseweb="switch"] {{
+        background-color: #cbd5e1 !important;
+    }}
+    /* Space Dark mode pill above market index cards (mobile/tablet only). */
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_ROW} {{
+        margin-bottom: {_DESKTOP_MARKET_NAV_GAP} !important;
+        padding-bottom: {_DESKTOP_MARKET_NAV_GAP} !important;
+    }}
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_ROW} div[data-testid="stToggle"],
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_ROW} div[data-testid="stCheckbox"] {{
+        margin-bottom: {_DESKTOP_MARKET_NAV_GAP} !important;
+    }}
+    html[data-scoop-tab-nav="1"] {_MOBILE_SCREENER_INDEX_BANNER_CONTAINER} {{
+        margin-top: {_DESKTOP_MARKET_NAV_GAP} !important;
+    }}
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_ROW} + [data-testid="stElementContainer"],
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_ROW} + [data-testid="element-container"] {{
+        margin-top: {_DESKTOP_MARKET_NAV_GAP} !important;
     }}
 }}
 """
@@ -2272,6 +2351,30 @@ DESKTOP_SIDEBAR_LOGO_RULES = """
         height: auto !important;
         display: block !important;
     }
+    /* Desktop: hide Streamlit image Fullscreen so the sidebar logo cannot overlay the page. */
+    [data-testid="stSidebar"] [data-testid="stElementToolbar"],
+    [data-testid="stSidebar"] button[aria-label="Fullscreen"],
+    [data-testid="stSidebar"] [data-testid="stFullScreenFrame"] button[aria-label="Fullscreen"] {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+    [data-testid="stFullScreenFrame"]:has([data-testid="stImage"]):has(button[aria-label="Close fullscreen"]) {
+        position: static !important;
+        inset: auto !important;
+        width: 100% !important;
+        height: auto !important;
+        z-index: auto !important;
+    }
+    [data-testid="stFullScreenFrame"]:has([data-testid="stImage"]):has(button[aria-label="Close fullscreen"]) img {
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: none !important;
+        height: auto !important;
+    }
+    [data-testid="stFullScreenFrame"]:has([data-testid="stImage"]) button[aria-label="Close fullscreen"] {
+        display: none !important;
+    }
 }
 html[data-scoop-desktop-layout="1"] [data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stImage"]),
 html[data-scoop-desktop-layout="1"] [data-testid="stSidebar"] [data-testid="element-container"]:has([data-testid="stImage"]) {
@@ -2289,6 +2392,23 @@ html[data-scoop-desktop-layout="1"] [data-testid="stSidebar"] [data-testid="stIm
     box-shadow: none !important;
     width: 100% !important;
     max-width: 100% !important;
+}
+html[data-scoop-desktop-layout="1"] [data-testid="stSidebar"] [data-testid="stElementToolbar"],
+html[data-scoop-desktop-layout="1"] [data-testid="stSidebar"] button[aria-label="Fullscreen"],
+html[data-scoop-desktop-layout="1"] [data-testid="stSidebar"] [data-testid="stFullScreenFrame"] button[aria-label="Fullscreen"] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+html[data-scoop-desktop-layout="1"] [data-testid="stFullScreenFrame"]:has([data-testid="stImage"]):has(button[aria-label="Close fullscreen"]) {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    z-index: auto !important;
+}
+html[data-scoop-desktop-layout="1"] [data-testid="stFullScreenFrame"]:has([data-testid="stImage"]) button[aria-label="Close fullscreen"] {
+    display: none !important;
 }
 """
 
@@ -2930,16 +3050,80 @@ _RESPONSIVE_SCREENER_TOP_COMPACT_RULES = """
     }
 """
 
+# Mobile/tablet terms gate checkbox — restore compact page styling (not Dark mode box).
+_MOBILE_TABLET_TERMS_CHECKBOX_RESTORE = f"""
+@media (max-width: 1366px) {{
+    html[data-scoop-screener-gated="1"] {_MOBILE_TAB_MAIN} [data-testid="stElementContainer"]:has([data-testid="stCheckbox"]):not(:has(.scoop-mobile-inner-top-toggle)),
+    html[data-scoop-screener-gated="1"] {_MOBILE_TAB_MAIN} [data-testid="element-container"]:has([data-testid="stCheckbox"]):not(:has(.scoop-mobile-inner-top-toggle)) {{
+        margin-bottom: {_DESKTOP_MARKET_NAV_GAP} !important;
+        padding-bottom: {_DESKTOP_MARKET_NAV_GAP} !important;
+    }}
+    html[data-scoop-screener-gated="1"] {_MOBILE_TAB_MAIN} [data-testid="stElementContainer"]:has([data-testid="stCheckbox"]):not(:has(.scoop-mobile-inner-top-toggle)) div[data-testid="stCheckbox"],
+    html[data-scoop-screener-gated="1"] {_MOBILE_TAB_MAIN} [data-testid="element-container"]:has([data-testid="stCheckbox"]):not(:has(.scoop-mobile-inner-top-toggle)) div[data-testid="stCheckbox"] {{
+        padding: 0.5rem 0.8rem !important;
+        margin-top: 0.35rem !important;
+        margin-bottom: {_DESKTOP_MARKET_NAV_GAP} !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        font-size: inherit !important;
+        overflow: visible !important;
+    }}
+    html[data-scoop-screener-gated="1"] {_MOBILE_TAB_MAIN} [data-testid="stElementContainer"]:has([data-testid="stCheckbox"]):not(:has(.scoop-mobile-inner-top-toggle)) div[data-testid="stCheckbox"] [data-testid="stWidgetLabel"] p,
+    html[data-scoop-screener-gated="1"] {_MOBILE_TAB_MAIN} [data-testid="element-container"]:has([data-testid="stCheckbox"]):not(:has(.scoop-mobile-inner-top-toggle)) div[data-testid="stCheckbox"] label p {{
+        font-size: inherit !important;
+        line-height: normal !important;
+    }}
+    html[data-scoop-screener-gated="1"] {_MOBILE_TAB_MAIN} [data-testid="stElementContainer"]:has([data-testid="stCheckbox"]):not(:has(.scoop-mobile-inner-top-toggle)) div[data-testid="stCheckbox"] [data-testid="stTooltipIcon"],
+    html[data-scoop-screener-gated="1"] {_MOBILE_TAB_MAIN} [data-testid="element-container"]:has([data-testid="stCheckbox"]):not(:has(.scoop-mobile-inner-top-toggle)) div[data-testid="stCheckbox"] [data-testid="stTooltipIcon"] {{
+        font-size: 14px !important;
+        width: 14px !important;
+        height: 14px !important;
+    }}
+}}
+"""
+
 # Mobile/tablet market pages: space between dark-mode row and index banner cards.
 _MOBILE_SCREENER_TOGGLE_BANNER_GAP_FINAL = f"""
-    html[data-scoop-tab-nav="1"][data-scoop-screener-active="1"] {_MOBILE_TAB_DARK_MODE_CONTAINER},
-    html[data-scoop-tab-nav="1"][data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stCheckbox"]),
-    html[data-scoop-tab-nav="1"][data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stCheckbox"]) {{
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_ROW} {{
+        margin-bottom: {_DESKTOP_MARKET_NAV_GAP} !important;
+        padding-bottom: {_DESKTOP_MARKET_NAV_GAP} !important;
+    }}
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_ROW} div[data-testid="stToggle"],
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_ROW} div[data-testid="stCheckbox"] {{
         margin-bottom: {_DESKTOP_MARKET_NAV_GAP} !important;
     }}
-    html[data-scoop-tab-nav="1"][data-scoop-screener-active="1"] {_MOBILE_SCREENER_INDEX_BANNER_CONTAINER} {{
+    html[data-scoop-tab-nav="1"] {_MOBILE_SCREENER_INDEX_BANNER_CONTAINER} {{
         margin-top: {_DESKTOP_MARKET_NAV_GAP} !important;
     }}
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_ROW} + [data-testid="stElementContainer"],
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_ROW} + [data-testid="element-container"] {{
+        margin-top: {_DESKTOP_MARKET_NAV_GAP} !important;
+    }}
+"""
+
+# Mobile/tablet gated view: space between terms checkbox and disclaimer footer.
+_MOBILE_TABLET_CONSENT_DISCLAIMER_GAP_FINAL = f"""
+@media (max-width: 1366px) {{
+    html[data-scoop-tab-nav="1"][data-scoop-screener-gated="1"] {_MOBILE_TAB_TERMS_CHECKBOX_ROW} {{
+        margin-bottom: {_DESKTOP_MARKET_NAV_GAP} !important;
+        padding-bottom: {_DESKTOP_MARKET_NAV_GAP} !important;
+    }}
+    html[data-scoop-tab-nav="1"][data-scoop-screener-gated="1"] {_MOBILE_TAB_TERMS_CHECKBOX_ROW} div[data-testid="stCheckbox"] {{
+        margin-bottom: {_DESKTOP_MARKET_NAV_GAP} !important;
+    }}
+    html[data-scoop-tab-nav="1"][data-scoop-screener-gated="1"] {_MOBILE_TAB_TERMS_CHECKBOX_ROW} + [data-testid="stElementContainer"],
+    html[data-scoop-tab-nav="1"][data-scoop-screener-gated="1"] {_MOBILE_TAB_TERMS_CHECKBOX_ROW} + [data-testid="element-container"],
+    html[data-scoop-tab-nav="1"][data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.disclaimer-footer),
+    html[data-scoop-tab-nav="1"][data-scoop-screener-gated="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.disclaimer-footer) {{
+        margin-top: {_DESKTOP_MARKET_NAV_GAP} !important;
+    }}
+    html[data-scoop-tab-nav="1"][data-scoop-screener-gated="1"] .disclaimer-footer {{
+        margin-top: {_DESKTOP_MARKET_NAV_GAP} !important;
+    }}
+}}
 """
 
 RESPONSIVE_SCREENER_TOP_COMPACT = f"""
@@ -2947,7 +3131,7 @@ RESPONSIVE_SCREENER_TOP_COMPACT = f"""
 {_RESPONSIVE_SCREENER_TOP_COMPACT_RULES}
 {_MOBILE_SCREENER_TOGGLE_BANNER_GAP_FINAL}
 }}
-""" + _MARKET_MOBILE_TABLET_TOGGLE_BOXED
+""" + _MARKET_MOBILE_TABLET_TOGGLE_BOXED + _MOBILE_TABLET_TERMS_CHECKBOX_RESTORE + _MOBILE_TABLET_DARK_MODE_PILL_LAYOUT_FINAL + _MOBILE_TABLET_CONSENT_DISCLAIMER_GAP_FINAL
 
 # Mobile/tablet Terms page: collapse bootstrap gaps before title and divider lines.
 _DESKTOP_TERMS_TOP_COMPACT_RULES = """
@@ -3826,4 +4010,6 @@ RESPONSIVE_TAB_NAV_BOOTSTRAP = (
     + MOBILE_TABLET_TOGGLE_STYLE
     + _MOBILE_TABLET_TOGGLE_FINAL
     + _HOME_MOBILE_TABLET_TOGGLE_BOXED
+    + _MOBILE_TABLET_DARK_MODE_PILL_LAYOUT_FINAL
+    + _MOBILE_TABLET_CONSENT_DISCLAIMER_GAP_FINAL
 )

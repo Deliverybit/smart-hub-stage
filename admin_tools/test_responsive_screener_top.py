@@ -33,14 +33,51 @@ def test_screener_top_compact_does_not_touch_desktop() -> None:
 
 def test_screener_toggle_banner_gap_on_mobile_tablet() -> None:
     css = RESPONSIVE_SCREENER_TOP_COMPACT
-    assert 'html[data-scoop-tab-nav="1"][data-scoop-screener-active="1"]' in css
+    assert 'html[data-scoop-tab-nav="1"]' in css
+    assert ':has(.scoop-mobile-inner-top-toggle) + [data-testid="stElementContainer"]:has([data-testid="stCheckbox"]' in css
+    assert ':has(.scoop-mobile-inner-top-toggle) + [data-testid="stElementContainer"]:has([data-testid="stToggle"]' in css
+    assert ':has(+ [data-testid="stElementContainer"] .disclaimer-footer)' in css
+    assert ".scoop-mobile-inner-top-toggle" in css
+    assert '[data-testid="stToggle"]' in css
     assert '[data-testid="stCheckbox"]' in css
-    assert "font-size: 18px !important" in css
-    assert "font-size: 14px !important" in css
+    assert "border-radius: 999px !important" in css
+    assert "width: fit-content !important" in css
+    assert "clamp(0.78rem, 2.2vw, 0.88rem)" in css
     assert '[data-testid="stMarkdownContainer"]' in css
     assert "margin-top: 12px !important" in css
     assert "margin-bottom: 12px !important" in css
     assert ".scoop-banner-compact" in css
+    assert "width: 309px !important" not in css
+    assert "height: 190px !important" not in css
+
+
+def test_screener_terms_checkbox_not_dark_mode_box_on_mobile_tablet() -> None:
+    css = RESPONSIVE_SCREENER_TOP_COMPACT
+    assert "html[data-scoop-screener-gated=\"1\"]" in css
+    assert "padding: 0.5rem 0.8rem !important" in css
+    assert "height: auto !important" in css
+    assert "font-size: inherit !important" in css
+    assert "margin-bottom: 12px !important" in css
+    assert "disclaimer-footer" in css
+    assert f'{css.index(".scoop-mobile-inner-top-toggle")} < {css.index("padding: 0.5rem 0.8rem")}'
+
+
+def test_screener_dark_mode_toggle_matches_back_home_pill_on_mobile_tablet() -> None:
+    css = RESPONSIVE_SCREENER_TOP_COMPACT
+    assert "@media (max-width: 1366px)" in css
+    assert "@media (min-width: 1367px)" not in css
+    assert "border-radius: 999px !important" in css
+    assert "width: fit-content !important" in css
+    assert "background: #0f172a !important" in css
+    assert "border: 1px solid #334155 !important" in css
+    assert "color: #e2e8f0 !important" in css
+    assert "clamp(0.32rem, 1.2vw, 0.4rem)" in css
+    assert "margin-top: 12px !important" in css
+    assert "margin-bottom: 12px !important" in css
+    assert "margin-left: auto !important" in css
+    assert "justify-content: flex-end !important" in css
+    assert 'html[data-scoop-desktop-layout="1"]' not in css
+    assert "width: 309px !important" not in css
 
 
 def test_screener_banner_cards_full_width_on_mobile_tablet() -> None:
@@ -58,6 +95,8 @@ if __name__ == "__main__":
         test_screener_top_compact_targets_active_flag,
         test_screener_top_compact_does_not_touch_desktop,
         test_screener_toggle_banner_gap_on_mobile_tablet,
+        test_screener_terms_checkbox_not_dark_mode_box_on_mobile_tablet,
+        test_screener_dark_mode_toggle_matches_back_home_pill_on_mobile_tablet,
         test_screener_banner_cards_full_width_on_mobile_tablet,
     ]
     for fn in tests:
