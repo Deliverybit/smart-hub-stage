@@ -98,6 +98,7 @@ def test_home_landing_page_css_scoped() -> None:
         RESPONSIVE_HOME_LANDING,
         RESPONSIVE_TAB_NAV_BOOTSTRAP,
         _DESKTOP_MARKET_NAV_GAP,
+        _HOME_HEADER_CLEARANCE,
         _HOME_LOGO_MAX,
         _HOME_MARKET_NAV_GAP_SPACER_RULES,
         _HOME_MARKET_NAV_LIGHT_RULES,
@@ -111,6 +112,7 @@ def test_home_landing_page_css_scoped() -> None:
     assert ".sidebar-brand-text" in css
     assert "--scoop-home-side-padding: 20px" in css
     assert _HOME_LOGO_MAX in css
+    assert _HOME_HEADER_CLEARANCE in css
     assert "background: #ffffff !important" in css
     assert "clamp(300px, 38vw, 420px)" in css
     assert "clamp(2rem, 10vw, 3.75rem)" in css

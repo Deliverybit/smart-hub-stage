@@ -1862,6 +1862,7 @@ _HOME_MAIN_SCOPE = 'html[data-scoop-home-page="1"] [data-testid="stMainBlockCont
 _HOME_SIDE_PADDING = "20px"
 _HOME_LOGO_MAX = "clamp(190px, 48vw, 280px)"
 _HOME_LOGO_TABLET_MAX = "clamp(300px, 38vw, 420px)"
+_HOME_HEADER_CLEARANCE = "calc(3.75rem + env(safe-area-inset-top, 0px))"
 _MOBILE_TAB_MAIN = 'html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"]'
 _MOBILE_TAB_DARK_MODE_SCOPE = f'{_MOBILE_TAB_MAIN} .scoop-mobile-inner-top-toggle'
 _MOBILE_TAB_TOGGLE_WRAP = (
@@ -2319,6 +2320,26 @@ _HOME_LOGO_TABLET_RULES = f"""
     html[data-scoop-theme="dark"][data-scoop-home-page="1"] {_HOME_MAIN_SCOPE} [data-testid="stElementContainer"]:has([data-testid="stImage"]),
     html[data-scoop-theme="dark"][data-scoop-home-page="1"] {_HOME_MAIN_SCOPE} [data-testid="element-container"]:has([data-testid="stImage"]) {{
         background: #ffffff !important;
+    }}
+}}
+"""
+
+# Late cascade — clear Streamlit header so the circular home logo is not clipped (mobile/tablet only).
+_HOME_LOGO_TOP_CLEARANCE_FINAL = f"""
+@media (max-width: 1366px) {{
+    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stImage"]),
+    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stImage"]) {{
+        margin-top: {_HOME_HEADER_CLEARANCE} !important;
+        overflow: visible !important;
+    }}
+    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stImage"],
+    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stFullScreenFrame"] {{
+        overflow: visible !important;
+    }}
+    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stImage"] img {{
+        object-fit: contain !important;
+        height: auto !important;
+        max-height: none !important;
     }}
 }}
 """
@@ -3516,11 +3537,6 @@ _RESPONSIVE_TAB_NAV_HIDE_SIDEBAR_RULES = """
     html[data-scoop-tab-nav="1"] [data-testid="stAppViewContainer"] > section.main {
         padding-top: 0.25rem !important;
     }
-    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] [data-testid="stMainBlockContainer"],
-    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] section.main > div,
-    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] [data-testid="stAppViewContainer"] > section.main {
-        padding-top: 0 !important;
-    }
 """
 
 # Final cascade — beats tablet overlay sidebar rules that re-show Streamlit chevrons.
@@ -3997,6 +4013,7 @@ RESPONSIVE_HOME_LANDING = (
 """
     + _HOME_LOGO_MOBILE_RULES
     + _HOME_LOGO_TABLET_RULES
+    + _HOME_LOGO_TOP_CLEARANCE_FINAL
 )
 
 RESPONSIVE_TAB_NAV_BOOTSTRAP = (
@@ -4012,4 +4029,5 @@ RESPONSIVE_TAB_NAV_BOOTSTRAP = (
     + _HOME_MOBILE_TABLET_TOGGLE_BOXED
     + _MOBILE_TABLET_DARK_MODE_PILL_LAYOUT_FINAL
     + _MOBILE_TABLET_CONSENT_DISCLAIMER_GAP_FINAL
+    + _HOME_LOGO_TOP_CLEARANCE_FINAL
 )
