@@ -4050,19 +4050,20 @@ RESPONSIVE_TAB_NAV_BAR = """
 MOBILE_BACK_HOME_BAR = """
 @media (max-width: 1366px) {
     .scoop-mobile-back-home-bar {
-        position: fixed !important;
-        top: calc(0.4rem + env(safe-area-inset-top, 0px)) !important;
-        left: 0 !important;
-        right: 0 !important;
-        z-index: 1000010 !important;
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        z-index: 2 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: flex-start !important;
         gap: 0.5rem !important;
-        width: 100vw !important;
-        max-width: 100vw !important;
-        padding-left: calc(0.55rem + env(safe-area-inset-left, 0px)) !important;
-        padding-right: calc(0.55rem + env(safe-area-inset-right, 0px)) !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin: 0 0 0.15rem 0 !important;
         box-sizing: border-box !important;
         pointer-events: auto !important;
     }
@@ -4150,15 +4151,15 @@ MOBILE_BACK_HOME_BAR = """
     }
     .scoop-mobile-back-home-spacer {
         display: block !important;
-        height: 2.35rem !important;
-        margin: 0 0 0.25rem 0 !important;
+        height: 0 !important;
+        margin: 0 !important;
         pointer-events: none !important;
     }
     html:not([data-scoop-home-page="1"]) [data-testid="stElementContainer"]:has(.scoop-env-banner),
     html:not([data-scoop-home-page="1"]) [data-testid="element-container"]:has(.scoop-env-banner) {
         display: block !important;
         height: auto !important;
-        min-height: 0 !important;
+        min-height: calc(5.2rem + env(safe-area-inset-top, 0px)) !important;
         margin: 0 !important;
         padding: 0 !important;
         overflow: visible !important;
@@ -4192,12 +4193,9 @@ MOBILE_BACK_HOME_BAR = """
         min-height: 0 !important;
         word-break: break-word !important;
     }
-    html:not([data-scoop-home-page="1"]):has(.scoop-env-banner) .scoop-mobile-back-home-bar {
-        top: calc(5.2rem + env(safe-area-inset-top, 0px)) !important;
-    }
     html:not([data-scoop-home-page="1"]):has(.scoop-env-banner) .scoop-mobile-back-home-spacer {
-        height: 9.65rem !important;
-        margin-bottom: 1.1rem !important;
+        height: calc(5.2rem + env(safe-area-inset-top, 0px)) !important;
+        margin-bottom: 0.35rem !important;
     }
     html:not([data-scoop-home-page="1"]) [data-testid="stElementContainer"]:has(.scoop-mobile-back-home-spacer),
     html:not([data-scoop-home-page="1"]) [data-testid="element-container"]:has(.scoop-mobile-back-home-spacer) {
