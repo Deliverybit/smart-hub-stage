@@ -366,7 +366,7 @@ TABLET_ANALYZE_LINK_CSS = f"""
         {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link:focus {{
             display: inline !important;
             visibility: visible !important;
-            color: #2563eb !important;
+            color: #93c5fd !important;
             background: transparent !important;
             background-color: transparent !important;
             border: none !important;
@@ -390,20 +390,59 @@ TABLET_ANALYZE_LINK_CSS = f"""
 }}
 """
 
-# Phone (≤743px): dashed Analyze tooltip — unchanged from prior mobile/tablet card layout.
+# Phone (≤743px): same Analyze link as tablet (headlines-heading blue, asset URL).
 PHONE_ANALYZE_MOBILE_TIP_CSS = """
 @media (max-width: 743px) {
-        .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell .fr-analyze-link {
-            display: none !important;
+        .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link,
+        .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link:link,
+        .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link:visited,
+        .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link:hover,
+        .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link:active,
+        .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link:focus {
+            display: inline !important;
+            visibility: visible !important;
+            color: #93c5fd !important;
+            background: transparent !important;
+            border: none !important;
+            border-bottom: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            text-decoration: underline !important;
+            text-underline-offset: 0.14em !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            pointer-events: auto !important;
         }
         .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell .fr-analyze-mobile-tip {
-            display: inline-block !important;
-            cursor: help !important;
-            border-bottom: 1px dashed #888 !important;
-            color: inherit !important;
-            font-weight: 600 !important;
-            text-decoration: none !important;
+            display: none !important;
         }
+}
+"""
+
+# Last-wins mobile/tablet Analyze control: headlines-heading blue + real Analyze URL.
+_MOBILE_TABLET_ANALYZE_LINK_FINAL = """
+@media (max-width: 1366px) {
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link:link,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link:visited,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link:hover,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link:active,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link:focus {
+        display: inline !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: #93c5fd !important;
+        background: transparent !important;
+        border: none !important;
+        text-decoration: underline !important;
+        text-underline-offset: 0.14em !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        pointer-events: auto !important;
+    }
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell .fr-analyze-mobile-tip {
+        display: none !important;
+    }
 }
 """
 
@@ -2000,8 +2039,8 @@ _MOBILE_TABLET_TOGGLE_RULES = f"""
         width: 100% !important;
         max-width: 100% !important;
     }}
-    {_MOBILE_TAB_MAIN} [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle):not(:has([data-testid="stToggle"])),
-    {_MOBILE_TAB_MAIN} [data-testid="element-container"]:has(.scoop-mobile-inner-top-toggle):not(:has([data-testid="stToggle"])) {{
+    {_MOBILE_TAB_MAIN} [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle):not(:has([data-testid="stToggle"])):not(:has([data-testid="stCheckbox"])),
+    {_MOBILE_TAB_MAIN} [data-testid="element-container"]:has(.scoop-mobile-inner-top-toggle):not(:has([data-testid="stToggle"])):not(:has([data-testid="stCheckbox"])) {{
         display: none !important;
         height: 0 !important;
         min-height: 0 !important;
@@ -2010,6 +2049,18 @@ _MOBILE_TABLET_TOGGLE_RULES = f"""
         overflow: hidden !important;
         background: transparent !important;
         border: none !important;
+    }}
+    {_MOBILE_TAB_DARK_MODE_ROW},
+    {_MOBILE_TAB_MAIN} [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle):has([data-testid="stToggle"]),
+    {_MOBILE_TAB_MAIN} [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle):has([data-testid="stCheckbox"]),
+    {_MOBILE_TAB_MAIN} [data-testid="element-container"]:has(.scoop-mobile-inner-top-toggle):has([data-testid="stToggle"]),
+    {_MOBILE_TAB_MAIN} [data-testid="element-container"]:has(.scoop-mobile-inner-top-toggle):has([data-testid="stCheckbox"]) {{
+        display: block !important;
+        visibility: visible !important;
+        height: auto !important;
+        min-height: 2.4rem !important;
+        overflow: visible !important;
+        opacity: 1 !important;
     }}
     {_MOBILE_TAB_TOGGLE_WRAP} {{
         background: transparent !important;
@@ -2074,8 +2125,8 @@ MOBILE_TABLET_TOGGLE_STYLE = f"""
 # Final cascade — spacing + unboxed toggle on mobile/tablet home and market pages.
 _MOBILE_TABLET_TOGGLE_FINAL = f"""
 @media (max-width: 1366px) {{
-    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle):not(:has([data-testid="stToggle"])),
-    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.scoop-mobile-inner-top-toggle):not(:has([data-testid="stToggle"])) {{
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle):not(:has([data-testid="stToggle"])):not(:has([data-testid="stCheckbox"])),
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.scoop-mobile-inner-top-toggle):not(:has([data-testid="stToggle"])):not(:has([data-testid="stCheckbox"])) {{
         display: none !important;
         height: 0 !important;
         min-height: 0 !important;
@@ -2084,6 +2135,16 @@ _MOBILE_TABLET_TOGGLE_FINAL = f"""
         overflow: hidden !important;
         background: transparent !important;
         border: none !important;
+    }}
+    {_MOBILE_TAB_DARK_MODE_ROW},
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle):has([data-testid="stToggle"]),
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle):has([data-testid="stCheckbox"]) {{
+        display: block !important;
+        visibility: visible !important;
+        height: auto !important;
+        min-height: 2.4rem !important;
+        overflow: visible !important;
+        opacity: 1 !important;
     }}
     html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle),
     html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.scoop-mobile-inner-top-toggle),
@@ -2737,10 +2798,10 @@ _HOME_SIDEBAR_BRAND_AND_TYPE_RULES = f"""
         word-break: normal !important;
         max-width: 100% !important;
     }}
-    html[data-scoop-theme="dark"][data-scoop-home-page="1"] {_HOME_MAIN_SCOPE} .sidebar-brand-text,
-    html[data-scoop-theme="dark"][data-scoop-home-page="1"] {_HOME_MAIN_SCOPE} #scoop-title {{
-        color: #f1f5f9 !important;
-        text-decoration-color: #94a3b8 !important;
+    html[data-scoop-theme="dark"][data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] .sidebar-brand-text,
+    html[data-scoop-theme="dark"][data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] #scoop-title {{
+        color: #ffffff !important;
+        text-decoration-color: #ffffff !important;
     }}
     {_HOME_MAIN_SCOPE} [data-testid="element-container"]:has([data-testid="stPageLink"]),
     {_HOME_MAIN_SCOPE} [data-testid="stElementContainer"]:has([data-testid="stPageLink"]) {{
@@ -3345,7 +3406,20 @@ _MOBILE_TABLET_DARK_MODE_UNBOX_ALWAYS = f"""
     }}
     html[data-scoop-theme="dark"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle) [data-testid="stCheckbox"] [data-testid="stWidgetLabel"] p,
     html[data-scoop-theme="dark"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle) ~ [data-testid="stElementContainer"]:has([data-testid="stCheckbox"]):not(:has(+ [data-testid="stElementContainer"] .disclaimer-footer)) [data-testid="stCheckbox"] [data-testid="stWidgetLabel"] p {{
-        color: #e2e8f0 !important;
+        color: #ffffff !important;
+    }}
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) [data-testid="stWidgetLabel"] p,
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) label p,
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-testid="stWidgetLabel"] p,
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stToggle"] label p,
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) [data-testid="stTooltipIcon"],
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) [data-testid="stTooltipIcon"] button,
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) [data-testid="stTooltipIcon"] svg,
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-testid="stTooltipIcon"],
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-testid="stTooltipIcon"] button,
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-testid="stTooltipIcon"] svg {{
+        color: #ffffff !important;
+        stroke: #ffffff !important;
     }}
 }}
 """
@@ -3978,11 +4052,23 @@ MOBILE_BACK_HOME_BAR = """
     .scoop-mobile-back-home-bar {
         position: fixed !important;
         top: calc(0.4rem + env(safe-area-inset-top, 0px)) !important;
-        left: calc(0.55rem + env(safe-area-inset-left, 0px)) !important;
+        left: 0 !important;
+        right: 0 !important;
         z-index: 1000010 !important;
         display: flex !important;
         align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 0.5rem !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        padding-left: calc(0.55rem + env(safe-area-inset-left, 0px)) !important;
+        padding-right: calc(0.55rem + env(safe-area-inset-right, 0px)) !important;
+        box-sizing: border-box !important;
         pointer-events: auto !important;
+    }
+    html[data-scoop-tab-nav="1"] [data-testid="stHeader"] [data-testid="stToolbar"] {
+        visibility: hidden !important;
+        pointer-events: none !important;
     }
     .scoop-mobile-back-home-bar .scoop-mobile-back-home {
         display: inline-flex !important;
@@ -4003,6 +4089,64 @@ MOBILE_BACK_HOME_BAR = """
         border-color: #94a3b8 !important;
         background: #1e293b !important;
         color: #f1f5f9 !important;
+    }
+    .scoop-mobile-fixed-dark {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 0.4rem !important;
+        margin: 0 !important;
+        padding: 0.2rem 0.15rem !important;
+        cursor: pointer !important;
+        user-select: none !important;
+        color: #0f172a !important;
+        font-size: clamp(0.94rem, 2.6vw, 1.08rem) !important;
+        font-weight: 600 !important;
+        line-height: 1 !important;
+        white-space: nowrap !important;
+        overflow: visible !important;
+        flex: 0 0 auto !important;
+    }
+    html[data-scoop-theme="dark"] .scoop-mobile-fixed-dark {
+        color: #ffffff !important;
+    }
+    .scoop-mobile-fixed-dark-cb {
+        position: absolute !important;
+        opacity: 0 !important;
+        width: 1px !important;
+        height: 1px !important;
+        pointer-events: none !important;
+    }
+    .scoop-mobile-fixed-dark-switch {
+        display: inline-block !important;
+        width: 2.35rem !important;
+        height: 1.25rem !important;
+        border-radius: 999px !important;
+        background: #cbd5e1 !important;
+        box-shadow: inset 0 0 0 1px #94a3b8 !important;
+        position: relative !important;
+        flex: 0 0 auto !important;
+    }
+    .scoop-mobile-fixed-dark-switch::after {
+        content: "" !important;
+        position: absolute !important;
+        top: 0.12rem !important;
+        left: 0.12rem !important;
+        width: 1rem !important;
+        height: 1rem !important;
+        border-radius: 50% !important;
+        background: #ffffff !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.28) !important;
+        transition: left 0.15s ease !important;
+    }
+    .scoop-mobile-fixed-dark-cb:checked + .scoop-mobile-fixed-dark-switch {
+        background: #334155 !important;
+    }
+    .scoop-mobile-fixed-dark-cb:checked + .scoop-mobile-fixed-dark-switch::after {
+        left: 1.2rem !important;
+    }
+    html[data-scoop-theme="dark"] .scoop-mobile-fixed-dark-switch {
+        background: #334155 !important;
+        box-shadow: inset 0 0 0 1px #94a3b8 !important;
     }
     .scoop-mobile-back-home-spacer {
         display: block !important;
@@ -4266,6 +4410,33 @@ _MOBILE_TABLET_BUTTON_HOVER_SHADER = """
 }
 """
 
+# Mobile/tablet dark mode — Dark mode label + help icon stay white.
+_MOBILE_TABLET_DARK_MODE_LABEL_WHITE = """
+@media (max-width: 1366px) {
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) [data-testid="stWidgetLabel"] p,
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) label p,
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-testid="stWidgetLabel"] p,
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stToggle"] label p {
+        color: #ffffff !important;
+    }
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) [data-testid="stTooltipIcon"],
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) [data-testid="stTooltipIcon"] button,
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) [data-testid="stTooltipIcon"] svg,
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-testid="stTooltipIcon"],
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-testid="stTooltipIcon"] button,
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-testid="stTooltipIcon"] svg {
+        color: #ffffff !important;
+        stroke: #ffffff !important;
+    }
+    html[data-scoop-theme="dark"][data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] .sidebar-brand-text,
+    html[data-scoop-theme="dark"][data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] #scoop-title,
+    html[data-scoop-theme="dark"][data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] .sidebar-brand #scoop-title {
+        color: #ffffff !important;
+        text-decoration-color: #ffffff !important;
+    }
+}
+"""
+
 RESPONSIVE_TAB_NAV_BOOTSTRAP = (
     RESPONSIVE_TAB_NAV_HIDE_SIDEBAR
     + RESPONSIVE_TAB_NAV_SHELL
@@ -4281,4 +4452,6 @@ RESPONSIVE_TAB_NAV_BOOTSTRAP = (
     + _MOBILE_TABLET_CONSENT_DISCLAIMER_GAP_FINAL
     + _HOME_LOGO_TOP_CLEARANCE_FINAL
     + _MOBILE_TABLET_BUTTON_HOVER_SHADER
+    + _MOBILE_TABLET_DARK_MODE_LABEL_WHITE
+    + _MOBILE_TABLET_ANALYZE_LINK_FINAL
 )

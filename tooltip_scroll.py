@@ -29,6 +29,7 @@ from admin_tools.tablet_mobile_layout_css import (
     DESKTOP_TABLET_DISCLAIMER_FLOW,
     TABLET_ANALYZE_LINK_CSS,
     PHONE_ANALYZE_MOBILE_TIP_CSS,
+    _MOBILE_TABLET_ANALYZE_LINK_FINAL,
     IPAD_MINI_POPUP_CLAMP_CSS,
 )
 
@@ -3838,7 +3839,8 @@ def _inject_tablet_analyze_link_css() -> None:
     """Tablet Analyze row: blue underlined link in a white card (744–1366px only)."""
     st.markdown(
         f"<style id='scoop-tablet-analyze-link-css'>{TABLET_ANALYZE_LINK_CSS}</style>"
-        f"<style id='scoop-phone-analyze-mobile-tip-css'>{PHONE_ANALYZE_MOBILE_TIP_CSS}</style>",
+        f"<style id='scoop-phone-analyze-mobile-tip-css'>{PHONE_ANALYZE_MOBILE_TIP_CSS}</style>"
+        f"<style id='scoop-mobile-tablet-analyze-link-final-css'>{_MOBILE_TABLET_ANALYZE_LINK_FINAL}</style>",
         unsafe_allow_html=True,
     )
 

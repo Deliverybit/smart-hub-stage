@@ -161,7 +161,11 @@ def render_mobile_back_home_bar(*, current_page: str | None) -> None:
     """Fixed top-left back link on inner pages; CSS hides on desktop (1367px+)."""
     if not current_page or current_page == HOME_PAGE:
         return
-    from admin_tools.tablet_mobile_layout_css import MOBILE_BACK_HOME_BAR
+    import importlib
+    import admin_tools.tablet_mobile_layout_css as _tml
+
+    importlib.reload(_tml)
+    MOBILE_BACK_HOME_BAR = _tml.MOBILE_BACK_HOME_BAR
 
     st.markdown(
         f'<style id="scoop-mobile-back-home-css">{MOBILE_BACK_HOME_BAR}</style>',
@@ -171,10 +175,61 @@ def render_mobile_back_home_bar(*, current_page: str | None) -> None:
         (
             '<div class="scoop-mobile-back-home-bar">'
             '<a class="scoop-mobile-back-home" href="/" target="_self">← Back to Home</a>'
+            '<label class="scoop-mobile-fixed-dark" title="Switch light/dark colors.">'
+            '<input type="checkbox" id="scoop-mobile-dark-cb" class="scoop-mobile-fixed-dark-cb" />'
+            '<span class="scoop-mobile-fixed-dark-switch" aria-hidden="true"></span>'
+            '<span class="scoop-mobile-fixed-dark-label">Dark mode</span>'
+            "</label>"
             "</div>"
             '<div class="scoop-mobile-back-home-spacer" aria-hidden="true"></div>'
         ),
         unsafe_allow_html=True,
+    )
+    st.html(
+        """
+<script>
+(function() {
+    const STORAGE = "scoop-theme";
+    const win = (window.parent && window.parent !== window) ? window.parent : window;
+    function roots() {
+        const out = [document.documentElement];
+        try {
+            if (win.document && win.document.documentElement) {
+                out.push(win.document.documentElement);
+            }
+        } catch (e) {}
+        return out;
+    }
+    function readDark() {
+        try {
+            return (win.sessionStorage || sessionStorage).getItem(STORAGE) === "dark";
+        } catch (e) {
+            return false;
+        }
+    }
+    function apply(dark) {
+        roots().forEach(function(root) {
+            root.setAttribute("data-scoop-theme", dark ? "dark" : "light");
+            root.classList.toggle("scoop-dark", dark);
+        });
+        try {
+            const store = win.sessionStorage || sessionStorage;
+            if (dark) store.setItem(STORAGE, "dark");
+            else store.removeItem(STORAGE);
+            (win.localStorage || localStorage).removeItem(STORAGE);
+        } catch (e) {}
+    }
+    const cb = document.getElementById("scoop-mobile-dark-cb");
+    if (!cb) return;
+    cb.checked = readDark();
+    apply(cb.checked);
+    cb.addEventListener("change", function() {
+        apply(cb.checked);
+    });
+})();
+</script>
+""",
+        unsafe_allow_javascript=True,
     )
 
 
@@ -182,14 +237,14 @@ def render_mobile_inner_top_bar(
     *,
     current_page: str | None,
 ) -> None:
-    """Mobile/tablet inner pages: dark mode toggle row (back link is a separate fixed bar)."""
+    """Mobile/tablet inner pages: tab-nav CSS (dark mode lives in the fixed back bar)."""
     if not current_page or current_page == HOME_PAGE:
         return
     import importlib
     import admin_tools.tablet_mobile_layout_css as _tml
 
     importlib.reload(_tml)
-    from theme_mode import inject_dark_mode_styles, render_dark_mode_toggle_main
+    from theme_mode import inject_dark_mode_styles
 
     install_responsive_tab_nav()
     inject_dark_mode_styles()
@@ -203,13 +258,6 @@ def render_mobile_inner_top_bar(
         f'<style id="scoop-dark-mode-unbox-css">{_tml._MOBILE_TABLET_DARK_MODE_UNBOX_ALWAYS}</style>',
         unsafe_allow_javascript=True,
     )
-    st.markdown('<div class="scoop-mobile-inner-top">', unsafe_allow_html=True)
-    toggle_row = st.columns([1], gap="small")
-    with toggle_row[0]:
-        st.markdown('<div class="scoop-mobile-inner-top-toggle">', unsafe_allow_html=True)
-        render_dark_mode_toggle_main(label="Dark mode")
-        st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_mobile_back_home_link(*, current_page: str | None) -> None:
@@ -306,7 +354,7 @@ def render_mobile_tab_nav_shell(*, current_page: str | None = None) -> None:
 def render_responsive_navigation(*, current_page: str | None = None) -> None:
     """Render desktop sidebar or mobile/tablet chrome — never both."""
     render_mobile_back_home_bar(current_page=current_page)
+    render_mobile_inner_top_bar(current_page=current_page)
     if is_mobile_tablet_viewport(page=current_page):
-        render_mobile_inner_top_bar(current_page=current_page)
         return
     render_desktop_sidebar_nav()

@@ -27,6 +27,7 @@ INNER_PAGES = SCREENER_PAGES + ("pages/7_Terms_of_Service.py", "pages/_Analyze.p
 def test_back_link_helper_renders_for_inner_pages() -> None:
     source = inspect.getsource(landing_page.render_mobile_back_home_bar)
     assert "← Back to Home" in source
+    assert "scoop-mobile-fixed-dark" in source
     assert "HOME_PAGE" in source
     assert "scoop-mobile-back-home-bar" in source
 
@@ -77,10 +78,9 @@ def test_desktop_skips_mobile_inner_top_bar() -> None:
     assert "render_mobile_inner_top_bar" in mobile_block
 
 
-def test_inner_top_bar_uses_compact_row() -> None:
+def test_inner_top_bar_injects_layout_css() -> None:
     source = inspect.getsource(landing_page.render_mobile_inner_top_bar)
-    assert "scoop-mobile-inner-top" in source
-    assert "scoop-mobile-inner-top-toggle" in source
+    assert "MOBILE_INNER_TOP_BAR" in source
     assert "← Back to Home" not in source
     assert "scoop-mobile-back-home-spacer" not in source
 
@@ -94,7 +94,7 @@ def main() -> int:
         test_back_link_hidden_on_desktop_via_tab_nav,
         test_back_bar_renders_independently_of_viewport_probe,
         test_desktop_skips_mobile_inner_top_bar,
-        test_inner_top_bar_uses_compact_row,
+        test_inner_top_bar_injects_layout_css,
     ]
     for fn in tests:
         fn()

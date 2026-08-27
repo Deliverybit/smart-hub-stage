@@ -382,10 +382,11 @@ def render_dark_mode_toggle() -> None:
 
 
 def render_dark_mode_toggle_main(*, label: str = "Dark") -> None:
-    """Main-area toggle for mobile/tablet tab navigation header."""
-    if not _theme_known_in_session():
-        return
+    """Main-area toggle for mobile/tablet tab navigation header.
 
+    Always render on first paint so the control is visible before storage
+    hydration completes (market inner pages especially).
+    """
     main_key = f"{TOGGLE_KEY}_main"
     if main_key not in st.session_state:
         st.session_state[main_key] = is_dark_mode()
