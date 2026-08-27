@@ -1,7 +1,6 @@
 """
 The Scoop 52 — home entry point.
 
-Search is archived (see archived/search_page.py and pages/_Analyze.py).
 Routes ?ticker= links to Analyze; desktop opens NYSE Top 10; mobile/tablet opens landing + tabs.
 """
 

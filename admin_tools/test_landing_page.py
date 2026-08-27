@@ -24,6 +24,7 @@ def _patch_js(responsive: str | None) -> None:
         want_output=True,
         height=0,
     )
+    landing_page.st.session_state.clear()
 
 
 def test_resolve_home_mobile_tablet() -> None:

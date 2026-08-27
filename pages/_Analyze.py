@@ -1,7 +1,7 @@
 """
 Analyze deep-dive page (hidden from navigation).
 
-Opened from Top 10 **Analyze** links with ?ticker=. Archived Search backup: archived/search_page.py
+Opened from Top 10 **Analyze** links with ?ticker=.
 """
 
 from datetime import timedelta

@@ -1860,9 +1860,9 @@ _DESKTOP_MARKET_NAV_DARK_RULES = """
 
 _HOME_MAIN_SCOPE = 'html[data-scoop-home-page="1"] [data-testid="stMainBlockContainer"]'
 _HOME_SIDE_PADDING = "20px"
-_HOME_LOGO_MAX = "clamp(190px, 48vw, 280px)"
-_HOME_LOGO_TABLET_MAX = "clamp(300px, 38vw, 420px)"
-_HOME_HEADER_CLEARANCE = "calc(3.75rem + env(safe-area-inset-top, 0px))"
+_HOME_LOGO_MAX = "clamp(240px, 64vw, 340px)"
+_HOME_LOGO_TABLET_MAX = "clamp(360px, 50vw, 520px)"
+_HOME_HEADER_CLEARANCE = "calc(4.75rem + env(safe-area-inset-top, 0px))"
 _MOBILE_TAB_MAIN = 'html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"]'
 _MOBILE_TAB_DARK_MODE_SCOPE = f'{_MOBILE_TAB_MAIN} .scoop-mobile-inner-top-toggle'
 _MOBILE_TAB_TOGGLE_WRAP = (
@@ -1882,9 +1882,8 @@ _MOBILE_TAB_TERMS_CHECKBOX_ROW = (
 )
 _MOBILE_TAB_DARK_MODE_CONTAINER = _MOBILE_TAB_TOGGLE_WRAP
 
-# Mobile/tablet Dark mode pill — same shape/size as Back to Home (viewport-responsive).
-_MOBILE_TABLET_DARK_MODE_PILL_PADDING = "clamp(0.32rem, 1.2vw, 0.4rem) clamp(0.65rem, 2.4vw, 0.8rem)"
-_MOBILE_TABLET_DARK_MODE_PILL_FONT = "clamp(0.78rem, 2.2vw, 0.88rem)"
+# Mobile/tablet Dark mode control — no pill container (toggle + label only).
+_MOBILE_TABLET_DARK_MODE_PILL_FONT = "clamp(0.94rem, 2.6vw, 1.08rem)"
 _MOBILE_TABLET_DARK_MODE_TOGGLE_CHROME = f"""
         display: inline-flex !important;
         align-items: center !important;
@@ -1894,40 +1893,68 @@ _MOBILE_TABLET_DARK_MODE_TOGGLE_CHROME = f"""
         min-height: 0 !important;
         max-height: none !important;
         margin: 0 !important;
-        padding: {_MOBILE_TABLET_DARK_MODE_PILL_PADDING} !important;
-        border-radius: 999px !important;
-        border: 1px solid #334155 !important;
-        background: #0f172a !important;
-        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12) !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
         box-sizing: border-box !important;
         overflow: visible !important;
         font-size: {_MOBILE_TABLET_DARK_MODE_PILL_FONT} !important;
         white-space: nowrap !important;
 """
 _MOBILE_TABLET_DARK_MODE_TOGGLE_LABEL = f"""
-        color: #e2e8f0 !important;
+        color: #111827 !important;
         font-weight: 700 !important;
         font-size: {_MOBILE_TABLET_DARK_MODE_PILL_FONT} !important;
-        line-height: 1.2 !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
 """
 _MOBILE_TABLET_DARK_MODE_TOGGLE_LABEL_SHELL = f"""
+        display: inline-flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 0.2rem !important;
+        position: static !important;
+        width: auto !important;
+        max-width: none !important;
+        flex: 0 0 auto !important;
         font-size: {_MOBILE_TABLET_DARK_MODE_PILL_FONT} !important;
-        line-height: 1.2 !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
 """
 _MOBILE_TABLET_DARK_MODE_TOGGLE_TIP = """
-        font-size: clamp(0.72rem, 1.9vw, 0.82rem) !important;
-        width: clamp(0.72rem, 1.9vw, 0.82rem) !important;
-        height: clamp(0.72rem, 1.9vw, 0.82rem) !important;
+        position: static !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        flex-shrink: 0 !important;
+        margin: 0 !important;
+        transform: none !important;
+        inset: auto !important;
+        font-size: clamp(0.84rem, 2.2vw, 0.96rem) !important;
+        width: auto !important;
+        height: auto !important;
+"""
+_MOBILE_TABLET_DARK_MODE_TOGGLE_ROW = """
+        display: inline-flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 0.4rem !important;
 """
 _MOBILE_TABLET_DARK_MODE_TOGGLE_SWITCH = """
-        width: clamp(1.85rem, 5vw, 2.15rem) !important;
-        height: clamp(1rem, 2.8vw, 1.15rem) !important;
-        min-width: clamp(1.85rem, 5vw, 2.15rem) !important;
-        min-height: clamp(1rem, 2.8vw, 1.15rem) !important;
+        width: clamp(2.2rem, 6vw, 2.55rem) !important;
+        height: clamp(1.18rem, 3.3vw, 1.36rem) !important;
+        min-width: clamp(2.2rem, 6vw, 2.55rem) !important;
+        min-height: clamp(1.18rem, 3.3vw, 1.36rem) !important;
 """
 _MOBILE_TABLET_DARK_MODE_TOGGLE_SWITCH_KNOB = """
-        width: clamp(0.85rem, 2.4vw, 0.95rem) !important;
-        height: clamp(0.85rem, 2.4vw, 0.95rem) !important;
+        width: clamp(1rem, 2.85vw, 1.16rem) !important;
+        height: clamp(1rem, 2.85vw, 1.16rem) !important;
 """
 _MOBILE_SCREENER_INDEX_BANNER_CONTAINER = (
     '[data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-banner-compact), '
@@ -1978,6 +2005,10 @@ _MOBILE_TABLET_TOGGLE_RULES = f"""
     {_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stToggle"] {{
 {_MOBILE_TABLET_DARK_MODE_TOGGLE_CHROME}
     }}
+    {_MOBILE_TAB_MAIN} [data-testid="stCheckbox"]:has([data-baseweb="switch"]),
+    {_MOBILE_TAB_MAIN} [data-testid="stCheckbox"]:has([aria-label="Dark mode"]) {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_CHROME}
+    }}
     {_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stToggle"] > label {{
         width: auto !important;
         min-height: 0 !important;
@@ -2005,6 +2036,10 @@ _MOBILE_TABLET_TOGGLE_RULES = f"""
     }}
     html:not([data-scoop-theme="dark"])[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stToggle"] [data-baseweb="switch"] {{
         background-color: #cbd5e1 !important;
+    }}
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] [data-testid="stWidgetLabel"] p,
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] label p {{
+        color: #e2e8f0 !important;
     }}
 """
 
@@ -2060,7 +2095,7 @@ _MOBILE_TABLET_DARK_MODE_TOGGLE_WRAP = (
     f'{_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="element-container"]:has([data-testid="stToggle"])'
 )
 
-# Mobile/tablet main Dark mode pill — same shape/size as Back to Home (desktop unchanged).
+# Mobile/tablet main Dark mode — unboxed toggle (desktop unchanged).
 _MOBILE_TABLET_DARK_MODE_TOGGLE_BOXED = f"""
 @media (max-width: 1366px) {{
     {_MOBILE_TAB_DARK_MODE_ROW} {{
@@ -2103,13 +2138,13 @@ _MOBILE_TABLET_DARK_MODE_TOGGLE_BOXED = f"""
 }}
 """
 
-# Home landing only — pill dark mode toggle (mobile/tablet).
+# Home landing only — unboxed dark mode toggle (mobile/tablet).
 _HOME_MOBILE_TABLET_TOGGLE_BOXED = _MOBILE_TABLET_DARK_MODE_TOGGLE_BOXED
 
-# Market screener pages — same pill Dark mode as home (desktop unchanged).
+# Market screener pages — same unboxed Dark mode as home (desktop unchanged).
 _MARKET_MOBILE_TABLET_TOGGLE_BOXED = _MOBILE_TABLET_DARK_MODE_TOGGLE_BOXED
 
-# Late cascade — pill layout + beat page-level font/width overrides (mobile/tablet dark mode only).
+# Late cascade — layout + beat page-level font/width overrides (mobile/tablet dark mode only).
 _MOBILE_TABLET_DARK_MODE_PILL_LAYOUT_FINAL = f"""
 @media (max-width: 1366px) {{
     html[data-scoop-tab-nav="1"] .scoop-mobile-inner-top-toggle {{
@@ -2134,8 +2169,19 @@ _MOBILE_TABLET_DARK_MODE_PILL_LAYOUT_FINAL = f"""
         margin-left: auto !important;
         margin-right: 0 !important;
     }}
-    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] {{
+    {_MOBILE_TAB_MAIN} [data-testid="stToggle"],
+    {_MOBILE_TAB_MAIN} [data-testid="stCheckbox"]:has([data-baseweb="switch"]),
+    {_MOBILE_TAB_MAIN} [data-testid="stCheckbox"]:has([aria-label="Dark mode"]),
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"],
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_ROW} div[data-testid="stToggle"],
+    html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_ROW} div[data-testid="stCheckbox"] {{
 {_MOBILE_TABLET_DARK_MODE_TOGGLE_CHROME}
+    }}
+    {_MOBILE_TAB_MAIN} [data-testid="stToggle"] [data-testid="stWidgetLabel"] p,
+    {_MOBILE_TAB_MAIN} [data-testid="stToggle"] label p,
+    {_MOBILE_TAB_MAIN} [data-testid="stCheckbox"]:has([data-baseweb="switch"]) [data-testid="stWidgetLabel"] p,
+    {_MOBILE_TAB_MAIN} [data-testid="stCheckbox"]:has([data-baseweb="switch"]) label p {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_LABEL}
     }}
     html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] > label {{
         width: auto !important;
@@ -2157,7 +2203,17 @@ _MOBILE_TABLET_DARK_MODE_PILL_LAYOUT_FINAL = f"""
     html:not([data-scoop-theme="dark"])[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} [data-testid="stToggle"] [data-baseweb="switch"] {{
         background-color: #cbd5e1 !important;
     }}
-    /* Space Dark mode pill above market index cards (mobile/tablet only). */
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] [data-testid="stWidgetLabel"] p,
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_SCOPE} div[data-testid="stToggle"] label p,
+    html[data-scoop-theme="dark"] {_MOBILE_TAB_MAIN} [data-testid="stToggle"] [data-testid="stWidgetLabel"] p,
+    html[data-scoop-theme="dark"] {_MOBILE_TAB_MAIN} [data-testid="stToggle"] label p,
+    html[data-scoop-theme="dark"] {_MOBILE_TAB_MAIN} [data-testid="stCheckbox"]:has([data-baseweb="switch"]) [data-testid="stWidgetLabel"] p,
+    html[data-scoop-theme="dark"] {_MOBILE_TAB_MAIN} [data-testid="stCheckbox"]:has([data-baseweb="switch"]) label p,
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_ROW} div[data-testid="stCheckbox"] [data-testid="stWidgetLabel"] p,
+    html[data-scoop-theme="dark"][data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_ROW} div[data-testid="stCheckbox"] label p {{
+        color: #e2e8f0 !important;
+    }}
+    /* Space Dark mode control above market index cards (mobile/tablet only). */
     html[data-scoop-tab-nav="1"] {_MOBILE_TAB_DARK_MODE_ROW} {{
         margin-bottom: {_DESKTOP_MARKET_NAV_GAP} !important;
         padding-bottom: {_DESKTOP_MARKET_NAV_GAP} !important;
@@ -2268,7 +2324,10 @@ _HOME_LOGO_INNER = """
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        width: auto !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 100% !important;
         min-width: 0 !important;
         max-width: 100% !important;
         padding: 0 !important;
@@ -2289,7 +2348,13 @@ _HOME_LOGO_MOBILE_RULES = f"""
 {_HOME_LOGO_INNER}
     }}
     {_HOME_MAIN_SCOPE} [data-testid="stImage"] img {{
+        width: auto !important;
         max-width: {_HOME_LOGO_MAX} !important;
+        height: auto !important;
+        display: block !important;
+        margin: 0 auto !important;
+        object-fit: contain !important;
+        object-position: center !important;
     }}
     html[data-scoop-theme="dark"][data-scoop-home-page="1"] {_HOME_MAIN_SCOPE} [data-testid="stElementContainer"]:has([data-testid="stImage"]),
     html[data-scoop-theme="dark"][data-scoop-home-page="1"] {_HOME_MAIN_SCOPE} [data-testid="element-container"]:has([data-testid="stImage"]) {{
@@ -2314,8 +2379,13 @@ _HOME_LOGO_TABLET_RULES = f"""
 {_HOME_LOGO_INNER}
     }}
     {_HOME_MAIN_SCOPE} [data-testid="stImage"] img {{
-        max-width: {_HOME_LOGO_TABLET_MAX} !important;
         width: auto !important;
+        max-width: {_HOME_LOGO_TABLET_MAX} !important;
+        height: auto !important;
+        display: block !important;
+        margin: 0 auto !important;
+        object-fit: contain !important;
+        object-position: center !important;
     }}
     html[data-scoop-theme="dark"][data-scoop-home-page="1"] {_HOME_MAIN_SCOPE} [data-testid="stElementContainer"]:has([data-testid="stImage"]),
     html[data-scoop-theme="dark"][data-scoop-home-page="1"] {_HOME_MAIN_SCOPE} [data-testid="element-container"]:has([data-testid="stImage"]) {{
@@ -2327,19 +2397,40 @@ _HOME_LOGO_TABLET_RULES = f"""
 # Late cascade — clear Streamlit header so the circular home logo is not clipped (mobile/tablet only).
 _HOME_LOGO_TOP_CLEARANCE_FINAL = f"""
 @media (max-width: 1366px) {{
-    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stImage"]),
-    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stImage"]) {{
-        margin-top: {_HOME_HEADER_CLEARANCE} !important;
+    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] body .stApp [data-testid="stMainBlockContainer"],
+    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] body .stApp .stMainBlockContainer {{
+        padding-top: {_HOME_HEADER_CLEARANCE} !important;
         overflow: visible !important;
     }}
-    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stImage"],
-    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stFullScreenFrame"] {{
+    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stImage"]),
+    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stImage"]) {{
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        margin-top: 0 !important;
+        padding-top: {_HOME_HEADER_CLEARANCE} !important;
+        padding-left: 1.25rem !important;
+        padding-right: 1.25rem !important;
+        padding-bottom: 1rem !important;
         overflow: visible !important;
     }}
-    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] [data-testid="stMainBlockContainer"] [data-testid="stImage"] img {{
-        object-fit: contain !important;
+    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stImage"],
+    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stFullScreenFrame"] {{
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 100% !important;
+        overflow: visible !important;
+    }}
+    html[data-scoop-tab-nav="1"][data-scoop-home-page="1"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stImage"] img {{
+        display: block !important;
+        width: auto !important;
         height: auto !important;
         max-height: none !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        object-fit: contain !important;
+        object-position: center !important;
     }}
 }}
 """
@@ -2583,6 +2674,7 @@ _HOME_SIDEBAR_BRAND_AND_TYPE_RULES = f"""
         height: auto !important;
         display: block !important;
         object-fit: contain !important;
+        object-position: center !important;
         margin: 0 auto !important;
     }}
     {_HOME_MAIN_SCOPE} .sidebar-brand {{
@@ -3147,12 +3239,101 @@ _MOBILE_TABLET_CONSENT_DISCLAIMER_GAP_FINAL = f"""
 }}
 """
 
+_MOBILE_TABLET_DARK_MODE_UNBOX_ALWAYS = f"""
+@media (max-width: 1366px) {{
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stToggle"] {{
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }}
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle) [data-testid="stToggle"],
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.scoop-mobile-inner-top-toggle) [data-testid="stToggle"],
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle) [data-testid="stCheckbox"],
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.scoop-mobile-inner-top-toggle) [data-testid="stCheckbox"],
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle) ~ [data-testid="stElementContainer"]:has([data-testid="stToggle"]) [data-testid="stToggle"],
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.scoop-mobile-inner-top-toggle) ~ [data-testid="element-container"]:has([data-testid="stToggle"]) [data-testid="stToggle"],
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle) ~ [data-testid="stElementContainer"]:has([data-testid="stCheckbox"]):not(:has(+ [data-testid="stElementContainer"] .disclaimer-footer)) [data-testid="stCheckbox"],
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.scoop-mobile-inner-top-toggle) ~ [data-testid="element-container"]:has([data-testid="stCheckbox"]):not(:has(+ [data-testid="element-container"] .disclaimer-footer)) [data-testid="stCheckbox"] {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_CHROME}
+    }}
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle) ~ [data-testid="stElementContainer"]:has([data-testid="stCheckbox"]):not(:has(+ [data-testid="stElementContainer"] .disclaimer-footer)) [data-testid="stCheckbox"] [data-testid="stWidgetLabel"] p,
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.scoop-mobile-inner-top-toggle) ~ [data-testid="element-container"]:has([data-testid="stCheckbox"]):not(:has(+ [data-testid="element-container"] .disclaimer-footer)) [data-testid="stCheckbox"] label p,
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle) [data-testid="stCheckbox"] [data-testid="stWidgetLabel"] p,
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.scoop-mobile-inner-top-toggle) [data-testid="stCheckbox"] label p,
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-testid="stWidgetLabel"] p,
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="stToggle"] label p {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_LABEL}
+    }}
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-baseweb="switch"] {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_SWITCH}
+    }}
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-baseweb="switch"] > div {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_SWITCH_KNOB}
+    }}
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-testid="stTooltipIcon"] {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_TIP}
+    }}
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) [data-baseweb="checkbox"] > div:first-child {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_SWITCH}
+    }}
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) [data-baseweb="checkbox"] > div:first-child > div {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_SWITCH_KNOB}
+    }}
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) [data-testid="stTooltipIcon"] {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_TIP}
+    }}
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) [data-baseweb="checkbox"],
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stToggle"] > label {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_ROW}
+    }}
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) [data-baseweb="checkbox"] > div:has([data-testid="stWidgetLabel"]) {{
+        width: auto !important;
+        max-width: none !important;
+        flex: 0 0 auto !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        position: static !important;
+        overflow: visible !important;
+    }}
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) [data-testid="stWidgetLabel"],
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-testid="stWidgetLabel"] {{
+{_MOBILE_TABLET_DARK_MODE_TOGGLE_LABEL_SHELL}
+    }}
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) [data-testid="stMarkdownContainer"],
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-testid="stMarkdownContainer"] {{
+        margin: 0 !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+    }}
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) [data-testid="stTooltipHoverTarget"],
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-testid="stTooltipHoverTarget"],
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has(input[aria-label="Dark mode"]) [data-testid="stTooltipIcon"] button,
+    html[data-scoop-tab-nav="1"] [data-testid="stMainBlockContainer"] [data-testid="stToggle"] [data-testid="stTooltipIcon"] button {{
+        position: static !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        transform: none !important;
+        inset: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }}
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle) [data-testid="stCheckbox"] [data-testid="stWidgetLabel"] p,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-mobile-inner-top-toggle) ~ [data-testid="stElementContainer"]:has([data-testid="stCheckbox"]):not(:has(+ [data-testid="stElementContainer"] .disclaimer-footer)) [data-testid="stCheckbox"] [data-testid="stWidgetLabel"] p {{
+        color: #e2e8f0 !important;
+    }}
+}}
+"""
+
 RESPONSIVE_SCREENER_TOP_COMPACT = f"""
 @media (max-width: 1366px) {{
 {_RESPONSIVE_SCREENER_TOP_COMPACT_RULES}
 {_MOBILE_SCREENER_TOGGLE_BANNER_GAP_FINAL}
 }}
-""" + _MARKET_MOBILE_TABLET_TOGGLE_BOXED + _MOBILE_TABLET_TERMS_CHECKBOX_RESTORE + _MOBILE_TABLET_DARK_MODE_PILL_LAYOUT_FINAL + _MOBILE_TABLET_CONSENT_DISCLAIMER_GAP_FINAL
+""" + _MARKET_MOBILE_TABLET_TOGGLE_BOXED + _MOBILE_TABLET_TERMS_CHECKBOX_RESTORE + _MOBILE_TABLET_DARK_MODE_PILL_LAYOUT_FINAL + _MOBILE_TABLET_CONSENT_DISCLAIMER_GAP_FINAL + _MOBILE_TABLET_DARK_MODE_UNBOX_ALWAYS
 
 # Mobile/tablet Terms page: collapse bootstrap gaps before title and divider lines.
 _DESKTOP_TERMS_TOP_COMPACT_RULES = """
@@ -3841,6 +4022,16 @@ MOBILE_INNER_TOP_BAR = """
     html[data-scoop-tab-nav="1"]:not([data-scoop-home-page="1"]) section.main > div,
     html[data-scoop-tab-nav="1"]:not([data-scoop-home-page="1"]) [data-testid="stAppViewContainer"] > section.main {
         padding-top: 0.25rem !important;
+    }
+    [data-testid="stMainBlockContainer"] [data-testid="stToggle"],
+    [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has([data-baseweb="switch"]),
+    [data-testid="stMainBlockContainer"] [data-testid="stCheckbox"]:has([aria-label="Dark mode"]) {
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
     }
 }
 @media (min-width: 1367px) {

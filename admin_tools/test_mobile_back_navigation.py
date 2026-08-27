@@ -64,14 +64,14 @@ def test_back_link_hidden_on_desktop_via_tab_nav() -> None:
 def test_back_bar_renders_independently_of_viewport_probe() -> None:
     source = inspect.getsource(landing_page.render_responsive_navigation)
     assert "render_mobile_back_home_bar" in source
-    back_block = source.split("is_mobile_tablet_viewport()")[0]
+    back_block = source.split("is_mobile_tablet_viewport")[0]
     assert "render_mobile_back_home_bar" in back_block
 
 
 def test_desktop_skips_mobile_inner_top_bar() -> None:
     source = inspect.getsource(landing_page.render_responsive_navigation)
     assert "render_mobile_inner_top_bar" in source
-    assert "is_mobile_tablet_viewport()" in source
+    assert "is_mobile_tablet_viewport" in source
     assert "render_desktop_sidebar_nav()" in source
     mobile_block = source.split("render_desktop_sidebar_nav()")[0]
     assert "render_mobile_inner_top_bar" in mobile_block

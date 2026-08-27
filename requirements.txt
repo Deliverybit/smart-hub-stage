@@ -10,7 +10,5 @@ plotly>=6.5
 pandas>=2.3
 # Utilities
 python-dateutil>=2.9
-# Legal consent logger API
-fastapi>=0.116
-uvicorn>=0.35
+# Postgres (consent logs and screener snapshots)
 psycopg[binary]>=3.2

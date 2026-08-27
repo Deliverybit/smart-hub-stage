@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 import streamlit as st
 
 DEFAULT_SCREENER_PAGE = "pages/1_NYSE_Top_10.py"
@@ -45,17 +47,32 @@ def _responsive_viewport_js() -> str:
     )
 
 
+def _sanitize_widget_key(value: str) -> str:
+    return re.sub(r"[^a-zA-Z0-9_]+", "_", value)
+
+
+def _nav_viewport_key(page: str | None) -> str:
+    return f"scoop_nav_viewport_{_sanitize_widget_key(page or 'app')}"
+
+
 def _js_eval(expression: str, *, key: str) -> object | None:
     try:
         from streamlit_js_eval import streamlit_js_eval
     except ImportError:
         return None
-    return streamlit_js_eval(
-        js_expressions=expression,
-        key=key,
-        want_output=True,
-        height=0,
-    )
+    try:
+        from streamlit.errors import StreamlitAPIException
+    except ImportError:
+        StreamlitAPIException = Exception  # type: ignore[misc, assignment]
+    try:
+        return streamlit_js_eval(
+            js_expressions=expression,
+            key=key,
+            want_output=True,
+            height=0,
+        )
+    except StreamlitAPIException:
+        return None
 
 
 def probe_responsive_viewport(*, key: str = "scoop_nav_viewport") -> bool | None:
@@ -63,6 +80,22 @@ def probe_responsive_viewport(*, key: str = "scoop_nav_viewport") -> bool | None
     cache_key = f"_scoop_viewport_cache_{key}"
     if cache_key in st.session_state:
         return st.session_state[cache_key]
+
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+
+        ctx = get_script_run_ctx()
+    except Exception:
+        ctx = None
+    if ctx is not None:
+        started = getattr(ctx, "_scoop_viewport_keys", None)
+        if started is None:
+            started = set()
+            setattr(ctx, "_scoop_viewport_keys", started)
+        if key in started:
+            cached = st.session_state.get(cache_key)
+            return cached if isinstance(cached, bool) else None
+        started.add(key)
 
     value = _js_eval(_responsive_viewport_js(), key=key)
     if value is None:
@@ -72,9 +105,9 @@ def probe_responsive_viewport(*, key: str = "scoop_nav_viewport") -> bool | None
     return result
 
 
-def is_mobile_tablet_viewport() -> bool:
+def is_mobile_tablet_viewport(*, page: str | None = None) -> bool:
     """True for mobile/tablet; defaults mobile-safe while the viewport probe is loading."""
-    responsive = probe_responsive_viewport()
+    responsive = probe_responsive_viewport(key=_nav_viewport_key(page))
     return responsive is not False
 
 
@@ -90,9 +123,9 @@ def install_responsive_tab_nav() -> None:
     """Enable mobile/tablet tab navigation (hides slide-out sidebar via CSS)."""
     from admin_tools.tablet_mobile_layout_css import RESPONSIVE_TAB_NAV_BOOTSTRAP
 
-    st.markdown(
+    st.html(
         f'<style id="scoop-responsive-tab-nav-css">{RESPONSIVE_TAB_NAV_BOOTSTRAP}</style>',
-        unsafe_allow_html=True,
+        unsafe_allow_javascript=True,
     )
     st.html(
         '<script>document.documentElement.setAttribute("data-scoop-tab-nav","1");</script>',
@@ -152,9 +185,10 @@ def render_mobile_inner_top_bar(
     """Mobile/tablet inner pages: dark mode toggle row (back link is a separate fixed bar)."""
     if not current_page or current_page == HOME_PAGE:
         return
-    if not is_mobile_tablet_viewport():
-        return
-    from admin_tools.tablet_mobile_layout_css import MOBILE_INNER_TOP_BAR
+    import importlib
+    import admin_tools.tablet_mobile_layout_css as _tml
+
+    importlib.reload(_tml)
     from theme_mode import inject_dark_mode_styles, render_dark_mode_toggle_main
 
     install_responsive_tab_nav()
@@ -164,9 +198,10 @@ def render_mobile_inner_top_bar(
         unsafe_allow_javascript=True,
     )
 
-    st.markdown(
-        f'<style id="scoop-mobile-inner-top-css">{MOBILE_INNER_TOP_BAR}</style>',
-        unsafe_allow_html=True,
+    st.html(
+        f'<style id="scoop-mobile-inner-top-css">{_tml.MOBILE_INNER_TOP_BAR}</style>'
+        f'<style id="scoop-dark-mode-unbox-css">{_tml._MOBILE_TABLET_DARK_MODE_UNBOX_ALWAYS}</style>',
+        unsafe_allow_javascript=True,
     )
     st.markdown('<div class="scoop-mobile-inner-top">', unsafe_allow_html=True)
     toggle_row = st.columns([1], gap="small")
@@ -186,9 +221,9 @@ def prepare_mobile_home_landing() -> None:
     """Mark the landing page and enable tab-nav CSS before first paint."""
     from admin_tools.tablet_mobile_layout_css import RESPONSIVE_TAB_NAV_BOOTSTRAP
 
-    st.markdown(
+    st.html(
         f'<style id="scoop-responsive-tab-nav-css">{RESPONSIVE_TAB_NAV_BOOTSTRAP}</style>',
-        unsafe_allow_html=True,
+        unsafe_allow_javascript=True,
     )
     st.html(
         '<script>'
@@ -271,7 +306,7 @@ def render_mobile_tab_nav_shell(*, current_page: str | None = None) -> None:
 def render_responsive_navigation(*, current_page: str | None = None) -> None:
     """Render desktop sidebar or mobile/tablet chrome — never both."""
     render_mobile_back_home_bar(current_page=current_page)
-    if is_mobile_tablet_viewport():
+    if is_mobile_tablet_viewport(page=current_page):
         render_mobile_inner_top_bar(current_page=current_page)
         return
     render_desktop_sidebar_nav()
