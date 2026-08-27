@@ -4154,6 +4154,63 @@ MOBILE_BACK_HOME_BAR = """
         margin: 0 0 0.25rem 0 !important;
         pointer-events: none !important;
     }
+    html:not([data-scoop-home-page="1"]) [data-testid="stElementContainer"]:has(.scoop-env-banner),
+    html:not([data-scoop-home-page="1"]) [data-testid="element-container"]:has(.scoop-env-banner) {
+        display: block !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+    html:not([data-scoop-home-page="1"]) .scoop-env-banner {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 1000020 !important;
+        display: block !important;
+        visibility: visible !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        padding: 0.35rem 0.65rem !important;
+        padding-left: calc(0.65rem + env(safe-area-inset-left, 0px)) !important;
+        padding-right: calc(0.65rem + env(safe-area-inset-right, 0px)) !important;
+        padding-top: calc(0.35rem + env(safe-area-inset-top, 0px)) !important;
+        background: #f59e0b !important;
+        color: #1e293b !important;
+        font-size: clamp(0.68rem, 2.1vw, 0.82rem) !important;
+        font-weight: 600 !important;
+        line-height: 1.35 !important;
+        text-align: center !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        height: auto !important;
+        min-height: 0 !important;
+        word-break: break-word !important;
+    }
+    html:not([data-scoop-home-page="1"]):has(.scoop-env-banner) .scoop-mobile-back-home-bar {
+        top: calc(5.2rem + env(safe-area-inset-top, 0px)) !important;
+    }
+    html:not([data-scoop-home-page="1"]):has(.scoop-env-banner) .scoop-mobile-back-home-spacer {
+        height: 9.65rem !important;
+        margin-bottom: 1.1rem !important;
+    }
+    html:not([data-scoop-home-page="1"]) [data-testid="stElementContainer"]:has(.scoop-mobile-back-home-spacer),
+    html:not([data-scoop-home-page="1"]) [data-testid="element-container"]:has(.scoop-mobile-back-home-spacer) {
+        display: block !important;
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    html[data-scoop-tab-nav="1"]:not([data-scoop-home-page="1"]) [data-testid="stMarkdownContainer"]:has(div[style*="linear-gradient(135deg"]) {
+        margin-top: 1.85rem !important;
+    }
 }
 @media (min-width: 1367px) {
     .scoop-mobile-back-home-bar,
