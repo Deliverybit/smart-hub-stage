@@ -191,14 +191,15 @@ def render_mobile_back_home_bar(*, current_page: str | None) -> None:
 (function() {
     const STORAGE = "scoop-theme";
     const win = (window.parent && window.parent !== window) ? window.parent : window;
-    function roots() {
-        const out = [document.documentElement];
+    function docs() {
+        const out = [document];
         try {
-            if (win.document && win.document.documentElement) {
-                out.push(win.document.documentElement);
-            }
+            if (win.document && win.document !== document) out.push(win.document);
         } catch (e) {}
         return out;
+    }
+    function roots() {
+        return docs().map(function(d) { return d.documentElement; }).filter(Boolean);
     }
     function readDark() {
         try {
@@ -207,25 +208,47 @@ def render_mobile_back_home_bar(*, current_page: str | None) -> None:
             return false;
         }
     }
-    function apply(dark) {
+    function syncSheets(dark) {
+        docs().forEach(function(doc) {
+            const sessionSheet = doc.getElementById("scoop-dark-mode-css");
+            if (sessionSheet) {
+                sessionSheet.disabled = !dark;
+                if (!dark) sessionSheet.textContent = "";
+            }
+        });
+    }
+    function apply(dark, persistUrl) {
         roots().forEach(function(root) {
             root.setAttribute("data-scoop-theme", dark ? "dark" : "light");
             root.classList.toggle("scoop-dark", dark);
         });
+        syncSheets(dark);
         try {
             const store = win.sessionStorage || sessionStorage;
             if (dark) store.setItem(STORAGE, "dark");
             else store.removeItem(STORAGE);
             (win.localStorage || localStorage).removeItem(STORAGE);
         } catch (e) {}
+        if (!persistUrl) return;
+        try {
+            const url = new URL(win.location.href);
+            const next = dark ? "dark" : "light";
+            if (url.searchParams.get("theme") === next) return;
+            url.searchParams.set("theme", next);
+            win.location.replace(url.toString());
+        } catch (e) {}
     }
-    const cb = document.getElementById("scoop-mobile-dark-cb");
-    if (!cb) return;
-    cb.checked = readDark();
-    apply(cb.checked);
-    cb.addEventListener("change", function() {
-        apply(cb.checked);
-    });
+    function bind(cb) {
+        if (!cb || cb.dataset.scoopThemeBound === "1") return;
+        cb.dataset.scoopThemeBound = "1";
+        cb.checked = readDark();
+        apply(cb.checked, false);
+    }
+    bind(document.getElementById("scoop-mobile-dark-cb"));
+    document.addEventListener("change", function(ev) {
+        const t = ev.target;
+        if (t && t.id === "scoop-mobile-dark-cb") apply(t.checked, true);
+    }, true);
 })();
 </script>
 """,
