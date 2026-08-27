@@ -60,6 +60,8 @@ def test_back_link_hidden_on_desktop_via_tab_nav() -> None:
     assert MOBILE_BACK_HOME_BAR in css
     assert "@media (min-width: 1367px)" in MOBILE_BACK_HOME_BAR
     assert 'html[data-scoop-tab-nav="1"]' in css
+    assert 'html body .stApp [data-testid="stExpandSidebarButton"]' in css
+    assert 'html body .stApp section[data-testid="stSidebar"]' in css
 
 
 def test_back_bar_renders_independently_of_viewport_probe() -> None:

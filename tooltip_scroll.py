@@ -3695,11 +3695,11 @@ def _inject_responsive_bootstrap_css() -> str:
         }}
         const hideTabNavSidebarControls = () => {{
             const w = (targetDoc.defaultView && targetDoc.defaultView.innerWidth) || 0;
-            if (w <= 0 || w > 1366) {{
+            if (w > 1366) {{
                 return;
             }}
             const sel =
-                '[data-testid="stExpandSidebarButton"], [data-testid="stSidebarCollapseButton"], [data-testid="collapsedControl"]';
+                '[data-testid="stExpandSidebarButton"], [data-testid="stSidebarCollapseButton"], [data-testid="collapsedControl"], [data-testid="stSidebarBackdrop"], section[data-testid="stSidebar"], [data-testid="stSidebarNav"]';
             targetDoc.querySelectorAll(sel).forEach((node) => {{
                 node.style.setProperty("display", "none", "important");
                 node.style.setProperty("visibility", "hidden", "important");
@@ -3707,6 +3707,7 @@ def _inject_responsive_bootstrap_css() -> str:
                 node.style.setProperty("pointer-events", "none", "important");
                 node.style.setProperty("width", "0", "important");
                 node.style.setProperty("height", "0", "important");
+                node.style.setProperty("transform", "translateX(-100%)", "important");
             }});
         }};
         hideTabNavSidebarControls();

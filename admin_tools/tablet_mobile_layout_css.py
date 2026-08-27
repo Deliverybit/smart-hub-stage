@@ -3668,29 +3668,19 @@ IPAD_MINI_POPUP_CLAMP_CSS = f"""
 """
 
 # Injected early on every page (via theme_mode) so mobile/tablet overlay sidebar wins first paint.
+# Never re-show Streamlit slide-out chevrons on tablet; tab nav replaces the sidebar.
 TABLET_SIDEBAR_TOGGLE_AVAILABILITY = """
-    /* Tablet (769–1366): keep Streamlit sidebar chevrons only when NOT using tab navigation. */
     @media (min-width: 769px) and (max-width: 1366px) {
-        html:not([data-scoop-tab-nav="1"]) .stApp:has(section[data-testid="stSidebar"][aria-expanded="false"]) [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
-        html:not([data-scoop-tab-nav="1"]) .stApp:has(section[data-testid="stSidebar"][aria-expanded="false"]) [data-testid="stHeader"] [data-testid="collapsedControl"] {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            pointer-events: auto !important;
-        }
-        html:not([data-scoop-tab-nav="1"]) .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
-        html:not([data-scoop-tab-nav="1"]) .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stHeader"] [data-testid="collapsedControl"] {
+        [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+        [data-testid="stHeader"] [data-testid="collapsedControl"],
+        [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+        [data-testid="stExpandSidebarButton"],
+        [data-testid="collapsedControl"],
+        [data-testid="stSidebarCollapseButton"] {
             display: none !important;
-        }
-        html:not([data-scoop-tab-nav="1"]) .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stSidebarCollapseButton"],
-        html:not([data-scoop-tab-nav="1"]) .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] {
-            display: flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            pointer-events: auto !important;
-        }
-        html:not([data-scoop-tab-nav="1"]) section[data-testid="stSidebar"][aria-expanded="false"] [data-testid="stSidebarCollapseButton"] {
-            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
     }
 """
@@ -4492,6 +4482,83 @@ _MOBILE_TABLET_DARK_MODE_LABEL_WHITE = """
 }
 """
 
+# Last-wins: hide Streamlit slide-out chrome on mobile/tablet even before
+# data-scoop-tab-nav is set, and after page CSS re-shows chevrons.
+_MOBILE_TABLET_KILL_SLIDEOUT_FINAL = """
+@media (max-width: 1366px) {
+    html body .stApp [data-testid="stExpandSidebarButton"],
+    html body .stApp [data-testid="stSidebarCollapseButton"],
+    html body .stApp [data-testid="collapsedControl"],
+    html body .stApp [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+    html body .stApp [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+    html body .stApp [data-testid="stHeader"] [data-testid="collapsedControl"],
+    html body .stApp section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"],
+    html body .stApp section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stSidebarCollapseButton"],
+    html body .stApp section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+    html body .stApp section[data-testid="stSidebar"][aria-expanded="true"] [data-testid="stHeader"] [data-testid="collapsedControl"],
+    html body .stApp [data-testid="stHeader"] [data-testid="stToolbar"] > div:first-child:has([data-testid="stExpandSidebarButton"]),
+    html body .stApp [data-testid="stHeader"] [data-testid="stToolbar"] > div:first-child:has([data-testid="collapsedControl"]),
+    html body .stApp [data-testid="stExpandSidebarButton"] button,
+    html body .stApp [data-testid="stSidebarCollapseButton"] button,
+    html body .stApp [data-testid="collapsedControl"] button,
+    html body .stApp [data-testid="stExpandSidebarButton"] [data-testid="stIconMaterial"],
+    html body .stApp [data-testid="stSidebarCollapseButton"] [data-testid="stIconMaterial"],
+    html body .stApp [data-testid="collapsedControl"] [data-testid="stIconMaterial"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        max-width: 0 !important;
+        max-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+    }
+    html body .stApp section[data-testid="stSidebar"],
+    html body .stApp section[data-testid="stSidebar"][aria-expanded="false"],
+    html body .stApp section[data-testid="stSidebar"][aria-expanded="true"],
+    html body .stApp [data-testid="stSidebarBackdrop"],
+    html body .stApp [data-testid="stSidebarNav"],
+    html body .stApp .scoop-responsive-sidebar-close {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        min-width: 0 !important;
+        max-width: 0 !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
+        transform: translateX(-100%) !important;
+        box-shadow: none !important;
+        opacity: 0 !important;
+    }
+    html body .stApp:has(section[data-testid="stSidebar"]) [data-testid="stAppViewContainer"]::before,
+    html body .stApp:has(section[data-testid="stSidebar"][aria-expanded="true"]) [data-testid="stAppViewContainer"]::before {
+        content: none !important;
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        background: none !important;
+        box-shadow: none !important;
+    }
+    html body .stApp [data-testid="stAppViewContainer"] {
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+    }
+}
+"""
+
 RESPONSIVE_TAB_NAV_BOOTSTRAP = (
     RESPONSIVE_TAB_NAV_HIDE_SIDEBAR
     + RESPONSIVE_TAB_NAV_SHELL
@@ -4509,4 +4576,5 @@ RESPONSIVE_TAB_NAV_BOOTSTRAP = (
     + _MOBILE_TABLET_BUTTON_HOVER_SHADER
     + _MOBILE_TABLET_DARK_MODE_LABEL_WHITE
     + _MOBILE_TABLET_ANALYZE_LINK_FINAL
+    + _MOBILE_TABLET_KILL_SLIDEOUT_FINAL
 )
