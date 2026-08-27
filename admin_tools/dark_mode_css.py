@@ -361,4 +361,12 @@ html[data-scoop-theme="dark"] .landing-card {
 html[data-scoop-theme="dark"] .landing-card p {
     color: #cbd5e1 !important;
 }
+
+@media (max-width: 1366px) {
+    html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text .hl-tip-heading,
+    html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .tip-text .hl-tip-heading,
+    html[data-scoop-theme="dark"] .full-results-wrap .tip-wrap.headlines-tip .tip-text .hl-tip-heading {
+        color: #93c5fd !important;
+    }
+}
 """ + DARK_RESPONSIVE_NAME_VALUE_TIP_UNDERLINE_CSS

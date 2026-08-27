@@ -21,6 +21,7 @@ from admin_tools.tablet_mobile_layout_css import (
     RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS,
     RESPONSIVE_SIDEBAR_BOOTSTRAP,
     RESPONSIVE_TAB_NAV_BOOTSTRAP,
+    MOBILE_TABLET_HL_HEADING_COLOR_CSS,
     SIDEBAR_NAV_COMPACT,
     RESPONSIVE_SIDEBAR_BRAND_TOGGLE_BUFFER,
     DESKTOP_SIDEBAR_BRAND_TOGGLE_BUFFER,
@@ -93,7 +94,7 @@ _MOBILE_PHONE_HEADLINES_FIXED_CSS = """
         overflow-wrap: anywhere !important;
         word-break: break-word !important;
         white-space: normal !important;
-        color: #ffffff !important;
+        color: #93c5fd !important;
         background: #1e1e2f !important;
         border: none !important;
         border-bottom: 1px solid #334155 !important;
@@ -552,7 +553,7 @@ _TABLET_HEADLINES_POPUP_RULES = """
         position: relative !important;
         z-index: 2 !important;
         text-align: left !important;
-        color: #ffffff !important;
+        color: #93c5fd !important;
         padding: 0.55rem 0.75rem !important;
         font-size: calc(1rem + 4pt) !important;
         font-weight: 700 !important;
@@ -3958,6 +3959,10 @@ def install_tooltip_scroll_handler() -> None:
         inject_dark_mode_styles()
         inject_desktop_sidebar_nav_market()
         inject_desktop_tablet_disclaimer_flow()
+        st.markdown(
+            f"<style id='scoop-mobile-tablet-hl-heading-color'>{MOBILE_TABLET_HL_HEADING_COLOR_CSS}</style>",
+            unsafe_allow_html=True,
+        )
         install_page_layout_resync()
         return
     st.html(
@@ -3988,4 +3993,8 @@ def install_tooltip_scroll_handler() -> None:
     from theme_mode import inject_dark_mode_styles
 
     inject_dark_mode_styles()
+    st.markdown(
+        f"<style id='scoop-mobile-tablet-hl-heading-color'>{MOBILE_TABLET_HL_HEADING_COLOR_CSS}</style>",
+        unsafe_allow_html=True,
+    )
     install_page_layout_resync()
