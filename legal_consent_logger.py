@@ -603,14 +603,18 @@ def persist_terms_to_browser(consent_key: str) -> None:
 
     ck = json.dumps(consent_key)
     storage = json.dumps(TERMS_STORAGE_KEY)
-    st.components.v1.html(
+    # Prefer parent window so mobile/tablet theme reloads can restore consent.
+    st.html(
         f"""
 <script>
 (function() {{
     try {{
         const storageKey = {storage};
         const consentKey = {ck};
-        const read = document.cookie.split(";").map(function(s) {{ return s.trim(); }})
+        const win = (window.parent && window.parent !== window) ? window.parent : window;
+        const doc = win.document || document;
+        const store = win.localStorage || localStorage;
+        const read = (doc.cookie || "").split(";").map(function(s) {{ return s.trim(); }})
             .find(function(s) {{ return s.indexOf(storageKey + "=") === 0; }});
         let data = {{}};
         if (read) {{
@@ -618,15 +622,22 @@ def persist_terms_to_browser(consent_key: str) -> None:
                 data = JSON.parse(decodeURIComponent(read.split("=")[1]));
             }} catch (e) {{}}
         }}
+        if (!Object.keys(data).length) {{
+            try {{
+                data = JSON.parse(store.getItem(storageKey) || "{{}}") || {{}};
+            }} catch (e) {{
+                data = {{}};
+            }}
+        }}
         data[consentKey] = true;
         const encoded = encodeURIComponent(JSON.stringify(data));
-        document.cookie = storageKey + "=" + encoded + "; path=/; max-age=31536000; samesite=lax";
-        localStorage.setItem(storageKey, JSON.stringify(data));
+        doc.cookie = storageKey + "=" + encoded + "; path=/; max-age=31536000; samesite=lax";
+        store.setItem(storageKey, JSON.stringify(data));
     }} catch (e) {{}}
 }})();
 </script>
 """,
-        height=0,
+        unsafe_allow_javascript=True,
     )
 
 

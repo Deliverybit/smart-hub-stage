@@ -465,7 +465,6 @@ _MOBILE_TABLET_ANALYZE_LINK_FINAL = """
         display: none !important;
     }
 }
-/* Tablet only: dashed Analyze label left; blue Analyze link flush right. */
 @media (min-width: 744px) and (max-width: 1366px) {
     html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] {
         display: grid !important;
@@ -504,7 +503,6 @@ _MOBILE_TABLET_ANALYZE_LINK_FINAL = """
         margin-left: auto !important;
     }
 }
-/* Tablet + dark mode only: strip white Analyze container so it matches sibling rows. */
 @media (min-width: 744px) and (max-width: 1366px) {
     html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"],
     html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-val,

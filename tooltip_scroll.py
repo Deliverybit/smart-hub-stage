@@ -3838,7 +3838,7 @@ def _inject_responsive_bootstrap_css() -> str:
 BOOTSTRAP_INSTALLED_KEY = "_scoop_responsive_bootstrap_installed"
 BOOTSTRAP_SCRIPT_VERSION = 9
 TOOLTIP_INSTALLED_KEY = "_scoop_tooltip_scroll_installed"
-TOOLTIP_SCRIPT_VERSION = 44
+TOOLTIP_SCRIPT_VERSION = 45
 SIDEBAR_HANDLER_INSTALLED_KEY = "_scoop_responsive_sidebar_handler_v3"
 
 
@@ -3875,11 +3875,12 @@ def _inject_tablet_analyze_link_css() -> None:
     import admin_tools.tablet_mobile_layout_css as _tml
 
     importlib.reload(_tml)
-    st.markdown(
+    # Use st.html — st.markdown strips/mangles <style> and can dump CSS onto the page.
+    st.html(
         f"<style id='scoop-tablet-analyze-link-css'>{_tml.TABLET_ANALYZE_LINK_CSS}</style>"
         f"<style id='scoop-phone-analyze-mobile-tip-css'>{_tml.PHONE_ANALYZE_MOBILE_TIP_CSS}</style>"
         f"<style id='scoop-mobile-tablet-analyze-link-final-css'>{_tml._MOBILE_TABLET_ANALYZE_LINK_FINAL}</style>",
-        unsafe_allow_html=True,
+        unsafe_allow_javascript=True,
     )
 
 
@@ -3891,11 +3892,10 @@ def _inject_tablet_hl_heading_color_css() -> None:
 
     importlib.reload(_tml)
     css = _tml.MOBILE_TABLET_HL_HEADING_COLOR_CSS
-    # st.markdown last-wins; dual ids so a stale single tag cannot stick.
-    st.markdown(
+    st.html(
         f"<style id='scoop-mobile-tablet-hl-heading-color'>{css}</style>"
-        f"<style id='scoop-tablet-hl-heading-blue-final-v43'>{css}</style>",
-        unsafe_allow_html=True,
+        f"<style id='scoop-tablet-hl-heading-blue-final-v45'>{css}</style>",
+        unsafe_allow_javascript=True,
     )
 
 

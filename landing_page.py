@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 
 import streamlit as st
@@ -28,6 +29,14 @@ HOME_NAV_MARKETS: tuple[tuple[str, str], ...] = (
     ("pages/5_CME_Top_10.py", "🌾 CME Commodities 10"),
     ("pages/6_ICE_Top_10.py", "🛢️ ICE Commodities 10"),
 )
+
+# Market screener paths (mobile/tablet: visit home first, then consent on these pages).
+MOBILE_MARKET_SCREENER_PAGES: frozenset[str] = frozenset(path for path, _ in HOME_NAV_MARKETS)
+
+# Session flag: user has opened the mobile/tablet home (required before market pages).
+MOBILE_HOME_SEEN_KEY = "_scoop_mobile_home_seen"
+# Browser tab flag — survives Streamlit session remints on multipage URL loads.
+MOBILE_HOME_SEEN_STORAGE = "scoop-mobile-home-seen"
 
 SCOOP_52_DESCRIPTION = (
     "Screen major markets for assets trading at or near their 52-week lows — "
@@ -117,6 +126,91 @@ def resolve_home_entry() -> str | None:
     if responsive is None:
         return None
     return "mobile" if responsive else "desktop"
+
+
+def mark_mobile_home_seen() -> None:
+    """Record that the mobile/tablet home (market tabs) was shown this session/tab."""
+    st.session_state[MOBILE_HOME_SEEN_KEY] = True
+    st.html(
+        f"""
+<script>
+(function() {{
+    try {{
+        const win = (window.parent && window.parent !== window) ? window.parent : window;
+        (win.sessionStorage || sessionStorage).setItem({json.dumps(MOBILE_HOME_SEEN_STORAGE)}, "1");
+    }} catch (e) {{}}
+}})();
+</script>
+""",
+        unsafe_allow_javascript=True,
+    )
+
+
+def _hydrate_mobile_home_seen_from_storage() -> bool | None:
+    """Restore home-seen from sessionStorage.
+
+    Returns True/False when known, None while the JS probe is still loading.
+    """
+    if st.session_state.get(MOBILE_HOME_SEEN_KEY):
+        return True
+    value = _js_eval(
+        (
+            "(() => { try {"
+            "  const win = (window.parent && window.parent !== window) ? window.parent : window;"
+            f"  return (win.sessionStorage || sessionStorage).getItem('{MOBILE_HOME_SEEN_STORAGE}') || '';"
+            "} catch (e) { return ''; } })()"
+        ),
+        key="scoop_mobile_home_seen_probe",
+    )
+    if value is None:
+        return None
+    if str(value).strip() == "1":
+        st.session_state[MOBILE_HOME_SEEN_KEY] = True
+        return True
+    return False
+
+
+def _mobile_analyze_return_bypass() -> bool:
+    """True when returning from Analyze — do not bounce the user back to home."""
+    try:
+        from legal_consent_logger import (
+            ANALYZE_RETURN_QUERY_KEY,
+            PENDING_ANALYZE_RETURN_CONSENT,
+        )
+    except Exception:
+        return False
+    if st.session_state.get(PENDING_ANALYZE_RETURN_CONSENT):
+        return True
+    raw = st.query_params.get(ANALYZE_RETURN_QUERY_KEY, "")
+    if isinstance(raw, list):
+        raw = raw[0] if raw else ""
+    return str(raw).strip() == "1"
+
+
+def enforce_mobile_home_before_market(current_page: str | None) -> None:
+    """Mobile/tablet only: require home (market tabs) before a screener page.
+
+    Desktop is unchanged. Analyze-return navigations are exempt.
+    """
+    if not current_page or current_page not in MOBILE_MARKET_SCREENER_PAGES:
+        return
+    # Strict True — do not treat an in-flight viewport probe as mobile.
+    responsive = probe_responsive_viewport(key=_nav_viewport_key(current_page))
+    if responsive is not True:
+        return
+    if st.session_state.get(MOBILE_HOME_SEEN_KEY):
+        return
+    seen = _hydrate_mobile_home_seen_from_storage()
+    if seen is True:
+        return
+    if seen is None:
+        # Wait for sessionStorage probe — do not redirect on a false negative.
+        st.stop()
+        return
+    if _mobile_analyze_return_bypass():
+        mark_mobile_home_seen()
+        return
+    st.switch_page(HOME_PAGE)
 
 
 def install_responsive_tab_nav() -> None:
@@ -219,7 +313,9 @@ def render_mobile_back_home_bar(*, current_page: str | None) -> None:
             }
         });
     }
-    function apply(dark, persistUrl) {
+    function apply(dark) {
+        // Mobile/tablet only: apply theme in-place. Never location.replace —
+        // a full reload clears Streamlit session and re-triggers the terms gate.
         roots().forEach(function(root) {
             root.setAttribute("data-scoop-theme", dark ? "dark" : "light");
             root.classList.toggle("scoop-dark", dark);
@@ -231,25 +327,22 @@ def render_mobile_back_home_bar(*, current_page: str | None) -> None:
             else store.removeItem(STORAGE);
             (win.localStorage || localStorage).removeItem(STORAGE);
         } catch (e) {}
-        if (!persistUrl) return;
-        try {
-            const url = new URL(win.location.href);
-            const next = dark ? "dark" : "light";
-            if (url.searchParams.get("theme") === next) return;
-            url.searchParams.set("theme", next);
-            win.location.replace(url.toString());
-        } catch (e) {}
+        // Keep static dark CSS live; session sheet may be empty until next Streamlit run.
+        docs().forEach(function(doc) {
+            const staticSheet = doc.getElementById("scoop-theme-static-css");
+            if (staticSheet) staticSheet.disabled = false;
+        });
     }
     function bind(cb) {
         if (!cb || cb.dataset.scoopThemeBound === "1") return;
         cb.dataset.scoopThemeBound = "1";
         cb.checked = readDark();
-        apply(cb.checked, false);
+        apply(cb.checked);
     }
     bind(document.getElementById("scoop-mobile-dark-cb"));
     document.addEventListener("change", function(ev) {
         const t = ev.target;
-        if (t && t.id === "scoop-mobile-dark-cb") apply(t.checked, true);
+        if (t && t.id === "scoop-mobile-dark-cb") apply(t.checked);
     }, true);
 })();
 </script>
@@ -314,6 +407,8 @@ def render_mobile_tablet_home() -> None:
     from branding import logo_path_str
     from theme_mode import inject_dark_mode_styles, render_dark_mode_toggle_main
 
+    # Gating sequence only — does not change landing layout.
+    mark_mobile_home_seen()
     inject_dark_mode_styles()
 
     st.markdown('<div class="scoop-mobile-home-shell-marker" aria-hidden="true"></div>', unsafe_allow_html=True)
@@ -383,6 +478,8 @@ def render_responsive_navigation(*, current_page: str | None = None) -> None:
     from tooltip_scroll import inject_streamlit_chrome_hide
 
     inject_streamlit_chrome_hide()
+    # Mobile/tablet: home (market tabs) before any screener; consent stays on market pages.
+    enforce_mobile_home_before_market(current_page)
     render_mobile_back_home_bar(current_page=current_page)
     render_mobile_inner_top_bar(current_page=current_page)
     if is_mobile_tablet_viewport(page=current_page):
