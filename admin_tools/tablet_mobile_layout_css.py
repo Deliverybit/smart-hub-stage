@@ -239,7 +239,7 @@ MOBILE_HEADLINES_CARD_OVERLAY = """
         }
 """
 
-# Mobile/tablet only — match desktop Headlines title color (light blue).
+# Mobile/tablet — Headlines popup title color (light blue).
 MOBILE_TABLET_HL_HEADING_COLOR_CSS = """
 @media (max-width: 1366px) {
     .stMarkdown .tip-wrap.headlines-tip .tip-text .hl-tip-heading,
@@ -257,6 +257,27 @@ MOBILE_TABLET_HL_HEADING_COLOR_CSS = """
     html:not([data-scoop-theme="dark"]) .full-results-wrap .tip-wrap.headlines-tip .tip-text .hl-tip-line,
     html:not([data-scoop-theme="dark"]) .full-results-wrap .tip-wrap.headlines-tip .tip-text .hl-tip-line a {
         color: #ffffff !important;
+    }
+}
+/* Tablet only: Headlines popup title = mobile blue (light + dark). Beats page CSS white. */
+@media (min-width: 744px) and (max-width: 1366px) {
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip .tip-text .hl-tip-heading,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-heading,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text .hl-tip-heading,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-heading,
+    html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip .tip-text .hl-tip-heading,
+    html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-heading,
+    html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text .hl-tip-heading,
+    html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-heading,
+    html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip .tip-text .hl-tip-heading,
+    html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-heading,
+    html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text .hl-tip-heading,
+    html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-heading,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip .tip-text .hl-tip-heading,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-heading,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text .hl-tip-heading,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-heading {
+        color: #93c5fd !important;
     }
 }
 """
@@ -319,21 +340,31 @@ _TABLET_ANALYZE_SCOPE = (
     'html body .stApp [data-testid="stAppViewContainer"] .stMarkdown'
 )
 
-# Tablet (744–1366px): blue underlined Analyze link, right-aligned in a white card row.
+# Tablet (744–1366px): match phone Analyze row — dashed label tip left, blue link right.
 TABLET_ANALYZE_LINK_CSS = f"""
 @media (min-width: 744px) and (max-width: 1366px) {{
         {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table tbody td[data-label="Analyze"] {{
-            display: block !important;
-            grid-template-columns: minmax(0, 1fr) !important;
-            gap: 0 !important;
-            margin-top: 0.55rem !important;
-            padding: 0.62rem 0.85rem !important;
-            border: 1px solid #e5e7eb !important;
-            border-radius: 10px !important;
-            background: #ffffff !important;
+            display: grid !important;
+            grid-template-columns: minmax(0, 42%) minmax(0, 58%) !important;
+            gap: 0.45rem 0.75rem !important;
+            align-items: center !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
         }}
         {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-label {{
-            display: none !important;
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            min-width: 0 !important;
+            text-align: left !important;
+        }}
+        {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-label .tip-wrap {{
+            display: inline-block !important;
+            cursor: help !important;
+            border-bottom: 1px dashed #888 !important;
+            color: inherit !important;
+            font-weight: 600 !important;
+            text-decoration: none !important;
         }}
         {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-val {{
             display: block !important;
@@ -343,20 +374,12 @@ TABLET_ANALYZE_LINK_CSS = f"""
         }}
         {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-analyze-cell {{
             display: flex !important;
-            justify-content: space-between !important;
+            justify-content: flex-end !important;
             align-items: center !important;
             width: 100% !important;
-            gap: 0.75rem !important;
         }}
         {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table .fr-analyze-cell .fr-analyze-mobile-tip {{
-            display: inline-block !important;
-            flex: 0 1 auto !important;
-            order: 1 !important;
-            cursor: help !important;
-            border-bottom: 1px dashed #888 !important;
-            color: inherit !important;
-            font-weight: 600 !important;
-            text-decoration: none !important;
+            display: none !important;
         }}
         {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link,
         {_TABLET_ANALYZE_SCOPE} .full-results-wrap .full-results-table .fr-analyze-cell a.fr-analyze-link:link,
@@ -383,9 +406,7 @@ TABLET_ANALYZE_LINK_CSS = f"""
             box-shadow: none !important;
             outline: none !important;
             cursor: pointer !important;
-            flex: 0 0 auto !important;
-            order: 2 !important;
-            margin-left: auto !important;
+            pointer-events: auto !important;
         }}
 }}
 """
@@ -442,6 +463,124 @@ _MOBILE_TABLET_ANALYZE_LINK_FINAL = """
     }
     html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table .fr-analyze-cell .fr-analyze-mobile-tip {
         display: none !important;
+    }
+}
+/* Tablet only: dashed Analyze label left; blue Analyze link flush right. */
+@media (min-width: 744px) and (max-width: 1366px) {
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] {
+        display: grid !important;
+        grid-template-columns: minmax(0, 42%) minmax(0, 58%) !important;
+        align-items: center !important;
+    }
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-label {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-label .tip-wrap {
+        display: inline-block !important;
+        cursor: help !important;
+        border-bottom: 1px dashed #888 !important;
+        text-decoration: none !important;
+        font-weight: 600 !important;
+    }
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-val {
+        display: block !important;
+        text-align: right !important;
+        width: 100% !important;
+    }
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-analyze-cell {
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] a.fr-analyze-link,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] a.fr-analyze-link:link,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] a.fr-analyze-link:visited,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] a.fr-analyze-link:hover,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] a.fr-analyze-link:active,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] a.fr-analyze-link:focus {
+        margin-left: auto !important;
+    }
+}
+/* Tablet + dark mode only: strip white Analyze container so it matches sibling rows. */
+@media (min-width: 744px) and (max-width: 1366px) {
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"],
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-val,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-analyze-cell {
+        background: transparent !important;
+        background-color: transparent !important;
+        border-style: none !important;
+        border-width: 0 !important;
+        border-color: transparent !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] {
+        display: grid !important;
+        grid-template-columns: minmax(0, 42%) minmax(0, 58%) !important;
+        align-items: center !important;
+        gap: 0.45rem 0.75rem !important;
+        margin: 0 !important;
+        margin-top: 0 !important;
+        padding: 0.58rem 0 !important;
+        border: none !important;
+        border-bottom: 1px solid #334155 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-analyze-cell {
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        width: 100% !important;
+    }
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody tr td[data-label="Analyze"]:last-child {
+        border-bottom: none !important;
+    }
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-label {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        background: transparent !important;
+        color: #cbd5e1 !important;
+    }
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-label .tip-wrap {
+        display: inline-block !important;
+        cursor: help !important;
+        border-bottom: 2px dashed #ffffff !important;
+        color: #cbd5e1 !important;
+        background: transparent !important;
+        text-decoration: none !important;
+        font-weight: 600 !important;
+    }
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-val {
+        text-align: right !important;
+        background: transparent !important;
+    }
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] .fr-analyze-cell .fr-analyze-mobile-tip {
+        display: none !important;
+    }
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] a.fr-analyze-link,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] a.fr-analyze-link:link,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] a.fr-analyze-link:visited,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] a.fr-analyze-link:hover,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] a.fr-analyze-link:active,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Analyze"] a.fr-analyze-link:focus {
+        display: inline !important;
+        visibility: visible !important;
+        color: #93c5fd !important;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        text-decoration: underline !important;
+        text-underline-offset: 0.14em !important;
+        font-weight: 600 !important;
+        padding: 0 !important;
+        margin: 0 0 0 auto !important;
     }
 }
 """
@@ -4558,6 +4697,40 @@ _MOBILE_TABLET_KILL_SLIDEOUT_FINAL = """
     }
 }
 """
+
+# Injected on every run (early + last): stop Streamlit default multipage nav / chevrons
+# from flashing before custom landing or branded sidebar paints.
+_DESKTOP_KILL_DEFAULT_CHROME = """
+html body .stApp [data-testid="stSidebarNav"] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+}
+@media (min-width: 1367px) {
+    html body .stApp [data-testid="stExpandSidebarButton"],
+    html body .stApp [data-testid="stSidebarCollapseButton"],
+    html body .stApp [data-testid="collapsedControl"],
+    html body .stApp [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+    html body .stApp [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"],
+    html body .stApp [data-testid="stHeader"] [data-testid="collapsedControl"],
+    html body .stApp [data-testid="stHeader"] [data-testid="stToolbar"] > div:first-child:has([data-testid="stExpandSidebarButton"]),
+    html body .stApp [data-testid="stHeader"] [data-testid="stToolbar"] > div:first-child:has([data-testid="collapsedControl"]) {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+    }
+}
+"""
+
+EARLY_STREAMLIT_CHROME_HIDE = _DESKTOP_KILL_DEFAULT_CHROME + _MOBILE_TABLET_KILL_SLIDEOUT_FINAL
 
 RESPONSIVE_TAB_NAV_BOOTSTRAP = (
     RESPONSIVE_TAB_NAV_HIDE_SIDEBAR

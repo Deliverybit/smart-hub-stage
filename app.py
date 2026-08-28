@@ -8,15 +8,26 @@ import streamlit as st
 
 from analyze_page import stash_analyze_ticker
 from branding import logo_path_str, render_environment_banner
-from landing_page import DEFAULT_SCREENER_PAGE, prepare_mobile_home_landing, render_mobile_tablet_home, resolve_home_entry
+from landing_page import (
+    DEFAULT_SCREENER_PAGE,
+    prepare_mobile_home_landing,
+    render_mobile_tablet_home,
+    resolve_home_entry,
+)
 from theme_mode import install_theme_support
+from tooltip_scroll import inject_streamlit_chrome_hide
 
 st.set_page_config(
     page_title="The Scoop 52",
     page_icon=logo_path_str(),
     layout="wide",
+    initial_sidebar_state="collapsed",
 )
 install_theme_support()
+
+# Hide default Streamlit multipage nav / chevrons before the viewport probe can st.stop().
+inject_streamlit_chrome_hide()
+prepare_mobile_home_landing()
 
 if "analyze" in st.query_params:
     raw = st.query_params.get("analyze", "")

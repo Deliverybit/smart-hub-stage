@@ -19,6 +19,7 @@ from admin_tools.tablet_mobile_layout_css import (
     DARK_RESPONSIVE_NAME_VALUE_TIP_UNDERLINE_CSS,
     RESPONSIVE_GENERIC_TOOLTIP_LAYOUT,
     RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS,
+    EARLY_STREAMLIT_CHROME_HIDE,
     RESPONSIVE_SIDEBAR_BOOTSTRAP,
     RESPONSIVE_TAB_NAV_BOOTSTRAP,
     MOBILE_TABLET_HL_HEADING_COLOR_CSS,
@@ -3662,24 +3663,30 @@ _RESPONSIVE_LAYOUT_SCRIPTS = (
 def _inject_responsive_bootstrap_css() -> str:
     sidebar_css_json = json.dumps(RESPONSIVE_SIDEBAR_BOOTSTRAP)
     tab_nav_css_json = json.dumps(RESPONSIVE_TAB_NAV_BOOTSTRAP)
+    chrome_hide_css_json = json.dumps(EARLY_STREAMLIT_CHROME_HIDE)
     return f"""
 <script>
 (function() {{
     const sidebarCss = {sidebar_css_json};
     const tabNavCss = {tab_nav_css_json};
+    const chromeHideCss = {chrome_hide_css_json};
     const id = "scoop-responsive-sidebar-bootstrap-css";
     const tabId = "scoop-responsive-tab-nav-bootstrap-css";
+    const chromeId = "scoop-streamlit-chrome-hide-bootstrap";
     function apply(targetDoc) {{
         if (!targetDoc || !targetDoc.documentElement) {{
             return;
         }}
+        const innerW = (targetDoc.defaultView && targetDoc.defaultView.innerWidth) || 0;
+        const isMobileTablet = innerW > 0 && innerW <= 1366;
         let el = targetDoc.getElementById(id);
         if (!el) {{
             el = targetDoc.createElement("style");
             el.id = id;
             (targetDoc.head || targetDoc.documentElement).appendChild(el);
         }}
-        el.textContent = sidebarCss;
+        // Old overlay slideout CSS fights tab-nav; skip it on mobile/tablet.
+        el.textContent = isMobileTablet ? "" : sidebarCss;
         let tabEl = targetDoc.getElementById(tabId);
         if (!tabEl) {{
             tabEl = targetDoc.createElement("style");
@@ -3687,15 +3694,35 @@ def _inject_responsive_bootstrap_css() -> str:
             (targetDoc.head || targetDoc.documentElement).appendChild(tabEl);
         }}
         tabEl.textContent = tabNavCss;
-        const innerW = (targetDoc.defaultView && targetDoc.defaultView.innerWidth) || 0;
-        if (innerW > 0 && innerW <= 1366) {{
+        let chromeEl = targetDoc.getElementById(chromeId);
+        if (!chromeEl) {{
+            chromeEl = targetDoc.createElement("style");
+            chromeEl.id = chromeId;
+            (targetDoc.head || targetDoc.documentElement).appendChild(chromeEl);
+        }}
+        chromeEl.textContent = chromeHideCss;
+        if (isMobileTablet) {{
             targetDoc.documentElement.setAttribute("data-scoop-tab-nav", "1");
         }} else {{
             targetDoc.documentElement.removeAttribute("data-scoop-tab-nav");
         }}
         const hideTabNavSidebarControls = () => {{
             const w = (targetDoc.defaultView && targetDoc.defaultView.innerWidth) || 0;
+            const nav = targetDoc.querySelectorAll('[data-testid="stSidebarNav"]');
+            nav.forEach((node) => {{
+                node.style.setProperty("display", "none", "important");
+                node.style.setProperty("visibility", "hidden", "important");
+            }});
             if (w > 1366) {{
+                const desktopChevrons = targetDoc.querySelectorAll(
+                    '[data-testid="stExpandSidebarButton"], [data-testid="stSidebarCollapseButton"], [data-testid="collapsedControl"]'
+                );
+                desktopChevrons.forEach((node) => {{
+                    node.style.setProperty("display", "none", "important");
+                    node.style.setProperty("visibility", "hidden", "important");
+                    node.style.setProperty("opacity", "0", "important");
+                    node.style.setProperty("pointer-events", "none", "important");
+                }});
                 return;
             }}
             const sel =
@@ -3809,19 +3836,24 @@ def _inject_responsive_bootstrap_css() -> str:
 
 
 BOOTSTRAP_INSTALLED_KEY = "_scoop_responsive_bootstrap_installed"
-BOOTSTRAP_SCRIPT_VERSION = 8
+BOOTSTRAP_SCRIPT_VERSION = 9
 TOOLTIP_INSTALLED_KEY = "_scoop_tooltip_scroll_installed"
-TOOLTIP_SCRIPT_VERSION = 41
+TOOLTIP_SCRIPT_VERSION = 44
 SIDEBAR_HANDLER_INSTALLED_KEY = "_scoop_responsive_sidebar_handler_v3"
 
 
 def _responsive_bootstrap_markup() -> str:
     """Bootstrap CSS/JS once per session (shared across pages)."""
+    # Always re-emit chrome-hide CSS so multipage nav / chevrons cannot flash after navigation.
+    chrome_style = (
+        f"<style id='scoop-streamlit-chrome-hide'>{EARLY_STREAMLIT_CHROME_HIDE}</style>"
+    )
     if st.session_state.get(BOOTSTRAP_INSTALLED_KEY) == BOOTSTRAP_SCRIPT_VERSION:
-        return ""
+        return chrome_style
     st.session_state[BOOTSTRAP_INSTALLED_KEY] = BOOTSTRAP_SCRIPT_VERSION
     return (
-        f"<style id='scoop-responsive-generic-tooltip-css'>{_RESPONSIVE_GENERIC_TOOLTIP_CSS}</style>"
+        chrome_style
+        + f"<style id='scoop-responsive-generic-tooltip-css'>{_RESPONSIVE_GENERIC_TOOLTIP_CSS}</style>"
         + _inject_responsive_bootstrap_css()
         + f"<script>{_RESPONSIVE_LAYOUT_CORE_JS}</script>"
         + f"<script>{_RESPONSIVE_LAYOUT_SYNC_JS}</script>"
@@ -3837,11 +3869,32 @@ def _inject_name_tooltip_override() -> None:
 
 
 def _inject_tablet_analyze_link_css() -> None:
-    """Tablet Analyze row: blue underlined link in a white card (744–1366px only)."""
+    """Tablet Analyze row: blue underlined link; reload CSS module so edits always apply."""
+    import importlib
+
+    import admin_tools.tablet_mobile_layout_css as _tml
+
+    importlib.reload(_tml)
     st.markdown(
-        f"<style id='scoop-tablet-analyze-link-css'>{TABLET_ANALYZE_LINK_CSS}</style>"
-        f"<style id='scoop-phone-analyze-mobile-tip-css'>{PHONE_ANALYZE_MOBILE_TIP_CSS}</style>"
-        f"<style id='scoop-mobile-tablet-analyze-link-final-css'>{_MOBILE_TABLET_ANALYZE_LINK_FINAL}</style>",
+        f"<style id='scoop-tablet-analyze-link-css'>{_tml.TABLET_ANALYZE_LINK_CSS}</style>"
+        f"<style id='scoop-phone-analyze-mobile-tip-css'>{_tml.PHONE_ANALYZE_MOBILE_TIP_CSS}</style>"
+        f"<style id='scoop-mobile-tablet-analyze-link-final-css'>{_tml._MOBILE_TABLET_ANALYZE_LINK_FINAL}</style>",
+        unsafe_allow_html=True,
+    )
+
+
+def _inject_tablet_hl_heading_color_css() -> None:
+    """Tablet/mobile Headlines title color — reload CSS module so edits always apply."""
+    import importlib
+
+    import admin_tools.tablet_mobile_layout_css as _tml
+
+    importlib.reload(_tml)
+    css = _tml.MOBILE_TABLET_HL_HEADING_COLOR_CSS
+    # st.markdown last-wins; dual ids so a stale single tag cannot stick.
+    st.markdown(
+        f"<style id='scoop-mobile-tablet-hl-heading-color'>{css}</style>"
+        f"<style id='scoop-tablet-hl-heading-blue-final-v43'>{css}</style>",
         unsafe_allow_html=True,
     )
 
@@ -3923,12 +3976,22 @@ def inject_desktop_analyze_top_compact() -> None:
     )
 
 
+def inject_streamlit_chrome_hide() -> None:
+    """Hide default Streamlit multipage nav / slideout chevrons (early + last wins)."""
+    st.html(
+        f'<style id="scoop-streamlit-chrome-hide">{EARLY_STREAMLIT_CHROME_HIDE}</style>',
+        unsafe_allow_javascript=True,
+    )
+
+
 def install_responsive_layout_bootstrap() -> None:
     """Early CSS + layout sync so mobile/tablet first paint uses overlay sidebar."""
+    inject_streamlit_chrome_hide()
     markup = _responsive_bootstrap_markup()
     if markup:
         st.html(markup, unsafe_allow_javascript=True)
     install_page_layout_resync()
+    inject_streamlit_chrome_hide()
 
 
 def install_responsive_sidebar_handler() -> None:
@@ -3962,11 +4025,12 @@ def install_tooltip_scroll_handler() -> None:
         inject_dark_mode_styles()
         inject_desktop_sidebar_nav_market()
         inject_desktop_tablet_disclaimer_flow()
-        st.markdown(
-            f"<style id='scoop-mobile-tablet-hl-heading-color'>{MOBILE_TABLET_HL_HEADING_COLOR_CSS}</style>",
-            unsafe_allow_html=True,
-        )
+        _inject_tablet_hl_heading_color_css()
         install_page_layout_resync()
+        st.html(
+            f"<style id='scoop-streamlit-chrome-hide'>{EARLY_STREAMLIT_CHROME_HIDE}</style>",
+            unsafe_allow_javascript=True,
+        )
         return
     st.html(
         f"<style id='scoop-mobile-headlines-css'>{_MOBILE_HEADLINES_CSS}</style>"
@@ -3996,8 +4060,11 @@ def install_tooltip_scroll_handler() -> None:
     from theme_mode import inject_dark_mode_styles
 
     inject_dark_mode_styles()
-    st.markdown(
-        f"<style id='scoop-mobile-tablet-hl-heading-color'>{MOBILE_TABLET_HL_HEADING_COLOR_CSS}</style>",
-        unsafe_allow_html=True,
-    )
+    _inject_tablet_hl_heading_color_css()
     install_page_layout_resync()
+    st.html(
+        f"<style id='scoop-streamlit-chrome-hide'>{EARLY_STREAMLIT_CHROME_HIDE}</style>",
+        unsafe_allow_javascript=True,
+    )
+    # Last paint: tablet Headlines heading blue in light (regular) and dark mode.
+    _inject_tablet_hl_heading_color_css()

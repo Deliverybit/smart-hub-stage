@@ -1969,7 +1969,7 @@ st.markdown(
             position: relative !important;
             z-index: 2 !important;
             text-align: left !important;
-            color: #ffffff !important;
+            color: #93c5fd !important;
             padding: 0.55rem 0.75rem !important;
             font-size: calc(1rem + 4pt) !important;
             font-weight: 700 !important;

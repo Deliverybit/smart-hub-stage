@@ -122,7 +122,9 @@ def resolve_home_entry() -> str | None:
 def install_responsive_tab_nav() -> None:
     """Enable mobile/tablet tab navigation (hides slide-out sidebar via CSS)."""
     from admin_tools.tablet_mobile_layout_css import RESPONSIVE_TAB_NAV_BOOTSTRAP
+    from tooltip_scroll import inject_streamlit_chrome_hide
 
+    inject_streamlit_chrome_hide()
     st.html(
         f'<style id="scoop-responsive-tab-nav-css">{RESPONSIVE_TAB_NAV_BOOTSTRAP}</style>',
         unsafe_allow_javascript=True,
@@ -291,7 +293,9 @@ def render_mobile_back_home_link(*, current_page: str | None) -> None:
 def prepare_mobile_home_landing() -> None:
     """Mark the landing page and enable tab-nav CSS before first paint."""
     from admin_tools.tablet_mobile_layout_css import RESPONSIVE_TAB_NAV_BOOTSTRAP
+    from tooltip_scroll import inject_streamlit_chrome_hide
 
+    inject_streamlit_chrome_hide()
     st.html(
         f'<style id="scoop-responsive-tab-nav-css">{RESPONSIVE_TAB_NAV_BOOTSTRAP}</style>',
         unsafe_allow_javascript=True,
@@ -376,8 +380,13 @@ def render_mobile_tab_nav_shell(*, current_page: str | None = None) -> None:
 
 def render_responsive_navigation(*, current_page: str | None = None) -> None:
     """Render desktop sidebar or mobile/tablet chrome — never both."""
+    from tooltip_scroll import inject_streamlit_chrome_hide
+
+    inject_streamlit_chrome_hide()
     render_mobile_back_home_bar(current_page=current_page)
     render_mobile_inner_top_bar(current_page=current_page)
     if is_mobile_tablet_viewport(page=current_page):
+        inject_streamlit_chrome_hide()
         return
     render_desktop_sidebar_nav()
+    inject_streamlit_chrome_hide()
