@@ -11,11 +11,11 @@ MAIN_SCREENER_PATH = "/NYSE_Top_10"
 MAIN_SCREENER_PAGE = "pages/1_NYSE_Top_10.py"
 
 SCREENER_RETURN_PAGES: dict[str, tuple[str, str]] = {
-    "/NYSE_Top_10": ("pages/1_NYSE_Top_10.py", "NYSE 10"),
-    "/NASDAQ_Top_10": ("pages/2_NASDAQ_Top_10.py", "NASDAQ 10"),
-    "/Crypto_Top_10": ("pages/3_Crypto_Top_10.py", "Crypto 10"),
-    "/CME_Top_10": ("pages/5_CME_Top_10.py", "CME Commodities 10"),
-    "/ICE_Top_10": ("pages/6_ICE_Top_10.py", "ICE Commodities 10"),
+    "/NYSE_Top_10": ("pages/1_NYSE_Top_10.py", "NYSE Top 10"),
+    "/NASDAQ_Top_10": ("pages/2_NASDAQ_Top_10.py", "NASDAQ Top 10"),
+    "/Crypto_Top_10": ("pages/3_Crypto_Top_10.py", "Crypto Top 10"),
+    "/CME_Top_10": ("pages/5_CME_Top_10.py", "CME Top 10"),
+    "/ICE_Top_10": ("pages/6_ICE_Top_10.py", "ICE Top 10"),
 }
 
 SCREENER_CONSENT_BY_PATH: dict[str, str] = {
@@ -142,28 +142,83 @@ def stash_analyze_ticker(ticker: str) -> None:
 
 
 def _normalize_screener_path(raw: str) -> str:
+    """Map a URL/path fragment to a known screener route (/NASDAQ_Top_10, …)."""
     path = str(raw or "").strip()
     if not path:
         return ""
+    if "?" in path:
+        path = path.split("?", 1)[0]
+    if "#" in path:
+        path = path.split("#", 1)[0]
+    path = path.replace("\\", "/")
     if not path.startswith("/"):
         path = f"/{path}"
-    return path.rstrip("/") or path
+    cleaned = path.rstrip("/") or "/"
+    if cleaned in SCREENER_RETURN_PAGES:
+        return cleaned
+
+    parts = [part for part in cleaned.split("/") if part and part not in ("~", "+")]
+    for part in reversed(parts):
+        candidate = f"/{part}"
+        if candidate in SCREENER_RETURN_PAGES:
+            return candidate
+        lower = candidate.lower()
+        for known in SCREENER_RETURN_PAGES:
+            if known.lower() == lower:
+                return known
+    return ""
+
+
+def inject_analyze_source_restore() -> None:
+    """If Analyze loaded without ?from=, recover screener from sessionStorage once."""
+    if st.session_state.get(ANALYZE_SOURCE_SESSION_KEY):
+        return
+    if "from" in st.query_params:
+        return
+    st.html(
+        """
+<script>
+(() => {
+    try {
+        const aw = window.parent || window;
+        const params = new URLSearchParams(aw.location.search || "");
+        if (params.get("from")) return;
+        if (!params.get("ticker")) return;
+        const saved = aw.sessionStorage.getItem("scoop-analyze-from") || "";
+        const known = [
+            "/NYSE_Top_10",
+            "/NASDAQ_Top_10",
+            "/Crypto_Top_10",
+            "/CME_Top_10",
+            "/ICE_Top_10",
+        ];
+        if (!known.includes(saved)) return;
+        params.set("from", saved);
+        const next = aw.location.pathname + "?" + params.toString() + (aw.location.hash || "");
+        aw.location.replace(next);
+    } catch (e) {}
+})();
+</script>
+""",
+        unsafe_allow_javascript=True,
+    )
 
 
 def capture_analyze_source_from_query() -> None:
     """Remember which screener page opened Analyze, then drop ?from= from the URL."""
-    if "from" not in st.query_params:
-        return
-    raw = st.query_params.get("from", "")
-    if isinstance(raw, list):
-        raw = raw[0] if raw else ""
+    raw = ""
+    if "from" in st.query_params:
+        raw = st.query_params.get("from", "")
+        if isinstance(raw, list):
+            raw = raw[0] if raw else ""
     path = _normalize_screener_path(raw)
     if path in SCREENER_RETURN_PAGES:
         st.session_state[ANALYZE_SOURCE_SESSION_KEY] = path
-    try:
-        del st.query_params["from"]
-    except Exception:
-        pass
+    if "from" in st.query_params:
+        try:
+            del st.query_params["from"]
+        except Exception:
+            pass
 
 
 def analyze_back_target() -> tuple[str, str]:
@@ -172,7 +227,7 @@ def analyze_back_target() -> tuple[str, str]:
     if path in SCREENER_RETURN_PAGES:
         page, label = SCREENER_RETURN_PAGES[path]
         return page, label
-    return MAIN_SCREENER_PAGE, "main page"
+    return MAIN_SCREENER_PAGE, SCREENER_RETURN_PAGES[MAIN_SCREENER_PATH][1]
 
 
 def analyze_back_href(page_script: str) -> str:

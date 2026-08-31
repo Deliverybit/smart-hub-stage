@@ -29,15 +29,37 @@ def test_analyze_back_link_marks_return_query() -> None:
     assert "/NYSE_Top_10" in href
 
 
+def test_normalize_screener_path_accepts_cloud_style_paths() -> None:
+    assert analyze_page._normalize_screener_path("/NASDAQ_Top_10") == "/NASDAQ_Top_10"
+    assert analyze_page._normalize_screener_path("~/+/NASDAQ_Top_10") == "/NASDAQ_Top_10"
+    assert analyze_page._normalize_screener_path("/foo/ICE_Top_10?x=1") == "/ICE_Top_10"
+    assert analyze_page._normalize_screener_path("crypto_top_10") == "/Crypto_Top_10"
+
+
+def test_analyze_back_labels_name_markets_explicitly() -> None:
+    labels = {label for _page, label in analyze_page.SCREENER_RETURN_PAGES.values()}
+    assert labels == {
+        "NYSE Top 10",
+        "NASDAQ Top 10",
+        "Crypto Top 10",
+        "CME Top 10",
+        "ICE Top 10",
+    }
+    assert analyze_page.SCREENER_RETURN_PAGES["/NASDAQ_Top_10"][1] == "NASDAQ Top 10"
+
+
 def test_analyze_link_includes_ticker_query() -> None:
     from screener_table import analyze_link_html, analyze_search_url
 
-    url = analyze_search_url("BTC-USD")
+    url = analyze_search_url("BTC-USD", from_path="/Crypto_Top_10")
     assert url.startswith("Analyze?ticker=")
     assert "BTC-USD" in url
-    html = analyze_link_html("DOGE-USD")
+    assert "from=%2FCrypto_Top_10" in url or "from=/Crypto_Top_10" in url
+    html = analyze_link_html("DOGE-USD", from_path="/NASDAQ_Top_10")
     assert 'data-ticker="DOGE-USD"' in html
     assert "ticker=DOGE-USD" in html
+    assert "from=" in html
+    assert "NASDAQ_Top_10" in html
     assert 'class="fr-analyze-link"' in html
     assert 'class="tip-wrap fr-analyze-mobile-tip"' in html
 
@@ -50,12 +72,16 @@ def test_analyze_click_js_handles_mobile_targets() -> None:
     assert 'td[data-label="Analyze"]' in js
     assert 'new URL("Analyze"' in js
     assert "appDoc.querySelector" in js
+    assert "scoop-analyze-from" in js
+    assert "NASDAQ_Top_10" in js
 
 
 def main() -> int:
     tests = [
         test_mark_analyze_return_uses_parent_session_storage,
         test_analyze_back_link_marks_return_query,
+        test_normalize_screener_path_accepts_cloud_style_paths,
+        test_analyze_back_labels_name_markets_explicitly,
         test_analyze_link_includes_ticker_query,
         test_analyze_click_js_handles_mobile_targets,
     ]

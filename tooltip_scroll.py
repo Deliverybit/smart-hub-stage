@@ -55,7 +55,7 @@ _MOBILE_PHONE_HEADLINES_FIXED_CSS = """
     }
     .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text {
         position: fixed !important;
-        top: var(--hl-fixed-top, 20px) !important;
+        top: var(--hl-fixed-top, calc(5.6rem + env(safe-area-inset-top, 0px))) !important;
         left: var(--hl-fixed-left, 0.75rem) !important;
         right: auto !important;
         bottom: auto !important;
@@ -2064,6 +2064,7 @@ _TOOLTIP_SCROLL_JS = """
                 "display",
                 "z-index",
                 "--scoop-mobile-tip-top",
+                "--scoop-mobile-tip-left",
                 "--scoop-se-name-tip-top",
                 "--scoop-tablet-tip-left",
                 "--scoop-tablet-tip-top",
@@ -3057,7 +3058,13 @@ _TOOLTIP_SCROLL_JS = """
         tip.style.setProperty("overflow-y", "auto", "important");
         tip.style.setProperty("overflow-x", "hidden", "important");
 
-        applyOtherMobileHorizontalCenter(tip);
+        tip.style.setProperty("position", "fixed", "important");
+        tip.style.setProperty("right", "auto", "important");
+        tip.style.setProperty("transform", "none", "important");
+        tip.style.setProperty("width", "min(18rem, calc(100vw - 2rem))", "important");
+        const ipadW = tip.getBoundingClientRect().width || tip.offsetWidth;
+        const ipadLeft = Math.max(pad, (window.innerWidth - ipadW) / 2);
+        tip.style.setProperty("left", `${ipadLeft}px`, "important");
 
         let tipHeight = measureMobileGenericTipHeight(tip);
         tipHeight = Math.min(tipHeight, maxPanelHeight);
@@ -3145,9 +3152,22 @@ _TOOLTIP_SCROLL_JS = """
     const getPhoneMobileHeadlinesSlot = (wrap) => {
         const header = document.querySelector('[data-testid="stHeader"]');
         const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+        let chromeBottom = headerBottom;
+        [
+            ".scoop-env-banner",
+            ".scoop-mobile-back-home-bar",
+            ".scoop-mobile-inner-top",
+        ].forEach((sel) => {
+            document.querySelectorAll(sel).forEach((el) => {
+                const r = el.getBoundingClientRect();
+                if (r.height > 1 && r.top < 28 && r.bottom > chromeBottom) {
+                    chromeBottom = r.bottom;
+                }
+            });
+        });
         const viewRight = window.innerWidth - VIEWPORT_PAD;
         const viewLeft = VIEWPORT_PAD;
-        const top = Math.round(headerBottom + VIEWPORT_PAD);
+        const top = Math.round(Math.max(chromeBottom, 0) + VIEWPORT_PAD);
         const maxHeight = Math.max(
             200,
             window.innerHeight - top - MOBILE_HEADLINES_BOTTOM_TAP_PAD
@@ -3320,6 +3340,7 @@ _TOOLTIP_SCROLL_JS = """
                 "--tip-fixed-width",
                 "--tip-fixed-max-height",
                 "--scoop-mobile-tip-top",
+                "--scoop-mobile-tip-left",
                 "--scoop-se-name-tip-top",
                 "--scoop-tablet-tip-left",
                 "--scoop-tablet-tip-top",
@@ -3365,30 +3386,38 @@ _TOOLTIP_SCROLL_JS = """
         return height;
     };
 
-    const applyIphoneSEHorizontalCenter = (tip) => {
-        if (!isIphoneSEViewport() || !tip) {
+    const applyPhoneViewportCenteredGenericTip = (tip, topPx) => {
+        // Phone only: force viewport-centered fixed box (page CSS uses absolute + right:0).
+        if (!isMobileGenericTipViewport() || isTabletGenericTipViewport() || !tip) {
             return;
         }
+        const pad = 8;
+        const maxWidth = Math.max(120, window.innerWidth - pad * 2);
+        const tipWidth = Math.round(Math.min(18 * 16, maxWidth));
         tip.style.setProperty("position", "fixed", "important");
         tip.style.setProperty("right", "auto", "important");
+        tip.style.setProperty("bottom", "auto", "important");
         tip.style.setProperty("transform", "none", "important");
-        tip.style.setProperty("width", "min(18rem, calc(100vw - 2rem))", "important");
-        const width = tip.getBoundingClientRect().width || tip.offsetWidth;
-        const left = Math.max(8, (window.innerWidth - width) / 2);
-        tip.style.setProperty("left", `${left}px`, "important");
-    };
-
-    const applyOtherMobileHorizontalCenter = (tip) => {
-        if (!usesTapCenteredGenericTip() || !tip) {
-            return;
-        }
-        tip.style.setProperty("position", "fixed", "important");
-        tip.style.setProperty("right", "auto", "important");
-        tip.style.setProperty("transform", "none", "important");
-        tip.style.setProperty("width", "min(18rem, calc(100vw - 2rem))", "important");
-        const width = tip.getBoundingClientRect().width || tip.offsetWidth;
-        const left = Math.max(8, (window.innerWidth - width) / 2);
-        tip.style.setProperty("left", `${left}px`, "important");
+        tip.style.setProperty("width", `${tipWidth}px`, "important");
+        tip.style.setProperty("max-width", `${maxWidth}px`, "important");
+        tip.style.setProperty("min-width", "0", "important");
+        tip.style.setProperty("box-sizing", "border-box", "important");
+        tip.style.setProperty("white-space", "normal", "important");
+        tip.style.setProperty("word-break", "break-word", "important");
+        tip.style.setProperty("overflow-wrap", "anywhere", "important");
+        tip.style.setProperty("overflow-x", "hidden", "important");
+        tip.style.setProperty("text-align", "left", "important");
+        const width = tip.getBoundingClientRect().width || tip.offsetWidth || tipWidth;
+        const left = Math.max(pad, Math.min((window.innerWidth - width) / 2, window.innerWidth - width - pad));
+        tip.style.setProperty("--scoop-mobile-tip-left", `${Math.round(left)}px`, "important");
+        tip.style.setProperty("--scoop-mobile-tip-top", `${Math.round(topPx)}px`, "important");
+        tip.style.setProperty("left", `${Math.round(left)}px`, "important");
+        tip.style.setProperty("top", `${Math.round(topPx)}px`, "important");
+        tip.style.setProperty("visibility", "visible", "important");
+        tip.style.setProperty("opacity", "1", "important");
+        tip.style.setProperty("pointer-events", "auto", "important");
+        tip.style.setProperty("display", "block", "important");
+        tip.style.setProperty("z-index", "100002", "important");
     };
 
     // Tablet: place generic tip beside the tapped text, vertically centered on the card row.
@@ -3524,12 +3553,11 @@ _TOOLTIP_SCROLL_JS = """
             clampIpadMiniGenericTipInViewport(tip, anchorY);
             return;
         }
+        ensurePhoneGenericTipRuntimeCss();
         const tipHeight = measureMobileGenericTipHeight(tip);
         const maxTop = Math.max(8, window.innerHeight - tipHeight - 8);
         const top = Math.max(8, Math.min(anchorY - tipHeight - MOBILE_GENERIC_TIP_GAP, maxTop));
-        tip.style.setProperty("--scoop-mobile-tip-top", `${top}px`, "important");
-        applyIphoneSEHorizontalCenter(tip);
-        applyOtherMobileHorizontalCenter(tip);
+        applyPhoneViewportCenteredGenericTip(tip, top);
     };
 
     const scheduleMobileGenericTip = (wrap, event) => {
@@ -3541,6 +3569,7 @@ _TOOLTIP_SCROLL_JS = """
         if (!isMobileGenericTipViewport() || !isMobileGenericTipWrap(wrap)) {
             return;
         }
+        ensurePhoneGenericTipRuntimeCss();
         closeAllMobileGenericTips();
         wrap.classList.add("scoop-mobile-tip-open");
         scheduleMobileGenericTip(wrap, event);
@@ -3609,6 +3638,53 @@ _TOOLTIP_SCROLL_JS = """
 }
 `;
 
+    const PHONE_GENERIC_TIP_RUNTIME_CSS = `
+@media (max-width: 743px) {
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open) .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open) .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):hover .tip-text {
+    visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;
+    left: -10000px !important; right: auto !important; transform: none !important;
+  }
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip) .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text {
+    position: fixed !important;
+    left: var(--scoop-mobile-tip-left, -10000px) !important;
+    top: var(--scoop-mobile-tip-top, -10000px) !important;
+    right: auto !important; bottom: auto !important; transform: none !important; margin: 0 !important;
+    width: min(18rem, calc(100vw - 2rem)) !important;
+    max-width: min(18rem, calc(100vw - 2rem)) !important;
+    z-index: 100002 !important;
+  }
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text {
+    visibility: visible !important; opacity: 1 !important; pointer-events: auto !important;
+    display: block !important; position: fixed !important;
+    left: var(--scoop-mobile-tip-left, 8px) !important;
+    top: var(--scoop-mobile-tip-top, 8px) !important;
+    right: auto !important; bottom: auto !important; transform: none !important;
+    z-index: 100002 !important;
+  }
+}
+`;
+
+    const ensurePhoneGenericTipRuntimeCss = () => {
+        if (!isMobileGenericTipViewport() || isTabletGenericTipViewport()) {
+            return;
+        }
+        const id = "scoop-phone-generic-tip-runtime-css";
+        let el = document.getElementById(id);
+        if (!el) {
+            el = document.createElement("style");
+            el.id = id;
+            el.textContent = PHONE_GENERIC_TIP_RUNTIME_CSS;
+        } else if (el.textContent !== PHONE_GENERIC_TIP_RUNTIME_CSS) {
+            el.textContent = PHONE_GENERIC_TIP_RUNTIME_CSS;
+        }
+        document.documentElement.appendChild(el);
+    };
+
     const ensureTabletGenericTipRuntimeCss = () => {
         if (!isTabletGenericTipViewport()) {
             return;
@@ -3627,10 +3703,10 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const bindMobileGenericTips = () => {
-        if (window.__scoopMobileGenericTipBindVersion === 7) {
+        if (window.__scoopMobileGenericTipBindVersion === 9) {
             return;
         }
-        window.__scoopMobileGenericTipBindVersion = 7;
+        window.__scoopMobileGenericTipBindVersion = 9;
 
         const handleMobileGenericTipPointer = (event) => {
             if (!isMobileGenericTipViewport()) {
@@ -4148,7 +4224,25 @@ def _inject_responsive_bootstrap_css() -> str:
                     const dest = new URL("Analyze", appWin.location.href);
                     dest.searchParams.set("ticker", ticker);
                     dest.searchParams.set("theme", theme);
-                    dest.searchParams.set("from", appWin.location.pathname || "/NYSE_Top_10");
+                    const knownFrom = [
+                        "NYSE_Top_10",
+                        "NASDAQ_Top_10",
+                        "Crypto_Top_10",
+                        "CME_Top_10",
+                        "ICE_Top_10",
+                    ];
+                    const pathNow = String(appWin.location.pathname || "");
+                    let fromPath = "/NYSE_Top_10";
+                    for (const slug of knownFrom) {{
+                        if (pathNow.indexOf(slug) !== -1) {{
+                            fromPath = "/" + slug;
+                            break;
+                        }}
+                    }}
+                    dest.searchParams.set("from", fromPath);
+                    try {{
+                        appWin.sessionStorage.setItem("scoop-analyze-from", fromPath);
+                    }} catch (e) {{}}
                     appWin.location.href = dest.toString();
                 }} catch (e) {{}}
             }},
@@ -4165,9 +4259,9 @@ def _inject_responsive_bootstrap_css() -> str:
 
 
 BOOTSTRAP_INSTALLED_KEY = "_scoop_responsive_bootstrap_installed"
-BOOTSTRAP_SCRIPT_VERSION = 9
+BOOTSTRAP_SCRIPT_VERSION = 10
 TOOLTIP_INSTALLED_KEY = "_scoop_tooltip_scroll_installed"
-TOOLTIP_SCRIPT_VERSION = 63
+TOOLTIP_SCRIPT_VERSION = 68
 SIDEBAR_HANDLER_INSTALLED_KEY = "_scoop_responsive_sidebar_handler_v3"
 
 
@@ -4199,6 +4293,7 @@ def _inject_name_tooltip_override() -> None:
     # st.html keeps <style> intact and runs late enough to beat screener page CSS.
     st.html(
         f"<style id='scoop-name-value-tooltip-override-css'>{_tml.RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS}</style>"
+        f"<style id='scoop-phone-generic-tip-final-css'>{_tml.PHONE_GENERIC_TIP_FINAL_CSS}</style>"
         f"<style id='scoop-tablet-generic-tip-final-css'>{_tml.TABLET_GENERIC_TIP_FINAL_CSS}</style>",
         unsafe_allow_javascript=True,
     )
@@ -4384,6 +4479,206 @@ def _inject_js_source(js: str, *, key: str) -> None:
     )
     st.html("".join(parts), unsafe_allow_javascript=True)
 
+
+# Compact phone-only generic tip binder. Combined page JS is often dropped on mobile;
+# this keeps company/name tips opening viewport-centered. Headlines unchanged.
+_PHONE_GENERIC_TIP_STANDALONE_JS = r"""
+(() => {
+    const MAX = 743;
+    const GAP = 20;
+    const PAD = 8;
+    const isPhone = () => window.innerWidth <= MAX;
+    const isHeadlinesTarget = (node) =>
+        !!(node && node.closest && node.closest(
+            ".tip-wrap.headlines-tip, .hl-tip-count, .hl-tip-cb, .hl-tip-backdrop, .headlines-tip-scroll, .hl-tip-heading"
+        ));
+    const isGeneric = (wrap) =>
+        !!wrap &&
+        !wrap.classList.contains("headlines-tip") &&
+        !wrap.closest(".tip-wrap.headlines-tip") &&
+        !wrap.closest("thead");
+    const clearTipStyles = (tip) => {
+        if (!tip) return;
+        [
+            "position", "left", "top", "right", "bottom", "transform", "width",
+            "max-width", "min-width", "max-height", "overflow-y", "overflow-x",
+            "visibility", "opacity", "pointer-events", "display", "z-index",
+            "white-space", "word-break", "overflow-wrap", "box-sizing", "text-align",
+            "--scoop-mobile-tip-left", "--scoop-mobile-tip-top",
+        ].forEach((p) => tip.style.removeProperty(p));
+    };
+    const closeAll = () => {
+        document.querySelectorAll(".tip-wrap:not(.headlines-tip).scoop-mobile-tip-open").forEach((wrap) => {
+            wrap.classList.remove("scoop-mobile-tip-open");
+            clearTipStyles(wrap.querySelector(":scope > .tip-text"));
+        });
+    };
+    const RUNTIME_CSS = `
+@media (max-width: 743px) {
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open) .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open) .tip-text {
+    visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;
+    left: -10000px !important; right: auto !important; transform: none !important;
+  }
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip) .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text {
+    position: fixed !important;
+    left: var(--scoop-mobile-tip-left, -10000px) !important;
+    top: var(--scoop-mobile-tip-top, -10000px) !important;
+    right: auto !important; bottom: auto !important; transform: none !important; margin: 0 !important;
+    width: min(18rem, calc(100vw - 2rem)) !important;
+    max-width: min(18rem, calc(100vw - 2rem)) !important;
+    z-index: 100002 !important;
+  }
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text {
+    visibility: visible !important; opacity: 1 !important; pointer-events: auto !important;
+    display: block !important; position: fixed !important;
+    left: var(--scoop-mobile-tip-left, 8px) !important;
+    top: var(--scoop-mobile-tip-top, 8px) !important;
+    right: auto !important; bottom: auto !important; transform: none !important;
+    z-index: 100002 !important;
+  }
+}`;
+    const ensureCss = () => {
+        if (!isPhone()) return;
+        const id = "scoop-phone-generic-tip-runtime-css";
+        let el = document.getElementById(id);
+        if (!el) {
+            el = document.createElement("style");
+            el.id = id;
+        }
+        if (el.textContent !== RUNTIME_CSS) el.textContent = RUNTIME_CSS;
+        document.documentElement.appendChild(el);
+    };
+    const position = (wrap, clientY) => {
+        if (!isPhone() || !isGeneric(wrap) || !wrap.classList.contains("scoop-mobile-tip-open")) return;
+        const tip = wrap.querySelector(":scope > .tip-text");
+        if (!tip) return;
+        const tipWidth = Math.round(Math.min(18 * 16, Math.max(120, window.innerWidth - PAD * 2)));
+        tip.style.setProperty("position", "fixed", "important");
+        tip.style.setProperty("right", "auto", "important");
+        tip.style.setProperty("bottom", "auto", "important");
+        tip.style.setProperty("transform", "none", "important");
+        tip.style.setProperty("width", tipWidth + "px", "important");
+        tip.style.setProperty("max-width", (window.innerWidth - PAD * 2) + "px", "important");
+        tip.style.setProperty("box-sizing", "border-box", "important");
+        tip.style.setProperty("white-space", "normal", "important");
+        tip.style.setProperty("word-break", "break-word", "important");
+        tip.style.setProperty("overflow-wrap", "anywhere", "important");
+        tip.style.setProperty("overflow-x", "hidden", "important");
+        tip.style.setProperty("overflow-y", "auto", "important");
+        tip.style.setProperty("visibility", "hidden", "important");
+        tip.style.setProperty("opacity", "1", "important");
+        tip.style.setProperty("display", "block", "important");
+        tip.style.setProperty("left", "-9999px", "important");
+        tip.style.setProperty("top", "0", "important");
+        let tipHeight = tip.offsetHeight || 120;
+        tipHeight = Math.min(tipHeight, Math.max(80, window.innerHeight - PAD * 2));
+        const anchorY = typeof clientY === "number" ? clientY : wrap.getBoundingClientRect().top;
+        let top = anchorY - tipHeight - GAP;
+        if (top < PAD) top = Math.min(anchorY + GAP, window.innerHeight - PAD - tipHeight);
+        top = Math.max(PAD, Math.min(top, window.innerHeight - PAD - tipHeight));
+        const width = tip.getBoundingClientRect().width || tipWidth;
+        const left = Math.max(PAD, Math.min((window.innerWidth - width) / 2, window.innerWidth - width - PAD));
+        tip.style.setProperty("--scoop-mobile-tip-left", Math.round(left) + "px", "important");
+        tip.style.setProperty("--scoop-mobile-tip-top", Math.round(top) + "px", "important");
+        tip.style.setProperty("left", Math.round(left) + "px", "important");
+        tip.style.setProperty("top", Math.round(top) + "px", "important");
+        tip.style.setProperty("max-height", Math.round(window.innerHeight - top - PAD) + "px", "important");
+        tip.style.setProperty("visibility", "visible", "important");
+        tip.style.setProperty("opacity", "1", "important");
+        tip.style.setProperty("pointer-events", "auto", "important");
+        tip.style.setProperty("z-index", "100002", "important");
+    };
+    const OPEN_GRACE_MS = 400;
+    const open = (wrap, clientY) => {
+        if (!isPhone() || !isGeneric(wrap)) return;
+        ensureCss();
+        closeAll();
+        wrap.classList.add("scoop-mobile-tip-open");
+        window.__scoopPhoneGenericTipOpenedAt = Date.now();
+        document.documentElement.classList.remove("scoop-tooltip-scrolling");
+        document.body.classList.remove("scoop-tooltip-scrolling");
+        position(wrap, clientY);
+        requestAnimationFrame(() => position(wrap, clientY));
+    };
+    const onTap = (event) => {
+        if (!isPhone() || !event || !event.target || !event.target.closest) return;
+        // Leave Headlines entirely to their own handlers.
+        if (isHeadlinesTarget(event.target)) return;
+        if (event.type === "pointerdown" && event.pointerType === "mouse" && event.button !== 0) {
+            return;
+        }
+        // Prefer pointerdown; click is a fallback when pointerdown was skipped.
+        if (event.type === "click" && event.pointerType) return;
+        ensureCss();
+        const t = event.target;
+        // Keep taps/scroll gestures inside an already-open tip content intact.
+        const openWrap = t.closest(".tip-wrap.scoop-mobile-tip-open:not(.headlines-tip)");
+        if (openWrap && t.closest(".tip-text")) return;
+
+        const wrap = t.closest(".tip-wrap:not(.headlines-tip)");
+        if (wrap && isGeneric(wrap)) {
+            if (event.type === "pointerdown" && event.cancelable) event.preventDefault();
+            // Same tip trigger again → close; other tip → switch.
+            if (wrap.classList.contains("scoop-mobile-tip-open")) {
+                closeAll();
+                return;
+            }
+            const y = typeof event.clientY === "number" ? event.clientY : null;
+            open(wrap, y);
+            return;
+        }
+        // Dead space: dismiss any open generic tip.
+        closeAll();
+    };
+    const isScrollInsideOpenPopup = (event) => {
+        const t = event && event.target;
+        if (!t || !t.closest) return false;
+        return !!(
+            t.closest(".tip-wrap.scoop-mobile-tip-open:not(.headlines-tip)") &&
+            t.closest(".tip-text")
+        );
+    };
+    const onScrollDismiss = (event) => {
+        if (!isPhone()) return;
+        if (isScrollInsideOpenPopup(event)) return;
+        const openedAt = window.__scoopPhoneGenericTipOpenedAt || 0;
+        if (Date.now() - openedAt < OPEN_GRACE_MS) return;
+        if (!document.querySelector(".tip-wrap:not(.headlines-tip).scoop-mobile-tip-open")) {
+            return;
+        }
+        closeAll();
+    };
+    if (window.__scoopPhoneGenericTipTapHandler) {
+        document.removeEventListener("pointerdown", window.__scoopPhoneGenericTipTapHandler, true);
+        document.removeEventListener("click", window.__scoopPhoneGenericTipTapHandler, true);
+    }
+    if (window.__scoopPhoneGenericTipScrollHandler) {
+        window.removeEventListener("scroll", window.__scoopPhoneGenericTipScrollHandler, true);
+        document.removeEventListener("scroll", window.__scoopPhoneGenericTipScrollHandler, true);
+        document.removeEventListener("wheel", window.__scoopPhoneGenericTipScrollHandler, true);
+        document.removeEventListener("touchmove", window.__scoopPhoneGenericTipScrollHandler, true);
+    }
+    window.__scoopPhoneGenericTipTapHandler = onTap;
+    window.__scoopPhoneGenericTipScrollHandler = onScrollDismiss;
+    document.addEventListener("pointerdown", onTap, true);
+    document.addEventListener("click", onTap, true);
+    window.addEventListener("scroll", onScrollDismiss, { passive: true, capture: true });
+    document.addEventListener("scroll", onScrollDismiss, { passive: true, capture: true });
+    document.addEventListener("wheel", onScrollDismiss, { passive: true, capture: true });
+    document.addEventListener("touchmove", onScrollDismiss, { passive: true, capture: true });
+    ensureCss();
+    if (!window.__scoopPhoneGenericTipCssWatch) {
+        window.__scoopPhoneGenericTipCssWatch = true;
+        setInterval(ensureCss, 1500);
+        window.addEventListener("resize", ensureCss, { passive: true });
+    }
+    window.__scoopPhoneGenericTipStandalone = 2;
+})();
+"""
 
 # Compact tablet-only generic tip binder. Kept small so Streamlit will not drop it
 # when the large combined bundle fails to load (NASDAQ/NYSE after disclaimer agree).
@@ -4610,7 +4905,7 @@ _TABLET_GENERIC_TIP_STANDALONE_JS = r"""
         window.addEventListener("resize", ensureCss, { passive: true });
     }
     window.__scoopTabletGenericTipBindVersion = 13;
-    window.__scoopTabletGenericTipStandalone = 5;
+    window.__scoopTabletGenericTipStandalone = 7;
 })();
 """
 
@@ -4790,7 +5085,7 @@ _TABLET_TIP_DISMISS_STANDALONE_JS = r"""
     document.addEventListener("wheel", onScrollDismiss, { passive: true, capture: true });
     document.addEventListener("touchmove", onScrollDismiss, { passive: true, capture: true });
     window.__scoopCloseTabletTips = closeTips;
-    window.__scoopTabletTipDismissStandalone = 2;
+    window.__scoopTabletTipDismissStandalone = 4;
 })();
 """
 
@@ -5033,7 +5328,7 @@ def install_tooltip_scroll_handler() -> None:
         unsafe_allow_javascript=True,
     )
     # Chunked: a single giant <script> is dropped by Streamlit; tablet tips never bind.
-    _inject_js_source(_COMBINED_PAGE_JS, key="combined-page-v63")
+    _inject_js_source(_COMBINED_PAGE_JS, key="combined-page-v68")
     inject_desktop_sidebar_nav_market()
     inject_desktop_tablet_disclaimer_flow()
     st.session_state[TOOLTIP_INSTALLED_KEY] = TOOLTIP_SCRIPT_VERSION
@@ -5051,6 +5346,7 @@ def install_tooltip_scroll_handler() -> None:
     _inject_tablet_hl_heading_color_css()
     # Small enough for Streamlit to keep; survives when the combined bundle is dropped.
     st.html(
+        f"<script id='scoop-phone-generic-tip-standalone'>{_PHONE_GENERIC_TIP_STANDALONE_JS}</script>"
         f"<script id='scoop-tablet-generic-tip-standalone'>{_TABLET_GENERIC_TIP_STANDALONE_JS}</script>"
         f"<script id='scoop-tablet-headlines-center-standalone'>{_TABLET_HEADLINES_CENTER_STANDALONE_JS}</script>"
         f"<script id='scoop-ipad-mini-headlines-center-standalone'>{_IPAD_MINI_HEADLINES_CENTER_STANDALONE_JS}</script>"

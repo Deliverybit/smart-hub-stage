@@ -4648,7 +4648,11 @@ else:
                             cells += _td(c, str(val), COLUMN_TIPS.get(c, ""))
                     elif c == "Analyze":
                         src = source_ticker_map.get(r["Ticker"], r["Ticker"])
-                        cells += _td(c, analyze_link_html(src), COLUMN_TIPS.get(c, ""))
+                        cells += _td(
+                            c,
+                            analyze_link_html(src, from_path="/NYSE_Top_10"),
+                            COLUMN_TIPS.get(c, ""),
+                        )
                     else:
                         cells += _td(c, str(val), COLUMN_TIPS.get(c, ""))
                 rows_html += f"<tr>{cells}</tr>"

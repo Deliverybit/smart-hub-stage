@@ -14,6 +14,7 @@ import html
 from analyze_page import (
     analyze_screener_snapshot_key,
     capture_analyze_source_from_query,
+    inject_analyze_source_restore,
     inherit_screener_terms_for_analyze,
     is_analyze_mode,
     query_param_ticker,
@@ -217,6 +218,7 @@ install_theme_support()
 render_responsive_navigation(current_page="pages/_Analyze.py")
 if is_analyze_mode():
     inject_desktop_analyze_top_compact()
+inject_analyze_source_restore()
 capture_analyze_source_from_query()
 inherit_screener_terms_for_analyze()
 

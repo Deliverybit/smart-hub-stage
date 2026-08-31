@@ -733,14 +733,16 @@ html[data-scoop-theme="dark"] {_name_value_tip_selectors(_DARK_RESPONSIVE_TIP_SC
 }}
 """
 
-# Phone mobile (≤768px): viewport-centered popup above tap/hover for all generic tooltips.
+# Phone mobile (≤743px): viewport-centered fixed popup. Beat page absolute/right:0 rules.
 _MOBILE_FIXED_GENERIC_TIP_TEXT = f"""
-        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text {{
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip) .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text {{
             position: fixed !important;
-            left: 50% !important;
+            left: var(--scoop-mobile-tip-left, -10000px) !important;
             right: auto !important;
             bottom: auto !important;
-            transform: translateX(-50%) !important;
+            transform: none !important;
             top: var(--scoop-mobile-tip-top, -10000px) !important;
             width: min(18rem, calc(100vw - 2rem)) !important;
             min-width: 0 !important;
@@ -759,7 +761,7 @@ _MOBILE_FIXED_GENERIC_TIP_TEXT = f"""
             white-space: normal !important;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
             pointer-events: none !important;
-            max-height: min(72vh, 28rem) !important;
+            max-height: min(50vh, 22rem) !important;
             overflow-x: hidden !important;
             overflow-y: auto !important;
             -webkit-overflow-scrolling: touch !important;
@@ -770,30 +772,20 @@ _MOBILE_FIXED_GENERIC_TIP_TEXT = f"""
         }}
 """
 
-# iPhone SE (≤375px): reinforce viewport centering — measureMobileGenericTipHeight must
-# not set inline left on this width (Safari can keep it and shift the popup off-screen).
+# iPhone SE / other phone: keep right:auto so page fr-val right:0 cannot win.
 _IPHONE_SE_FIXED_GENERIC_TIP_TEXT = f"""
-        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text {{
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text {{
             position: fixed !important;
-            left: 50% !important;
+            left: var(--scoop-mobile-tip-left, -10000px) !important;
             right: auto !important;
-            transform: translateX(-50%) !important;
+            transform: none !important;
             margin-left: 0 !important;
             margin-right: 0 !important;
         }}
 """
 
-# Other mobile (376px–768px): same viewport centering reinforcement as iPhone SE.
-_OTHER_MOBILE_FIXED_GENERIC_TIP_TEXT = f"""
-        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text {{
-            position: fixed !important;
-            left: 50% !important;
-            right: auto !important;
-            transform: translateX(-50%) !important;
-            margin-left: 0 !important;
-            margin-right: 0 !important;
-        }}
-"""
+_OTHER_MOBILE_FIXED_GENERIC_TIP_TEXT = _IPHONE_SE_FIXED_GENERIC_TIP_TEXT
 
 # Mobile (≤768px): JS-controlled open/close — suppress sticky :hover/:active show.
 _MOBILE_GENERIC_TIP_OPEN_CLOSE_CSS = f"""
@@ -839,7 +831,7 @@ _TABLET_GENERIC_TIP_RELIABILITY_CSS = f"""
         }}
 """
 
-# Tablet: generic tips (NOT headlines) sit beside the tapped text, vertically centered on the card row.
+# Phone + tablet: generic tips (NOT headlines) sit beside the tapped text, vertically centered on the card row.
 _TABLET_BESIDE_GENERIC_TIP_TEXT = f"""
         {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text,
         {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip) .tip-text,
@@ -883,6 +875,19 @@ RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS = f"""
 @media (max-width: 743px) {{
 {_MOBILE_FIXED_GENERIC_TIP_TEXT}
 {_MOBILE_GENERIC_TIP_OPEN_CLOSE_CSS}
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text::before,
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text::after {{
+            content: none !important;
+            display: none !important;
+            border: 0 !important;
+        }}
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open .tip-text {{
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            display: block !important;
+        }}
 }}
 @media (max-width: 375px) {{
 {_IPHONE_SE_FIXED_GENERIC_TIP_TEXT}
@@ -901,7 +906,6 @@ RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS = f"""
             display: none !important;
             border: 0 !important;
         }}
-        /* Beat page hover/scroll rules so JS-opened tablet tips stay visible. */
         html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open .tip-text,
         html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open .tip-text,
         html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open .tip-text,
@@ -915,6 +919,45 @@ RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS = f"""
         }}
 }}
 """ + DARK_RESPONSIVE_NAME_VALUE_TIP_UNDERLINE_CSS
+
+# Injected last (st.html): phone generics stay viewport-centered (page CSS uses absolute/right:0).
+# Headlines tips are excluded.
+PHONE_GENERIC_TIP_FINAL_CSS = f"""
+@media (max-width: 743px) {{
+{_MOBILE_FIXED_GENERIC_TIP_TEXT}
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open) .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open) .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open) .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):hover .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):hover .tip-text {{
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            left: -10000px !important;
+            right: auto !important;
+            transform: none !important;
+        }}
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text {{
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            display: block !important;
+            position: fixed !important;
+            left: var(--scoop-mobile-tip-left, 8px) !important;
+            top: var(--scoop-mobile-tip-top, 8px) !important;
+            right: auto !important;
+            bottom: auto !important;
+            transform: none !important;
+            margin: 0 !important;
+            z-index: 100002 !important;
+            width: min(18rem, calc(100vw - 2rem)) !important;
+            max-width: min(18rem, calc(100vw - 2rem)) !important;
+            overflow-x: hidden !important;
+        }}
+}}
+"""
 
 # Injected last (st.html) so page screener CSS cannot keep open tablet tips at right:0 / hidden.
 TABLET_GENERIC_TIP_FINAL_CSS = f"""

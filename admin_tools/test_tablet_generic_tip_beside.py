@@ -17,12 +17,14 @@ def test_tablet_beside_css_excludes_headlines() -> None:
     )
 
     css = RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS
+    assert "@media (max-width: 743px)" in css
     assert "@media (min-width: 744px) and (max-width: 1366px)" in css
+    assert "--scoop-mobile-tip-top" in css
     assert "--scoop-tablet-tip-left" in css
     assert "--scoop-tablet-tip-top" in css
     assert ".tip-wrap:not(.headlines-tip)" in css
-    # Headlines keep their own card-overlay rules elsewhere; this block must not retarget them.
-    assert ".tip-wrap.headlines-tip .tip-text" not in css.split("@media (min-width: 744px)")[1]
+    tablet_block = css.split("@media (min-width: 744px) and (max-width: 1366px)")[1]
+    assert ".tip-wrap.headlines-tip .tip-text" not in tablet_block
     assert "scoop-mobile-tip-open > .tip-text" in TABLET_GENERIC_TIP_FINAL_CSS
     assert ".tip-wrap.headlines-tip" not in TABLET_GENERIC_TIP_FINAL_CSS
     assert "@media (min-width: 744px) and (max-width: 1366px)" in TABLET_GENERIC_TIP_FINAL_CSS
@@ -31,19 +33,19 @@ def test_tablet_beside_css_excludes_headlines() -> None:
 def test_tooltip_scroll_has_tablet_beside_positioner() -> None:
     source = (ROOT / "tooltip_scroll.py").read_text(encoding="utf-8")
     assert "positionTabletBesideGenericTip" in source
-    assert "TOOLTIP_SCRIPT_VERSION = 63" in source
-    assert "__scoopTabletGenericTipStandalone = 5" in source
+    assert "TOOLTIP_SCRIPT_VERSION = 68" in source
+    assert "__scoopTabletGenericTipStandalone = 7" in source
     assert "__scoopIpadMiniHeadlinesCenterStandalone = 1" in source
     assert "scoop-ipad-mini-headlines-center-standalone" in source
     assert "_IPAD_MINI_HEADLINES_CENTER_STANDALONE_JS" in source
     assert "__scoopTabletHeadlinesCenterStandalone = 1" in source
     assert "scoop-tablet-headlines-center-standalone" in source
     assert "_TABLET_HEADLINES_CENTER_STANDALONE_JS" in source
-    assert "__scoopTabletTipDismissStandalone = 2" in source
+    assert "__scoopTabletTipDismissStandalone = 4" in source
     assert "scoop-tablet-tip-dismiss-standalone" in source
     assert "_TABLET_TIP_DISMISS_STANDALONE_JS" in source
     assert "_inject_js_source" in source
-    assert "combined-page-v63" in source
+    assert "combined-page-v68" in source
     assert "TABLET_GENERIC_TIP_MIN = 744" in source
     assert "MOBILE_GENERIC_TIP_MAX = 743" in source
     # iPad Mini Headlines center is scoped 744–768 only.
@@ -71,6 +73,13 @@ def test_tooltip_scroll_has_tablet_beside_positioner() -> None:
     assert "onScrollDismiss" in dismiss
     assert "touchmove" in dismiss
     assert "isScrollInsideOpenPopup" in dismiss
+    # Phone generic binder is separate from tablet beside placement.
+    standalone = source.split("_TABLET_GENERIC_TIP_STANDALONE_JS = r\"\"\"", 1)[1].split(
+        "\"\"\"", 1
+    )[0]
+    assert "const MIN = 744" in standalone
+    assert "scoop-env-banner" in source
+    assert "getPhoneMobileHeadlinesSlot" in source
 
 
 if __name__ == "__main__":

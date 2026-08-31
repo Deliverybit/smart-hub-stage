@@ -21,16 +21,22 @@ def build_source_ticker_map(df) -> dict[str, str]:
     }
 
 
-def analyze_search_url(source_ticker: str) -> str:
+def analyze_search_url(source_ticker: str, *, from_path: str = "") -> str:
     """Relative Analyze URL with ticker (works on Cloud ~/+/ paths if click JS is skipped)."""
     sym = str(source_ticker).strip()
-    return f"Analyze?ticker={quote(sym, safe='')}"
+    url = f"Analyze?ticker={quote(sym, safe='')}"
+    source = str(from_path or "").strip()
+    if source:
+        if not source.startswith("/"):
+            source = f"/{source}"
+        url = f"{url}&from={quote(source, safe='')}"
+    return url
 
 
-def analyze_link_html(source_ticker: str) -> str:
+def analyze_link_html(source_ticker: str, *, from_path: str = "") -> str:
     """HTML for the Analyze column cell (desktop link + mobile/tablet tooltip)."""
     sym = str(source_ticker).strip()
-    url = analyze_search_url(sym)
+    url = analyze_search_url(sym, from_path=from_path)
     sym_esc = html.escape(sym, quote=True)
     url_esc = html.escape(url, quote=True)
     tip_esc = html.escape(ANALYZE_COLUMN_TIP)
