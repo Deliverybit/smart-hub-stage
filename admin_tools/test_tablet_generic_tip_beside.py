@@ -31,16 +31,19 @@ def test_tablet_beside_css_excludes_headlines() -> None:
 def test_tooltip_scroll_has_tablet_beside_positioner() -> None:
     source = (ROOT / "tooltip_scroll.py").read_text(encoding="utf-8")
     assert "positionTabletBesideGenericTip" in source
-    assert "TOOLTIP_SCRIPT_VERSION = 61" in source
-    assert "__scoopTabletGenericTipStandalone = 4" in source
+    assert "TOOLTIP_SCRIPT_VERSION = 63" in source
+    assert "__scoopTabletGenericTipStandalone = 5" in source
     assert "__scoopIpadMiniHeadlinesCenterStandalone = 1" in source
     assert "scoop-ipad-mini-headlines-center-standalone" in source
     assert "_IPAD_MINI_HEADLINES_CENTER_STANDALONE_JS" in source
     assert "__scoopTabletHeadlinesCenterStandalone = 1" in source
     assert "scoop-tablet-headlines-center-standalone" in source
     assert "_TABLET_HEADLINES_CENTER_STANDALONE_JS" in source
+    assert "__scoopTabletTipDismissStandalone = 2" in source
+    assert "scoop-tablet-tip-dismiss-standalone" in source
+    assert "_TABLET_TIP_DISMISS_STANDALONE_JS" in source
     assert "_inject_js_source" in source
-    assert "combined-page-v61" in source
+    assert "combined-page-v63" in source
     assert "TABLET_GENERIC_TIP_MIN = 744" in source
     assert "MOBILE_GENERIC_TIP_MAX = 743" in source
     # iPad Mini Headlines center is scoped 744–768 only.
@@ -56,6 +59,18 @@ def test_tooltip_scroll_has_tablet_beside_positioner() -> None:
     )[0]
     assert "const MIN = 769" in tab_hl
     assert "const MAX = 1366" in tab_hl
+    # Dismiss covers tablet + iPad Mini and closes Headlines + generics.
+    dismiss = source.split("_TABLET_TIP_DISMISS_STANDALONE_JS = r\"\"\"", 1)[1].split(
+        "\"\"\"", 1
+    )[0]
+    assert "const MIN = 744" in dismiss
+    assert "const MAX = 1366" in dismiss
+    assert "hl-tip-cb:checked" in dismiss
+    assert "scoop-mobile-tip-open" in dismiss
+    assert "hl-tip-backdrop" in dismiss
+    assert "onScrollDismiss" in dismiss
+    assert "touchmove" in dismiss
+    assert "isScrollInsideOpenPopup" in dismiss
 
 
 if __name__ == "__main__":

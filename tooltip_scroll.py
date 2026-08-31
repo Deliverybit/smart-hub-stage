@@ -2226,10 +2226,61 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const hideTooltips = (event) => {
+        // Tablet / iPad Mini: page scroll closes Headlines + company tips.
+        // Scrolling inside an already-open popup keeps that popup open.
+        if (isTabletGenericTipViewport()) {
+            if (event && event.target && event.target.closest) {
+                const t = event.target;
+                const hlWrap = t.closest(".tip-wrap.headlines-tip");
+                if (hlWrap) {
+                    const cb = hlWrap.querySelector(".hl-tip-cb");
+                    if (
+                        cb &&
+                        cb.checked &&
+                        t.closest(".tip-text") &&
+                        !t.closest(".hl-tip-backdrop")
+                    ) {
+                        root.classList.remove(className);
+                        document.body.classList.remove(className);
+                        return;
+                    }
+                }
+                if (
+                    t.closest(".tip-wrap.scoop-mobile-tip-open:not(.headlines-tip)") &&
+                    t.closest(".tip-text")
+                ) {
+                    root.classList.remove(className);
+                    document.body.classList.remove(className);
+                    return;
+                }
+            }
+            const openedAt = window.__scoopTabletGenericTipOpenedAt || 0;
+            if (Date.now() - openedAt < TABLET_GENERIC_TIP_OPEN_GRACE_MS) {
+                return;
+            }
+            if (typeof window.__scoopCloseTabletTips === "function") {
+                window.__scoopCloseTabletTips({ headlines: true, generics: true });
+            } else {
+                document
+                    .querySelectorAll(
+                        ".full-results-wrap .tip-wrap.headlines-tip .hl-tip-cb:checked"
+                    )
+                    .forEach((checkbox) => {
+                        checkbox.checked = false;
+                        const wrap = checkbox.closest(".tip-wrap.headlines-tip");
+                        if (wrap) {
+                            clearHeadlinesPosition(wrap);
+                        }
+                    });
+                closeAllMobileGenericTips();
+            }
+            root.classList.add(className);
+            document.body.classList.add(className);
+            return;
+        }
         if (
             isDesktopHeadlinesSessionOpen() ||
-            isPhoneMobileHeadlinesOpen() ||
-            isTabletProHeadlinesOpen()
+            isPhoneMobileHeadlinesOpen()
         ) {
             root.classList.remove(className);
             document.body.classList.remove(className);
@@ -2243,26 +2294,6 @@ _TOOLTIP_SCROLL_JS = """
         if (event && isInsideDesktopHeadlinesPopup(event.target)) {
             root.classList.remove(className);
             document.body.classList.remove(className);
-            return;
-        }
-        if (isTabletGenericTipViewport()) {
-            const openedAt = window.__scoopTabletGenericTipOpenedAt || 0;
-            if (Date.now() - openedAt < TABLET_GENERIC_TIP_OPEN_GRACE_MS) {
-                return;
-            }
-            const openWrap = document.querySelector(".tip-wrap.scoop-mobile-tip-open");
-            if (
-                openWrap &&
-                event &&
-                event.target &&
-                event.target.closest &&
-                event.target.closest(".tip-wrap.scoop-mobile-tip-open")
-            ) {
-                return;
-            }
-            closeAllMobileGenericTips();
-            root.classList.add(className);
-            document.body.classList.add(className);
             return;
         }
         if (isMobileGenericTipViewport()) {
@@ -2871,7 +2902,23 @@ _TOOLTIP_SCROLL_JS = """
             return;
         }
         if (checkbox.checked) {
+            // Tablet / iPad Mini: only one tip popup at a time.
             if (usesTabletProHeadlinesPopup()) {
+                window.__scoopDesktopHeadlinesSyncing = true;
+                document
+                    .querySelectorAll(".full-results-wrap .tip-wrap.headlines-tip .hl-tip-cb:checked")
+                    .forEach((other) => {
+                        if (other === checkbox) {
+                            return;
+                        }
+                        other.checked = false;
+                        const otherWrap = other.closest(".tip-wrap.headlines-tip");
+                        if (otherWrap) {
+                            clearHeadlinesPosition(otherWrap);
+                        }
+                    });
+                window.__scoopDesktopHeadlinesSyncing = false;
+                closeAllMobileGenericTips();
                 scheduleResponsiveHeadlinesPosition(wrap);
             } else if (isPhoneMobileHeadlinesViewport()) {
                 const savedScrollTop = getPageScrollEl().scrollTop;
@@ -4120,7 +4167,7 @@ def _inject_responsive_bootstrap_css() -> str:
 BOOTSTRAP_INSTALLED_KEY = "_scoop_responsive_bootstrap_installed"
 BOOTSTRAP_SCRIPT_VERSION = 9
 TOOLTIP_INSTALLED_KEY = "_scoop_tooltip_scroll_installed"
-TOOLTIP_SCRIPT_VERSION = 61
+TOOLTIP_SCRIPT_VERSION = 63
 SIDEBAR_HANDLER_INSTALLED_KEY = "_scoop_responsive_sidebar_handler_v3"
 
 
@@ -4518,6 +4565,9 @@ _TABLET_GENERIC_TIP_STANDALONE_JS = r"""
     const open = (wrap) => {
         if (!isTablet() || !isGeneric(wrap)) return;
         ensureCss();
+        if (typeof window.__scoopCloseTabletTips === "function") {
+            window.__scoopCloseTabletTips({ headlines: true, generics: false });
+        }
         closeAll();
         wrap.classList.add("scoop-mobile-tip-open");
         document.documentElement.classList.remove("scoop-tooltip-scrolling");
@@ -4538,7 +4588,13 @@ _TABLET_GENERIC_TIP_STANDALONE_JS = r"""
             open(wrap);
             return;
         }
-        if (event.type === "click") closeAll();
+        if (event.type === "click") {
+            if (typeof window.__scoopCloseTabletTips === "function") {
+                window.__scoopCloseTabletTips({ headlines: true, generics: true });
+            } else {
+                closeAll();
+            }
+        }
     };
     if (window.__scoopTabletGenericTipTapHandler) {
         document.removeEventListener("pointerdown", window.__scoopTabletGenericTipTapHandler, true);
@@ -4553,8 +4609,188 @@ _TABLET_GENERIC_TIP_STANDALONE_JS = r"""
         setInterval(ensureCss, 1500);
         window.addEventListener("resize", ensureCss, { passive: true });
     }
-    window.__scoopTabletGenericTipBindVersion = 12;
-    window.__scoopTabletGenericTipStandalone = 4;
+    window.__scoopTabletGenericTipBindVersion = 13;
+    window.__scoopTabletGenericTipStandalone = 5;
+})();
+"""
+
+# Tablet + iPad Mini (744–1366): dismiss open tip popups on dead-space / other-tip taps.
+# Keeps taps inside an already-open popup (links/scroll) from closing it.
+_TABLET_TIP_DISMISS_STANDALONE_JS = r"""
+(() => {
+    const MIN = 744;
+    const MAX = 1366;
+    const isRange = () => {
+        const w = window.innerWidth;
+        return w >= MIN && w <= MAX;
+    };
+    const clearGenericTip = (tip) => {
+        if (!tip) return;
+        [
+            "position", "left", "top", "right", "bottom", "transform", "width",
+            "max-width", "min-width", "max-height", "overflow-y", "overflow-x",
+            "visibility", "opacity", "pointer-events", "display", "z-index",
+            "white-space", "word-break", "overflow-wrap", "box-sizing", "text-align",
+            "--scoop-tablet-tip-left", "--scoop-tablet-tip-top", "--scoop-tablet-tip-width",
+        ].forEach((p) => tip.style.removeProperty(p));
+    };
+    const clearHlTip = (tip) => {
+        if (!tip) return;
+        [
+            "--hl-fixed-top", "--hl-fixed-left", "--hl-fixed-width",
+            "--hl-fixed-max-height", "--hl-fixed-height",
+            "height", "position", "left", "top", "right", "bottom", "transform",
+            "width", "max-width", "max-height", "visibility", "opacity",
+            "pointer-events", "display", "flex-direction", "overflow",
+        ].forEach((p) => tip.style.removeProperty(p));
+    };
+    const closeHeadlines = (exceptWrap) => {
+        document
+            .querySelectorAll(".full-results-wrap .tip-wrap.headlines-tip .hl-tip-cb:checked")
+            .forEach((cb) => {
+                const wrap = cb.closest(".tip-wrap.headlines-tip");
+                if (exceptWrap && wrap === exceptWrap) return;
+                cb.checked = false;
+                if (wrap) {
+                    wrap.classList.remove("hl-tip-desktop-open");
+                    clearHlTip(wrap.querySelector(":scope > .tip-text"));
+                }
+            });
+    };
+    const closeGenerics = (exceptWrap) => {
+        document
+            .querySelectorAll(".tip-wrap:not(.headlines-tip).scoop-mobile-tip-open")
+            .forEach((wrap) => {
+                if (exceptWrap && wrap === exceptWrap) return;
+                wrap.classList.remove("scoop-mobile-tip-open");
+                clearGenericTip(wrap.querySelector(":scope > .tip-text"));
+            });
+    };
+    const closeTips = (opts) => {
+        if (!isRange()) return;
+        const o = opts || {};
+        if (o.headlines !== false) closeHeadlines(o.exceptHeadlines || null);
+        if (o.generics !== false) closeGenerics(o.exceptGeneric || null);
+    };
+    const onDismiss = (event) => {
+        if (!isRange() || !event || !event.target || !event.target.closest) return;
+        if (event.type === "pointerdown" && event.pointerType === "mouse" && event.button !== 0) {
+            return;
+        }
+        // Prefer pointerdown; click is a fallback when pointerdown was skipped.
+        if (event.type === "click" && event.pointerType) {
+            return;
+        }
+        const t = event.target;
+
+        const hlWrap = t.closest(".tip-wrap.headlines-tip");
+        if (hlWrap) {
+            const cb = hlWrap.querySelector(".hl-tip-cb");
+            const inOpenPopup =
+                cb &&
+                cb.checked &&
+                t.closest(".tip-text") &&
+                !t.closest(".hl-tip-backdrop") &&
+                !t.closest(".hl-tip-count");
+            if (inOpenPopup) return;
+
+            if (t.closest(".hl-tip-count")) {
+                closeHeadlines(hlWrap);
+                closeGenerics(null);
+                return;
+            }
+
+            if (t.closest(".hl-tip-backdrop")) {
+                if (cb && cb.checked) {
+                    cb.checked = false;
+                    hlWrap.classList.remove("hl-tip-desktop-open");
+                    clearHlTip(hlWrap.querySelector(":scope > .tip-text"));
+                    try {
+                        cb.dispatchEvent(new Event("change", { bubbles: true }));
+                    } catch (e) {}
+                }
+                closeGenerics(null);
+                if (event.cancelable) event.preventDefault();
+                return;
+            }
+        }
+
+        const openGeneric = t.closest(".tip-wrap.scoop-mobile-tip-open");
+        if (
+            openGeneric &&
+            !openGeneric.classList.contains("headlines-tip") &&
+            t.closest(".tip-text")
+        ) {
+            return;
+        }
+
+        const genericWrap = t.closest(".tip-wrap:not(.headlines-tip)");
+        if (genericWrap) {
+            closeHeadlines(null);
+            closeGenerics(genericWrap);
+            return;
+        }
+
+        closeHeadlines(null);
+        closeGenerics(null);
+    };
+
+    const isScrollInsideOpenPopup = (event) => {
+        const t = event && event.target;
+        if (!t || !t.closest) return false;
+        const hlWrap = t.closest(".tip-wrap.headlines-tip");
+        if (hlWrap) {
+            const cb = hlWrap.querySelector(".hl-tip-cb");
+            if (
+                cb &&
+                cb.checked &&
+                t.closest(".tip-text") &&
+                !t.closest(".hl-tip-backdrop")
+            ) {
+                return true;
+            }
+        }
+        if (
+            t.closest(".tip-wrap.scoop-mobile-tip-open:not(.headlines-tip)") &&
+            t.closest(".tip-text")
+        ) {
+            return true;
+        }
+        return false;
+    };
+
+    const onScrollDismiss = (event) => {
+        if (!isRange()) return;
+        if (isScrollInsideOpenPopup(event)) return;
+        const hasOpen =
+            document.querySelector(
+                ".full-results-wrap .tip-wrap.headlines-tip .hl-tip-cb:checked"
+            ) || document.querySelector(".tip-wrap:not(.headlines-tip).scoop-mobile-tip-open");
+        if (!hasOpen) return;
+        closeHeadlines(null);
+        closeGenerics(null);
+    };
+
+    if (window.__scoopTabletTipDismissHandler) {
+        document.removeEventListener("pointerdown", window.__scoopTabletTipDismissHandler, true);
+        document.removeEventListener("click", window.__scoopTabletTipDismissHandler, true);
+    }
+    if (window.__scoopTabletTipScrollDismissHandler) {
+        window.removeEventListener("scroll", window.__scoopTabletTipScrollDismissHandler, true);
+        document.removeEventListener("scroll", window.__scoopTabletTipScrollDismissHandler, true);
+        document.removeEventListener("wheel", window.__scoopTabletTipScrollDismissHandler, true);
+        document.removeEventListener("touchmove", window.__scoopTabletTipScrollDismissHandler, true);
+    }
+    window.__scoopTabletTipDismissHandler = onDismiss;
+    window.__scoopTabletTipScrollDismissHandler = onScrollDismiss;
+    document.addEventListener("pointerdown", onDismiss, true);
+    document.addEventListener("click", onDismiss, true);
+    window.addEventListener("scroll", onScrollDismiss, { passive: true, capture: true });
+    document.addEventListener("scroll", onScrollDismiss, { passive: true, capture: true });
+    document.addEventListener("wheel", onScrollDismiss, { passive: true, capture: true });
+    document.addEventListener("touchmove", onScrollDismiss, { passive: true, capture: true });
+    window.__scoopCloseTabletTips = closeTips;
+    window.__scoopTabletTipDismissStandalone = 2;
 })();
 """
 
@@ -4797,7 +5033,7 @@ def install_tooltip_scroll_handler() -> None:
         unsafe_allow_javascript=True,
     )
     # Chunked: a single giant <script> is dropped by Streamlit; tablet tips never bind.
-    _inject_js_source(_COMBINED_PAGE_JS, key="combined-page-v61")
+    _inject_js_source(_COMBINED_PAGE_JS, key="combined-page-v63")
     inject_desktop_sidebar_nav_market()
     inject_desktop_tablet_disclaimer_flow()
     st.session_state[TOOLTIP_INSTALLED_KEY] = TOOLTIP_SCRIPT_VERSION
@@ -4817,6 +5053,7 @@ def install_tooltip_scroll_handler() -> None:
     st.html(
         f"<script id='scoop-tablet-generic-tip-standalone'>{_TABLET_GENERIC_TIP_STANDALONE_JS}</script>"
         f"<script id='scoop-tablet-headlines-center-standalone'>{_TABLET_HEADLINES_CENTER_STANDALONE_JS}</script>"
-        f"<script id='scoop-ipad-mini-headlines-center-standalone'>{_IPAD_MINI_HEADLINES_CENTER_STANDALONE_JS}</script>",
+        f"<script id='scoop-ipad-mini-headlines-center-standalone'>{_IPAD_MINI_HEADLINES_CENTER_STANDALONE_JS}</script>"
+        f"<script id='scoop-tablet-tip-dismiss-standalone'>{_TABLET_TIP_DISMISS_STANDALONE_JS}</script>",
         unsafe_allow_javascript=True,
     )
