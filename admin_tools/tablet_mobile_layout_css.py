@@ -3690,8 +3690,7 @@ RESPONSIVE_TERMS_TOP_COMPACT = f"""
 """
 
 # Phone mobile (≤743px): Terms page stays in overlay-sidebar layout (not desktop split).
-MOBILE_CONSENT_TERMS_MAIN_VIEW_CSS = """
-@media (max-width: 743px) {
+_CONSENT_TERMS_MAIN_VIEW_RULES = """
     html[data-scoop-terms-active="1"] [data-testid="stAppViewContainer"],
     html[data-scoop-terms-active="1"][data-scoop-desktop-layout="1"] [data-testid="stAppViewContainer"],
     html[data-scoop-terms-active="1"][data-scoop-screener-gated="1"] [data-testid="stAppViewContainer"] {
@@ -3719,7 +3718,13 @@ MOBILE_CONSENT_TERMS_MAIN_VIEW_CSS = """
     html[data-scoop-terms-active="1"][data-scoop-screener-gated="1"] .scoop-banner-desktop {
         display: none !important;
     }
-}
+"""
+
+# Phone + tablet (≤1366px): Terms stays in main-view chrome (not desktop split). Desktop 1367+ unchanged.
+MOBILE_CONSENT_TERMS_MAIN_VIEW_CSS = f"""
+@media (max-width: 1366px) {{
+{_CONSENT_TERMS_MAIN_VIEW_RULES}
+}}
 """
 
 TABLET_SEARCH_MOBILE_LAYOUT = (

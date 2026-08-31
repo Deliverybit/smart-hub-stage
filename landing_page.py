@@ -37,6 +37,8 @@ MOBILE_MARKET_SCREENER_PAGES: frozenset[str] = frozenset(path for path, _ in HOM
 MOBILE_HOME_SEEN_KEY = "_scoop_mobile_home_seen"
 # Browser tab flag — survives Streamlit session remints on multipage URL loads.
 MOBILE_HOME_SEEN_STORAGE = "scoop-mobile-home-seen"
+# Set when phone/tablet consent Disclaimer & Terms is clicked; Terms must stay responsive.
+TERMS_FORCE_RESPONSIVE_STORAGE = "scoop-terms-force-responsive"
 
 SCOOP_52_DESCRIPTION = (
     "Screen major markets for assets trading at or near their 52-week lows — "
@@ -118,6 +120,53 @@ def is_mobile_tablet_viewport(*, page: str | None = None) -> bool:
     """True for mobile/tablet; defaults mobile-safe while the viewport probe is loading."""
     responsive = probe_responsive_viewport(key=_nav_viewport_key(page))
     return responsive is not False
+
+
+def probe_terms_force_responsive() -> bool | None:
+    """True when consent-page Terms navigation requested responsive chrome.
+
+    Returns True/False when known, None while the JS probe is still loading.
+    """
+    cache_key = "_scoop_terms_force_responsive_cache"
+    if cache_key in st.session_state:
+        return bool(st.session_state[cache_key])
+
+    value = _js_eval(
+        (
+            "(() => { try {"
+            "  const win = (window.parent && window.parent !== window) ? window.parent : window;"
+            f"  return (win.sessionStorage || sessionStorage).getItem('{TERMS_FORCE_RESPONSIVE_STORAGE}') || '';"
+            "} catch (e) { return ''; } })()"
+        ),
+        key="scoop_terms_force_responsive_probe",
+    )
+    if value is None:
+        return None
+    forced = str(value).strip() == "1"
+    st.session_state[cache_key] = forced
+    return forced
+
+
+def clear_terms_force_responsive_marker() -> None:
+    """Clear the one-shot Terms responsive marker after Terms chrome is installed."""
+    st.session_state.pop("_scoop_terms_force_responsive_cache", None)
+    st.html(
+        f"""
+<script>
+(function() {{
+    try {{
+        const win = (window.parent && window.parent !== window) ? window.parent : window;
+        (win.sessionStorage || sessionStorage).removeItem({json.dumps(TERMS_FORCE_RESPONSIVE_STORAGE)});
+    }} catch (e) {{}}
+    try {{
+        document.documentElement.setAttribute("data-scoop-tab-nav", "1");
+        document.documentElement.removeAttribute("data-scoop-desktop-layout");
+    }} catch (e) {{}}
+}})();
+</script>
+""",
+        unsafe_allow_javascript=True,
+    )
 
 
 def resolve_home_entry() -> str | None:
@@ -482,6 +531,30 @@ def render_responsive_navigation(*, current_page: str | None = None) -> None:
     enforce_mobile_home_before_market(current_page)
     render_mobile_back_home_bar(current_page=current_page)
     render_mobile_inner_top_bar(current_page=current_page)
+
+    # Terms opened from phone/tablet consent: never mount desktop sidebar chrome.
+    if current_page == TERMS_PAGE:
+        force_responsive = probe_terms_force_responsive()
+        if force_responsive is None:
+            # Wait for sessionStorage probe — do not flash desktop sidebar.
+            st.stop()
+            return
+        if force_responsive is True:
+            # Drop a stale desktop viewport cache from an earlier wide-window visit.
+            st.session_state.pop(
+                f"_scoop_viewport_cache_{_nav_viewport_key(current_page)}",
+                None,
+            )
+            clear_terms_force_responsive_marker()
+            inject_streamlit_chrome_hide()
+            return
+        if is_mobile_tablet_viewport(page=current_page):
+            inject_streamlit_chrome_hide()
+            return
+        render_desktop_sidebar_nav()
+        inject_streamlit_chrome_hide()
+        return
+
     if is_mobile_tablet_viewport(page=current_page):
         inject_streamlit_chrome_hide()
         return

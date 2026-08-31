@@ -13,6 +13,30 @@ st.set_page_config(
     page_icon=logo_path_str(),
     layout="wide",
 )
+# Phone/tablet: pin tab-nav before paint so consent → Terms never flashes desktop split.
+st.html(
+    """
+<script>
+(function() {
+    try {
+        const win = (window.parent && window.parent !== window) ? window.parent : window;
+        const w = win.innerWidth || window.innerWidth || 0;
+        const forced = (win.sessionStorage || sessionStorage).getItem("scoop-terms-force-responsive") === "1"
+            || (win.sessionStorage || sessionStorage).getItem("scoop-terms-nav-collapse") === "1";
+        if (w <= 1366 || forced) {
+            document.documentElement.setAttribute("data-scoop-tab-nav", "1");
+            document.documentElement.setAttribute("data-scoop-terms-active", "1");
+            document.documentElement.removeAttribute("data-scoop-desktop-layout");
+            try { win.document.documentElement.setAttribute("data-scoop-tab-nav", "1"); } catch (e) {}
+            try { win.document.documentElement.setAttribute("data-scoop-terms-active", "1"); } catch (e) {}
+            try { win.document.documentElement.removeAttribute("data-scoop-desktop-layout"); } catch (e) {}
+        }
+    } catch (e) {}
+})();
+</script>
+""",
+    unsafe_allow_javascript=True,
+)
 render_environment_banner(st)
 install_theme_support()
 render_responsive_navigation(current_page="pages/7_Terms_of_Service.py")

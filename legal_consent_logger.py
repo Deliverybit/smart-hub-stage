@@ -777,11 +777,6 @@ def inject_mobile_consent_terms_nav_bridge(st_module) -> None:
         try {{
             aw.sessionStorage.setItem(TERMS_NAV_COLLAPSE_KEY, "1");
         }} catch (e) {{}}
-        if (doc.documentElement.getAttribute("data-scoop-tab-nav") === "1") {{
-            doc.documentElement.removeAttribute("data-scoop-screener-gated");
-            doc.documentElement.removeAttribute("data-scoop-desktop-layout");
-            return;
-        }}
         try {{
             aw.sessionStorage.setItem("scoop-responsive-sidebar-ready", "1");
         }} catch (e) {{}}
@@ -791,6 +786,11 @@ def inject_mobile_consent_terms_nav_bridge(st_module) -> None:
         }}
         doc.documentElement.removeAttribute("data-scoop-screener-gated");
         doc.documentElement.removeAttribute("data-scoop-desktop-layout");
+        // Phone/tablet: keep tab-nav main view when opening Terms from consent.
+        doc.documentElement.setAttribute("data-scoop-tab-nav", "1");
+        try {{
+            aw.sessionStorage.setItem("scoop-terms-force-responsive", "1");
+        }} catch (e) {{}}
         aw.__scoopLayout?.clearDesktopInlineLayout?.();
         const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
         if (sidebar) {{
@@ -801,8 +801,10 @@ def inject_mobile_consent_terms_nav_bridge(st_module) -> None:
             view.style.setProperty("display", "block", "important");
             view.style.setProperty("width", "100%", "important");
             view.style.setProperty("max-width", "100vw", "important");
+            view.style.setProperty("flex-direction", "column", "important");
+            view.style.setProperty("margin-left", "0", "important");
+            view.style.setProperty("padding-left", "0", "important");
         }}
-        aw.__scoopLayout?.syncSidebarLayout?.();
     }};
     const onPointer = (event) => {{
         const target = event.target;
@@ -823,14 +825,14 @@ def inject_mobile_consent_terms_nav_bridge(st_module) -> None:
             : `${{aw.location.origin}}${{href.startsWith("/") ? href : `/${{href}}`}}`;
         aw.location.assign(url);
     }};
-    if (aw.__scoopMobileConsentTermsNavVersion !== 2) {{
+    if (aw.__scoopMobileConsentTermsNavVersion !== 4) {{
         if (aw.__scoopMobileConsentTermsNavHandler) {{
             doc.removeEventListener("click", aw.__scoopMobileConsentTermsNavHandler, true);
             doc.removeEventListener("touchstart", aw.__scoopMobileConsentTermsNavHandler, true);
             doc.removeEventListener("pointerdown", aw.__scoopMobileConsentTermsNavHandler, true);
         }}
         aw.__scoopMobileConsentTermsNavHandler = onPointer;
-        aw.__scoopMobileConsentTermsNavVersion = 2;
+        aw.__scoopMobileConsentTermsNavVersion = 4;
         doc.addEventListener("click", aw.__scoopMobileConsentTermsNavHandler, true);
         doc.addEventListener("touchstart", aw.__scoopMobileConsentTermsNavHandler, {{ passive: false, capture: true }});
         doc.addEventListener("pointerdown", aw.__scoopMobileConsentTermsNavHandler, true);

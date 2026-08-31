@@ -653,6 +653,8 @@ const __scoopIsTabletOnlyViewport = () => {
     const w = __scoopViewportWidth();
     return w >= 769 && w <= 1366;
 };
+// Phone + all tablet widths (≤1366): Terms stays in main-view chrome, never desktop split.
+const __scoopShouldHoldTermsMainView = () => __scoopViewportWidth() <= 1366;
 const __scoopClickFirstSidebarControl = (doc, selectors) => {
     for (const selector of selectors) {
         const node = doc.querySelector(selector);
@@ -785,6 +787,10 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
         const innerW = __scoopViewportWidth();
         const screenW = appWin.screen?.width || 0;
         if (isAsusZenbookFoldViewport()) {
+            return false;
+        }
+        // Terms on phone/tablet: never treat as desktop (blocks zoom/screen-width heuristic).
+        if (__scoopIsTermsPage() && innerW <= TABLET_MAX) {
             return false;
         }
         if (innerW >= DESKTOP_MIN) {
@@ -1067,6 +1073,19 @@ _RESPONSIVE_LAYOUT_CORE_JS = (
     };
 
     const syncSidebarLayout = () => {
+        // Tablet/phone Terms: stay in main-view tab-nav chrome (never flip to desktop split).
+        if (__scoopIsTermsPage() && __scoopShouldHoldTermsMainView()) {
+            setDesktopLayoutFlag(false);
+            const fixElTerms = doc.getElementById("scoop-desktop-nav-fix-css");
+            if (fixElTerms) {
+                fixElTerms.remove();
+            }
+            doc.documentElement.setAttribute("data-scoop-tab-nav", "1");
+            clearDesktopInlineLayout();
+            applyResponsiveSidebarLayout();
+            syncMainBlockHeaderPadding();
+            return;
+        }
         if (isDesktopViewport()) {
             doc.documentElement.removeAttribute("data-scoop-tab-nav");
             setDesktopLayoutFlag(true);
@@ -1218,14 +1237,17 @@ _PAGE_NAV_LAYOUT_RESYNC_JS = (
 
     const TERMS_NAV_COLLAPSE_KEY = "scoop-terms-nav-collapse";
     const TERMS_NAV_SUPPRESS_MS = 15000;
-    const PAGE_NAV_BIND_VERSION = 6;
+    const PAGE_NAV_BIND_VERSION = 8;
 
     const enforceMobileTermsMainView = () => {
-        if (!__scoopIsPhoneViewport()) {
+        if (!__scoopShouldHoldTermsMainView()) {
             return;
         }
         doc.documentElement.removeAttribute("data-scoop-screener-gated");
         doc.documentElement.removeAttribute("data-scoop-desktop-layout");
+        if (__scoopIsTabletOnlyViewport() || __scoopIsPhoneViewport()) {
+            doc.documentElement.setAttribute("data-scoop-tab-nav", "1");
+        }
         layout()?.clearDesktopInlineLayout?.();
         __scoopApplySidebarExpandedState(false);
         const view = doc.querySelector('[data-testid="stAppViewContainer"]');
@@ -1237,12 +1259,13 @@ _PAGE_NAV_LAYOUT_RESYNC_JS = (
     };
 
     const markMobileTermsNav = () => {
-        if (!__scoopIsPhoneViewport()) {
+        if (!__scoopShouldHoldTermsMainView()) {
             return;
         }
         try {
             appWin.sessionStorage.setItem(TERMS_NAV_COLLAPSE_KEY, "1");
             appWin.sessionStorage.setItem("scoop-responsive-sidebar-ready", "1");
+            appWin.sessionStorage.setItem("scoop-terms-force-responsive", "1");
         } catch (e) {}
         appWin.__scoopSuppressSidebarExpand = Date.now() + TERMS_NAV_SUPPRESS_MS;
         if (typeof appWin.__scoopClearResponsiveExpandTimers === "function") {
@@ -1252,7 +1275,7 @@ _PAGE_NAV_LAYOUT_RESYNC_JS = (
     };
 
     const holdMobileTermsMainView = () => {
-        if (!__scoopIsPhoneViewport()) {
+        if (!__scoopShouldHoldTermsMainView()) {
             return;
         }
         const hold =
@@ -1288,7 +1311,7 @@ _PAGE_NAV_LAYOUT_RESYNC_JS = (
             return;
         }
         if (/Terms_of_Service/i.test(link.getAttribute("href") || "")) {
-            if (__scoopIsPhoneViewport()) {
+            if (__scoopShouldHoldTermsMainView()) {
                 event.preventDefault();
                 event.stopPropagation();
                 markMobileTermsNav();
@@ -1669,7 +1692,7 @@ _RESPONSIVE_SIDEBAR_JS = (
     };
 
     const shouldHoldMobileTermsMainView = () => {
-        if (!__scoopIsPhoneViewport()) {
+        if (!__scoopShouldHoldTermsMainView()) {
             return false;
         }
         if (__scoopIsTermsPage()) {
@@ -1693,6 +1716,7 @@ _RESPONSIVE_SIDEBAR_JS = (
         markSidebarBootstrapped();
         doc.documentElement.removeAttribute("data-scoop-screener-gated");
         doc.documentElement.removeAttribute("data-scoop-desktop-layout");
+        doc.documentElement.setAttribute("data-scoop-tab-nav", "1");
         layout()?.clearDesktopInlineLayout?.();
         const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
         if (sidebar && sidebar.getAttribute("aria-expanded") !== "false") {
@@ -1703,8 +1727,11 @@ _RESPONSIVE_SIDEBAR_JS = (
             view.style.setProperty("display", "block", "important");
             view.style.setProperty("width", "100%", "important");
             view.style.setProperty("max-width", "100vw", "important");
+            view.style.setProperty("flex-direction", "column", "important");
+            view.style.setProperty("margin-left", "0", "important");
+            view.style.setProperty("padding-left", "0", "important");
         }
-        layout()?.syncSidebarLayout?.();
+        // Keep tablet/phone Terms in tab-nav main view; do not re-run desktop sync here.
         removeLegacyCloseButton();
         return true;
     };
