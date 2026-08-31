@@ -18,7 +18,6 @@ from admin_tools.tablet_mobile_layout_css import (
     MOBILE_HEADLINES_CARD_OVERLAY,
     DARK_RESPONSIVE_NAME_VALUE_TIP_UNDERLINE_CSS,
     RESPONSIVE_GENERIC_TOOLTIP_LAYOUT,
-    RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS,
     EARLY_STREAMLIT_CHROME_HIDE,
     RESPONSIVE_SIDEBAR_BOOTSTRAP,
     RESPONSIVE_TAB_NAV_BOOTSTRAP,
@@ -2026,8 +2025,9 @@ _TOOLTIP_SCROLL_JS = """
     const DESKTOP_HEADLINES_WIDTH_TRIM = 70;
     const DESKTOP_HEADLINES_TOP = 100;
     const DESKTOP_HEADLINES_ANCHOR_GAP = 10;
-    const MOBILE_GENERIC_TIP_MAX = 768;
-    const TABLET_GENERIC_TIP_MIN = 769;
+    // Phone tips: ≤743. iPad Mini (744–768) + tablet (769–1366) use beside-row tips.
+    const MOBILE_GENERIC_TIP_MAX = 743;
+    const TABLET_GENERIC_TIP_MIN = 744;
     const TABLET_GENERIC_TIP_MAX = 1366;
     const TABLET_GENERIC_TIP_OPEN_GRACE_MS = 450;
     const isMobileGenericTipViewport = () => window.innerWidth <= MOBILE_GENERIC_TIP_MAX;
@@ -2038,8 +2038,37 @@ _TOOLTIP_SCROLL_JS = """
     const isTapGenericTipViewport = () =>
         isMobileGenericTipViewport() || isTabletGenericTipViewport();
     const closeAllMobileGenericTips = () => {
-        document.querySelectorAll(".tip-wrap.scoop-mobile-tip-open").forEach((wrap) => {
+        // Never clear Headlines wraps — they use scoop-mobile-tip-open only for generics.
+        document.querySelectorAll(".tip-wrap:not(.headlines-tip).scoop-mobile-tip-open").forEach((wrap) => {
             wrap.classList.remove("scoop-mobile-tip-open");
+            const tip = wrap.querySelector(":scope > .tip-text");
+            if (!tip) {
+                return;
+            }
+            // Clear tablet/mobile inline placement so closed tips cannot stay painted on-screen.
+            [
+                "position",
+                "left",
+                "top",
+                "right",
+                "bottom",
+                "transform",
+                "width",
+                "max-width",
+                "min-width",
+                "max-height",
+                "overflow-y",
+                "visibility",
+                "opacity",
+                "pointer-events",
+                "display",
+                "z-index",
+                "--scoop-mobile-tip-top",
+                "--scoop-se-name-tip-top",
+                "--scoop-tablet-tip-left",
+                "--scoop-tablet-tip-top",
+                "--scoop-tablet-tip-width",
+            ].forEach((prop) => tip.style.removeProperty(prop));
         });
     };
     const clearTooltipScrollingHide = () => {
@@ -3235,23 +3264,33 @@ _TOOLTIP_SCROLL_JS = """
                 "max-height",
                 "overflow-y",
                 "visibility",
+                "opacity",
+                "pointer-events",
+                "display",
+                "z-index",
                 "--tip-center-x",
                 "--tip-center-y",
                 "--tip-fixed-width",
                 "--tip-fixed-max-height",
                 "--scoop-mobile-tip-top",
                 "--scoop-se-name-tip-top",
+                "--scoop-tablet-tip-left",
+                "--scoop-tablet-tip-top",
+                "--scoop-tablet-tip-width",
             ].forEach((prop) => tip.style.removeProperty(prop));
         });
     };
 
     const IPHONE_SE_MAX = 375;
     const MOBILE_GENERIC_TIP_GAP = 20;
+    const TABLET_GENERIC_TIP_GAP = 12;
+    const TABLET_GENERIC_TIP_PAD = 12;
     const isIphoneSEViewport = () => window.innerWidth <= IPHONE_SE_MAX;
+    // Phone-sized only — iPad Mini+ uses tablet beside-row placement.
     const isOtherMobileViewport = () =>
         window.innerWidth > IPHONE_SE_MAX && window.innerWidth <= MOBILE_GENERIC_TIP_MAX;
-    const usesTapCenteredGenericTip = () =>
-        isOtherMobileViewport() || isTabletGenericTipViewport();
+    // Phone only — tablet uses beside-trigger placement instead of viewport centering.
+    const usesTapCenteredGenericTip = () => isOtherMobileViewport();
 
     const isMobileGenericTipWrap = (wrap) =>
         !!wrap && !wrap.classList.contains("headlines-tip");
@@ -3261,7 +3300,7 @@ _TOOLTIP_SCROLL_JS = """
         tip.style.setProperty("opacity", "1", "important");
         if (isIphoneSEViewport()) {
             tip.style.setProperty("top", "-9999px", "important");
-        } else if (usesTapCenteredGenericTip()) {
+        } else if (usesTapCenteredGenericTip() || isTabletGenericTipViewport()) {
             tip.style.setProperty("top", "-9999px", "important");
         } else {
             tip.style.setProperty("position", "fixed", "important");
@@ -3305,12 +3344,127 @@ _TOOLTIP_SCROLL_JS = """
         tip.style.setProperty("left", `${left}px`, "important");
     };
 
-    const positionMobileGenericTip = (wrap, event) => {
-        if (!isTapGenericTipViewport() || !isMobileGenericTipWrap(wrap)) {
+    // Tablet: place generic tip beside the tapped text, vertically centered on the card row.
+    // Headlines tips are never passed here (filtered by isMobileGenericTipWrap).
+    const positionTabletBesideGenericTip = (wrap) => {
+        if (!isTabletGenericTipViewport() || !isMobileGenericTipWrap(wrap)) {
+            return;
+        }
+        // Ignore stale rAF from a tip that was already closed.
+        if (!wrap.classList.contains("scoop-mobile-tip-open")) {
             return;
         }
         const tip = wrap.querySelector(":scope > .tip-text");
         if (!tip) {
+            return;
+        }
+        const wrapRect = wrap.getBoundingClientRect();
+        const card =
+            wrap.closest("tr") ||
+            wrap.closest(".full-results-wrap") ||
+            wrap.closest('[data-testid="stElementContainer"]');
+        const cardRect = card ? card.getBoundingClientRect() : wrapRect;
+        const pad = TABLET_GENERIC_TIP_PAD;
+        const gap = TABLET_GENERIC_TIP_GAP;
+        const viewLeft = pad;
+        const viewRight = window.innerWidth - pad;
+        const viewTop = pad;
+        const viewBottom = window.innerHeight - pad;
+        const cardLeft = Math.max(viewLeft, cardRect.left + pad);
+        const cardRight = Math.min(viewRight, cardRect.right - pad);
+        const cardInnerW = Math.max(160, cardRight - cardLeft);
+
+        // Value-side names (Company/Ticker/…) sit on the right — open into the card middle (left).
+        // Label-side tips open to the right of the label.
+        const preferLeft =
+            !!wrap.closest(".fr-val") ||
+            wrapRect.left > (cardLeft + cardRight) / 2;
+
+        let tipWidth = Math.round(
+            Math.min(320, Math.max(180, Math.min(window.innerWidth * 0.42, cardInnerW * 0.55)))
+        );
+        if (preferLeft) {
+            const maxLeftW = Math.max(140, Math.floor(wrapRect.left - gap - cardLeft));
+            tipWidth = Math.min(tipWidth, maxLeftW);
+        } else {
+            const maxRightW = Math.max(140, Math.floor(cardRight - (wrapRect.right + gap)));
+            tipWidth = Math.min(tipWidth, maxRightW);
+        }
+
+        tip.style.setProperty("position", "fixed", "important");
+        tip.style.setProperty("right", "auto", "important");
+        tip.style.setProperty("bottom", "auto", "important");
+        tip.style.setProperty("transform", "none", "important");
+        tip.style.setProperty("width", `${tipWidth}px`, "important");
+        tip.style.setProperty("--scoop-tablet-tip-width", `${tipWidth}px`, "important");
+
+        let tipHeight = measureMobileGenericTipHeight(tip);
+        // measureMobileGenericTipHeight clears width — restore before placement math/paint.
+        tip.style.setProperty("position", "fixed", "important");
+        tip.style.setProperty("right", "auto", "important");
+        tip.style.setProperty("bottom", "auto", "important");
+        tip.style.setProperty("transform", "none", "important");
+        tip.style.setProperty("width", `${tipWidth}px`, "important");
+        tip.style.setProperty("--scoop-tablet-tip-width", `${tipWidth}px`, "important");
+        tipHeight = Math.min(tipHeight, Math.max(120, viewBottom - viewTop));
+        tip.style.setProperty("max-height", `${Math.round(tipHeight)}px`, "important");
+
+        let left;
+        if (preferLeft) {
+            left = wrapRect.left - gap - tipWidth;
+            if (left < cardLeft) {
+                left = cardLeft;
+            }
+        } else {
+            left = wrapRect.right + gap;
+            if (left + tipWidth > cardRight) {
+                left = Math.max(cardLeft, wrapRect.left - gap - tipWidth);
+            }
+            if (left + tipWidth > cardRight) {
+                left = cardLeft + Math.max(0, (cardInnerW - tipWidth) / 2);
+            }
+        }
+        left = Math.max(viewLeft, Math.min(left, viewRight - tipWidth));
+
+        // Vertically center on the tapped text / card row.
+        const anchorMidY = wrapRect.top + wrapRect.height / 2;
+        let top = anchorMidY - tipHeight / 2;
+        const cardTop = Math.max(viewTop, cardRect.top + pad * 0.5);
+        const cardBottom = Math.min(viewBottom, cardRect.bottom - pad * 0.5);
+        if (top < cardTop) {
+            top = cardTop;
+        }
+        if (top + tipHeight > cardBottom) {
+            top = Math.max(cardTop, cardBottom - tipHeight);
+        }
+        top = Math.max(viewTop, Math.min(top, viewBottom - tipHeight));
+
+        tip.style.setProperty("--scoop-tablet-tip-left", `${Math.round(left)}px`, "important");
+        tip.style.setProperty("--scoop-tablet-tip-top", `${Math.round(top)}px`, "important");
+        tip.style.setProperty("left", `${Math.round(left)}px`, "important");
+        tip.style.setProperty("top", `${Math.round(top)}px`, "important");
+        // Page screener CSS hides all generic tips; force open state on the element itself.
+        tip.style.setProperty("visibility", "visible", "important");
+        tip.style.setProperty("opacity", "1", "important");
+        tip.style.setProperty("pointer-events", "auto", "important");
+        tip.style.setProperty("display", "block", "important");
+        tip.style.setProperty("z-index", "100002", "important");
+    };
+
+    const positionMobileGenericTip = (wrap, event) => {
+        if (!isTapGenericTipViewport() || !isMobileGenericTipWrap(wrap)) {
+            return;
+        }
+        if (!wrap.classList.contains("scoop-mobile-tip-open")) {
+            return;
+        }
+        const tip = wrap.querySelector(":scope > .tip-text");
+        if (!tip) {
+            return;
+        }
+
+        if (isTabletGenericTipViewport()) {
+            positionTabletBesideGenericTip(wrap);
             return;
         }
 
@@ -3349,11 +3503,80 @@ _TOOLTIP_SCROLL_JS = """
         if (!isTabletGenericTipViewport() || !isMobileGenericTipWrap(wrap)) {
             return;
         }
+        ensureTabletGenericTipRuntimeCss();
         closeAllMobileGenericTips();
         wrap.classList.add("scoop-mobile-tip-open");
         clearTooltipScrollingHide();
         window.__scoopTabletGenericTipOpenedAt = Date.now();
         scheduleMobileGenericTip(wrap, event);
+    };
+
+    // Streamlit can reorder page <style> after our st.html inject (NASDAQ/NYSE tip CSS
+    // with right:0 / left:50%). Re-append this block as the last stylesheet so tablet
+    // beside-placement always wins. Headlines tips are excluded.
+    const TABLET_GENERIC_TIP_RUNTIME_CSS = `
+@media (min-width: 744px) and (max-width: 1366px) {
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open) .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):hover .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):active .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):focus-within .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open) .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):hover .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):active .tip-text {
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    right: auto !important;
+    left: -10000px !important;
+    transform: none !important;
+  }
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip) .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text {
+    position: fixed !important;
+    left: var(--scoop-tablet-tip-left, -10000px) !important;
+    top: var(--scoop-tablet-tip-top, -10000px) !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    margin: 0 !important;
+    width: var(--scoop-tablet-tip-width, min(20rem, 42vw)) !important;
+    min-width: 0 !important;
+    max-width: min(22rem, calc(100vw - 1.5rem)) !important;
+    z-index: 100002 !important;
+  }
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text {
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    display: block !important;
+    position: fixed !important;
+    left: var(--scoop-tablet-tip-left, -10000px) !important;
+    top: var(--scoop-tablet-tip-top, -10000px) !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+    z-index: 100002 !important;
+  }
+}
+`;
+
+    const ensureTabletGenericTipRuntimeCss = () => {
+        if (!isTabletGenericTipViewport()) {
+            return;
+        }
+        const id = "scoop-tablet-generic-tip-runtime-css";
+        let el = document.getElementById(id);
+        if (!el) {
+            el = document.createElement("style");
+            el.id = id;
+            el.textContent = TABLET_GENERIC_TIP_RUNTIME_CSS;
+        } else if (el.textContent !== TABLET_GENERIC_TIP_RUNTIME_CSS) {
+            el.textContent = TABLET_GENERIC_TIP_RUNTIME_CSS;
+        }
+        // Always move to the end so NASDAQ/NYSE page CSS cannot win on cascade order.
+        document.documentElement.appendChild(el);
     };
 
     const bindMobileGenericTips = () => {
@@ -3381,15 +3604,38 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const bindTabletGenericTips = () => {
-        if (window.__scoopTabletGenericTipBindVersion === 1) {
-            return;
+        ensureTabletGenericTipRuntimeCss();
+
+        // Rebind on every Streamlit script inject — session may keep window flags
+        // after the previous listeners were discarded with the old document scripts.
+        if (window.__scoopTabletGenericTipTapHandler) {
+            document.removeEventListener(
+                "pointerdown",
+                window.__scoopTabletGenericTipTapHandler,
+                true
+            );
+            document.removeEventListener(
+                "click",
+                window.__scoopTabletGenericTipTapHandler,
+                true
+            );
         }
-        window.__scoopTabletGenericTipBindVersion = 1;
 
         const handleTabletGenericTipTap = (event) => {
             if (!isTabletGenericTipViewport()) {
                 return;
             }
+            // Headlines keep their own centered popup — never hijack those taps.
+            if (
+                event.target &&
+                event.target.closest &&
+                event.target.closest(
+                    ".tip-wrap.headlines-tip, .hl-tip-count, .hl-tip-cb, .hl-tip-backdrop, .headlines-tip-scroll, .hl-tip-heading"
+                )
+            ) {
+                return;
+            }
+            ensureTabletGenericTipRuntimeCss();
             const wrap =
                 event.target && event.target.closest
                     ? event.target.closest(".tip-wrap:not(.headlines-tip)")
@@ -3406,8 +3652,17 @@ _TOOLTIP_SCROLL_JS = """
             }
         };
 
+        window.__scoopTabletGenericTipTapHandler = handleTabletGenericTipTap;
         document.addEventListener("pointerdown", handleTabletGenericTipTap, true);
         document.addEventListener("click", handleTabletGenericTipTap, true);
+        window.__scoopTabletGenericTipBindVersion = 8;
+
+        if (!window.__scoopTabletGenericTipCssWatch) {
+            window.__scoopTabletGenericTipCssWatch = true;
+            window.setInterval(ensureTabletGenericTipRuntimeCss, 1500);
+            document.addEventListener("visibilitychange", ensureTabletGenericTipRuntimeCss);
+            window.addEventListener("resize", ensureTabletGenericTipRuntimeCss, { passive: true });
+        }
     };
 
     bindMobileGenericTips();
@@ -3865,7 +4120,7 @@ def _inject_responsive_bootstrap_css() -> str:
 BOOTSTRAP_INSTALLED_KEY = "_scoop_responsive_bootstrap_installed"
 BOOTSTRAP_SCRIPT_VERSION = 9
 TOOLTIP_INSTALLED_KEY = "_scoop_tooltip_scroll_installed"
-TOOLTIP_SCRIPT_VERSION = 45
+TOOLTIP_SCRIPT_VERSION = 61
 SIDEBAR_HANDLER_INSTALLED_KEY = "_scoop_responsive_sidebar_handler_v3"
 
 
@@ -3888,10 +4143,17 @@ def _responsive_bootstrap_markup() -> str:
 
 
 def _inject_name_tooltip_override() -> None:
-    """Inject mobile generic tooltip override last so it wins over tablet/generic CSS."""
-    st.markdown(
-        f"<style id='scoop-name-value-tooltip-override-css'>{RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS}</style>",
-        unsafe_allow_html=True,
+    """Inject generic tooltip override + tablet final open/beside CSS after page styles."""
+    import importlib
+
+    import admin_tools.tablet_mobile_layout_css as _tml
+
+    importlib.reload(_tml)
+    # st.html keeps <style> intact and runs late enough to beat screener page CSS.
+    st.html(
+        f"<style id='scoop-name-value-tooltip-override-css'>{_tml.RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS}</style>"
+        f"<style id='scoop-tablet-generic-tip-final-css'>{_tml.TABLET_GENERIC_TIP_FINAL_CSS}</style>",
+        unsafe_allow_javascript=True,
     )
 
 
@@ -4037,6 +4299,473 @@ def install_responsive_sidebar_handler() -> None:
     install_page_layout_resync()
 
 
+def _inject_js_source(js: str, *, key: str) -> None:
+    """Inject JS in small <script> tags inside one st.html call.
+
+    Streamlit silently drops oversized inline <script> blocks (~130KB combined
+    tip bundle). Multiple separate st.html() calls can also reorder, so chunk
+    pushes and the join must stay in a single markup string.
+    """
+    chunk_size = 8000
+    chunks = [js[i : i + chunk_size] for i in range(0, len(js), chunk_size)]
+    key_json = json.dumps(key)
+    script_id_json = json.dumps("scoop-js-" + key)
+    parts = [
+        f"<script>window.__scoopJsChunks=window.__scoopJsChunks||{{}};window.__scoopJsChunks[{key_json}]=[];</script>"
+    ]
+    for chunk in chunks:
+        parts.append(
+            f"<script>window.__scoopJsChunks[{key_json}].push({json.dumps(chunk)});</script>"
+        )
+    parts.append(
+        f"""<script>
+(function() {{
+  const parts = window.__scoopJsChunks && window.__scoopJsChunks[{key_json}];
+  if (!parts || parts.length !== {len(chunks)}) {{
+    return;
+  }}
+  const existing = document.getElementById({script_id_json});
+  if (existing) {{
+    existing.remove();
+  }}
+  const s = document.createElement("script");
+  s.id = {script_id_json};
+  s.textContent = parts.join("");
+  document.documentElement.appendChild(s);
+}})();
+</script>"""
+    )
+    st.html("".join(parts), unsafe_allow_javascript=True)
+
+
+# Compact tablet-only generic tip binder. Kept small so Streamlit will not drop it
+# when the large combined bundle fails to load (NASDAQ/NYSE after disclaimer agree).
+_TABLET_GENERIC_TIP_STANDALONE_JS = r"""
+(() => {
+    // iPad Mini (744–768) + tablet / iPad Pro-class (769–1366). Not phone. Not Headlines.
+    const MIN = 744;
+    const MAX = 1366;
+    const GAP = 12;
+    const PAD = 12;
+    const isTablet = () => {
+        const w = window.innerWidth;
+        return w >= MIN && w <= MAX;
+    };
+    // Headlines use their own centered --hl-fixed-* path. Never treat them as generic tips.
+    const isHeadlinesTarget = (node) =>
+        !!(node && node.closest && node.closest(
+            ".tip-wrap.headlines-tip, .hl-tip-count, .hl-tip-cb, .hl-tip-backdrop, .headlines-tip-scroll, .hl-tip-heading"
+        ));
+    const isGeneric = (wrap) =>
+        !!wrap &&
+        !wrap.classList.contains("headlines-tip") &&
+        !wrap.closest(".tip-wrap.headlines-tip");
+    const clearTipStyles = (tip) => {
+        [
+            "position", "left", "top", "right", "bottom", "transform", "width",
+            "max-width", "min-width", "max-height", "overflow-y", "overflow-x",
+            "visibility", "opacity", "pointer-events", "display", "z-index",
+            "white-space", "word-break", "overflow-wrap", "box-sizing", "text-align",
+            "--scoop-tablet-tip-left", "--scoop-tablet-tip-top", "--scoop-tablet-tip-width",
+        ].forEach((p) => tip.style.removeProperty(p));
+    };
+    const closeAll = () => {
+        document.querySelectorAll(".tip-wrap:not(.headlines-tip).scoop-mobile-tip-open").forEach((wrap) => {
+            wrap.classList.remove("scoop-mobile-tip-open");
+            const tip = wrap.querySelector(":scope > .tip-text");
+            if (tip) clearTipStyles(tip);
+        });
+    };
+    const RUNTIME_CSS = `
+@media (min-width: 744px) and (max-width: 1366px) {
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open) .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):hover .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open) .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-mobile-tip-open):hover .tip-text {
+    visibility: hidden !important; opacity: 0 !important; pointer-events: none !important;
+    right: auto !important; left: -10000px !important; transform: none !important;
+  }
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text {
+    position: fixed !important;
+    left: var(--scoop-tablet-tip-left, -10000px) !important;
+    top: var(--scoop-tablet-tip-top, -10000px) !important;
+    right: auto !important; bottom: auto !important; transform: none !important; margin: 0 !important;
+    width: var(--scoop-tablet-tip-width, min(18rem, 46vw)) !important;
+    min-width: 0 !important; max-width: min(20rem, calc(100vw - 1.5rem)) !important;
+    white-space: normal !important; word-break: break-word !important; overflow-wrap: anywhere !important;
+    box-sizing: border-box !important; text-align: left !important;
+    overflow-x: hidden !important; overflow-y: auto !important;
+    z-index: 100002 !important;
+  }
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text,
+  html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text {
+    visibility: visible !important; opacity: 1 !important; pointer-events: auto !important;
+    display: block !important; position: fixed !important;
+    left: var(--scoop-tablet-tip-left, -10000px) !important;
+    top: var(--scoop-tablet-tip-top, -10000px) !important;
+    right: auto !important; bottom: auto !important; transform: none !important;
+    white-space: normal !important; word-break: break-word !important; overflow-wrap: anywhere !important;
+    z-index: 100002 !important;
+  }
+}`;
+    const ensureCss = () => {
+        if (!isTablet()) return;
+        const id = "scoop-tablet-generic-tip-runtime-css";
+        let el = document.getElementById(id);
+        if (!el) {
+            el = document.createElement("style");
+            el.id = id;
+        }
+        if (el.textContent !== RUNTIME_CSS) el.textContent = RUNTIME_CSS;
+        document.documentElement.appendChild(el);
+    };
+    const applyWrapBox = (tip, width) => {
+        tip.style.setProperty("box-sizing", "border-box", "important");
+        tip.style.setProperty("white-space", "normal", "important");
+        tip.style.setProperty("word-break", "break-word", "important");
+        tip.style.setProperty("overflow-wrap", "anywhere", "important");
+        tip.style.setProperty("min-width", "0", "important");
+        tip.style.setProperty("max-width", width + "px", "important");
+        tip.style.setProperty("width", width + "px", "important");
+        tip.style.setProperty("overflow-x", "hidden", "important");
+        tip.style.setProperty("overflow-y", "auto", "important");
+        tip.style.setProperty("text-align", "left", "important");
+    };
+    const measureHeight = (tip, width) => {
+        tip.style.setProperty("visibility", "hidden", "important");
+        tip.style.setProperty("opacity", "1", "important");
+        tip.style.setProperty("position", "fixed", "important");
+        tip.style.setProperty("left", "-9999px", "important");
+        tip.style.setProperty("top", "0", "important");
+        applyWrapBox(tip, width);
+        const h = tip.offsetHeight || 120;
+        tip.style.removeProperty("visibility");
+        tip.style.removeProperty("opacity");
+        tip.style.removeProperty("left");
+        tip.style.removeProperty("top");
+        return h;
+    };
+    const position = (wrap) => {
+        if (!isTablet() || !isGeneric(wrap) || !wrap.classList.contains("scoop-mobile-tip-open")) return;
+        const tip = wrap.querySelector(":scope > .tip-text");
+        if (!tip) return;
+        const wrapRect = wrap.getBoundingClientRect();
+        const card = wrap.closest("tr") || wrap.closest(".full-results-wrap") || wrap;
+        const cardRect = card.getBoundingClientRect();
+        const viewLeft = PAD;
+        const viewRight = window.innerWidth - PAD;
+        const viewTop = PAD;
+        const viewBottom = window.innerHeight - PAD;
+        const cardLeft = Math.max(viewLeft, cardRect.left + PAD);
+        const cardRight = Math.min(viewRight, cardRect.right - PAD);
+        const preferLeft = !!wrap.closest(".fr-val") || wrapRect.left > (cardLeft + cardRight) / 2;
+
+        // Free lane beside the trigger — tip is centered in that lane.
+        let laneLeft = cardLeft;
+        let laneRight = cardRight;
+        if (preferLeft) {
+            laneRight = Math.max(laneLeft + 140, wrapRect.left - GAP);
+        } else {
+            laneLeft = Math.min(laneRight - 140, wrapRect.right + GAP);
+        }
+        const laneW = Math.max(140, laneRight - laneLeft);
+        let tipWidth = Math.round(Math.min(300, laneW * 0.92, window.innerWidth * 0.4));
+        tipWidth = Math.max(160, Math.min(tipWidth, laneW, viewRight - viewLeft));
+
+        tip.style.setProperty("position", "fixed", "important");
+        tip.style.setProperty("right", "auto", "important");
+        tip.style.setProperty("bottom", "auto", "important");
+        tip.style.setProperty("transform", "none", "important");
+        applyWrapBox(tip, tipWidth);
+        tip.style.setProperty("--scoop-tablet-tip-width", tipWidth + "px", "important");
+
+        let tipHeight = measureHeight(tip, tipWidth);
+        tipHeight = Math.min(tipHeight, Math.min(280, viewBottom - viewTop));
+        applyWrapBox(tip, tipWidth);
+        tip.style.setProperty("max-height", Math.round(tipHeight) + "px", "important");
+        // Remeasure after max-height so vertical centering uses the painted box.
+        tipHeight = Math.min(tip.getBoundingClientRect().height || tipHeight, tipHeight);
+
+        let left = laneLeft + Math.max(0, (laneW - tipWidth) / 2);
+        left = Math.max(viewLeft, Math.min(left, viewRight - tipWidth));
+        if (preferLeft && left + tipWidth > wrapRect.left - 4) {
+            left = Math.max(viewLeft, wrapRect.left - GAP - tipWidth);
+        }
+        if (!preferLeft && left < wrapRect.right + 4) {
+            left = Math.min(viewRight - tipWidth, wrapRect.right + GAP);
+        }
+        left = Math.max(viewLeft, Math.min(left, viewRight - tipWidth));
+
+        const anchorMidY = wrapRect.top + wrapRect.height / 2;
+        let top = anchorMidY - tipHeight / 2;
+        const cardTop = Math.max(viewTop, cardRect.top + PAD * 0.5);
+        const cardBottom = Math.min(viewBottom, cardRect.bottom - PAD * 0.5);
+        if (top < cardTop) top = cardTop;
+        if (top + tipHeight > cardBottom) top = Math.max(cardTop, cardBottom - tipHeight);
+        top = Math.max(viewTop, Math.min(top, viewBottom - tipHeight));
+
+        tip.style.setProperty("--scoop-tablet-tip-left", Math.round(left) + "px", "important");
+        tip.style.setProperty("--scoop-tablet-tip-top", Math.round(top) + "px", "important");
+        tip.style.setProperty("left", Math.round(left) + "px", "important");
+        tip.style.setProperty("top", Math.round(top) + "px", "important");
+        tip.style.setProperty("visibility", "visible", "important");
+        tip.style.setProperty("opacity", "1", "important");
+        tip.style.setProperty("pointer-events", "auto", "important");
+        tip.style.setProperty("display", "block", "important");
+        tip.style.setProperty("z-index", "100002", "important");
+    };
+    const open = (wrap) => {
+        if (!isTablet() || !isGeneric(wrap)) return;
+        ensureCss();
+        closeAll();
+        wrap.classList.add("scoop-mobile-tip-open");
+        document.documentElement.classList.remove("scoop-tooltip-scrolling");
+        document.body.classList.remove("scoop-tooltip-scrolling");
+        position(wrap);
+        requestAnimationFrame(() => position(wrap));
+    };
+    const onTap = (event) => {
+        if (!isTablet()) return;
+        // Leave Headlines taps/clicks entirely to the headlines handlers (stay centered).
+        if (isHeadlinesTarget(event.target)) return;
+        ensureCss();
+        const wrap = event.target && event.target.closest
+            ? event.target.closest(".tip-wrap:not(.headlines-tip)")
+            : null;
+        if (wrap && isGeneric(wrap)) {
+            if (event.type === "pointerdown") event.preventDefault();
+            open(wrap);
+            return;
+        }
+        if (event.type === "click") closeAll();
+    };
+    if (window.__scoopTabletGenericTipTapHandler) {
+        document.removeEventListener("pointerdown", window.__scoopTabletGenericTipTapHandler, true);
+        document.removeEventListener("click", window.__scoopTabletGenericTipTapHandler, true);
+    }
+    window.__scoopTabletGenericTipTapHandler = onTap;
+    document.addEventListener("pointerdown", onTap, true);
+    document.addEventListener("click", onTap, true);
+    ensureCss();
+    if (!window.__scoopTabletGenericTipCssWatch) {
+        window.__scoopTabletGenericTipCssWatch = true;
+        setInterval(ensureCss, 1500);
+        window.addEventListener("resize", ensureCss, { passive: true });
+    }
+    window.__scoopTabletGenericTipBindVersion = 12;
+    window.__scoopTabletGenericTipStandalone = 4;
+})();
+"""
+
+# Compact tablet Headlines centering — independent of the large tip bundle (often dropped).
+# Generic company tips must never change this path; Headlines stay horizontally centered.
+_TABLET_HEADLINES_CENTER_STANDALONE_JS = r"""
+(() => {
+    const MIN = 769;
+    const MAX = 1366;
+    const PAD = 12;
+    const isTablet = () => {
+        const w = window.innerWidth;
+        return w >= MIN && w <= MAX;
+    };
+    const slot = () => {
+        const header = document.querySelector('[data-testid="stHeader"]');
+        const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+        const top = Math.round(headerBottom + PAD);
+        const viewLeft = PAD;
+        const viewRight = window.innerWidth - PAD;
+        const maxHeight = Math.max(200, window.innerHeight - top - PAD);
+        const available = Math.max(240, viewRight - viewLeft);
+        const width = Math.round(Math.min(available, Math.max(280, window.innerWidth * 0.4)));
+        let left = Math.round(viewLeft + (available - width) / 2);
+        left = Math.max(viewLeft, Math.min(left, viewRight - width));
+        return { top, left, width, maxHeight };
+    };
+    const apply = (wrap) => {
+        if (!isTablet() || !wrap || !wrap.classList.contains("headlines-tip")) return;
+        const cb = wrap.querySelector(".hl-tip-cb");
+        if (!cb || !cb.checked) return;
+        const tip = wrap.querySelector(":scope > .tip-text");
+        if (!tip) return;
+        // Strip any accidental generic-tip vars so company-tip CSS cannot pull Headlines off-center.
+        tip.style.removeProperty("--scoop-tablet-tip-left");
+        tip.style.removeProperty("--scoop-tablet-tip-top");
+        tip.style.removeProperty("--scoop-tablet-tip-width");
+        const s = slot();
+        tip.style.setProperty("--hl-fixed-top", s.top + "px");
+        tip.style.setProperty("--hl-fixed-left", s.left + "px");
+        tip.style.setProperty("--hl-fixed-width", s.width + "px");
+        tip.style.setProperty("--hl-fixed-max-height", s.maxHeight + "px");
+        tip.style.setProperty("position", "fixed", "important");
+        tip.style.setProperty("top", s.top + "px", "important");
+        tip.style.setProperty("left", s.left + "px", "important");
+        tip.style.setProperty("right", "auto", "important");
+        tip.style.setProperty("bottom", "auto", "important");
+        tip.style.setProperty("transform", "none", "important");
+        tip.style.setProperty("width", s.width + "px", "important");
+        tip.style.setProperty("max-width", s.width + "px", "important");
+        tip.style.setProperty("max-height", s.maxHeight + "px", "important");
+    };
+    const repositionOpen = () => {
+        document
+            .querySelectorAll(".full-results-wrap .tip-wrap.headlines-tip .hl-tip-cb:checked")
+            .forEach((cb) => apply(cb.closest(".tip-wrap.headlines-tip")));
+    };
+    const onHeadlinesTap = (event) => {
+        if (!isTablet()) return;
+        const count =
+            event.target && event.target.closest
+                ? event.target.closest(".hl-tip-count")
+                : null;
+        if (!count) return;
+        const wrap = count.closest(".tip-wrap.headlines-tip");
+        window.requestAnimationFrame(() => {
+            apply(wrap);
+            window.requestAnimationFrame(() => apply(wrap));
+        });
+    };
+    if (window.__scoopTabletHeadlinesCenterTapHandler) {
+        document.removeEventListener(
+            "pointerdown",
+            window.__scoopTabletHeadlinesCenterTapHandler,
+            true
+        );
+        document.removeEventListener(
+            "click",
+            window.__scoopTabletHeadlinesCenterTapHandler,
+            true
+        );
+    }
+    window.__scoopTabletHeadlinesCenterTapHandler = onHeadlinesTap;
+    document.addEventListener("pointerdown", onHeadlinesTap, true);
+    document.addEventListener("click", onHeadlinesTap, true);
+    document.addEventListener(
+        "change",
+        (event) => {
+            if (!isTablet()) return;
+            if (event.target && event.target.classList && event.target.classList.contains("hl-tip-cb")) {
+                window.requestAnimationFrame(() =>
+                    apply(event.target.closest(".tip-wrap.headlines-tip"))
+                );
+            }
+        },
+        true
+    );
+    if (!window.__scoopTabletHeadlinesCenterWatch) {
+        window.__scoopTabletHeadlinesCenterWatch = true;
+        window.addEventListener("resize", repositionOpen, { passive: true });
+        window.setInterval(repositionOpen, 2000);
+    }
+    window.__scoopTabletHeadlinesCenterStandalone = 1;
+    repositionOpen();
+})();
+"""
+
+# iPad Mini only (744–768): center Headlines popup. Does not change tablet (769+) Headlines.
+_IPAD_MINI_HEADLINES_CENTER_STANDALONE_JS = r"""
+(() => {
+    const MIN = 744;
+    const MAX = 768;
+    const PAD = 12;
+    const isIpadMini = () => {
+        const w = window.innerWidth;
+        return w >= MIN && w <= MAX;
+    };
+    const slot = () => {
+        const header = document.querySelector('[data-testid="stHeader"]');
+        const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+        const top = Math.round(Math.max(PAD, headerBottom + PAD));
+        const viewLeft = PAD;
+        const viewRight = window.innerWidth - PAD;
+        const maxHeight = Math.max(180, window.innerHeight - top - PAD);
+        const available = Math.max(220, viewRight - viewLeft);
+        const width = Math.round(Math.min(available, Math.max(260, window.innerWidth * 0.42)));
+        let left = Math.round(viewLeft + (available - width) / 2);
+        left = Math.max(viewLeft, Math.min(left, viewRight - width));
+        return { top, left, width, maxHeight };
+    };
+    const apply = (wrap) => {
+        if (!isIpadMini() || !wrap || !wrap.classList.contains("headlines-tip")) return;
+        const cb = wrap.querySelector(".hl-tip-cb");
+        if (!cb || !cb.checked) return;
+        const tip = wrap.querySelector(":scope > .tip-text");
+        if (!tip) return;
+        tip.style.removeProperty("--scoop-tablet-tip-left");
+        tip.style.removeProperty("--scoop-tablet-tip-top");
+        tip.style.removeProperty("--scoop-tablet-tip-width");
+        const s = slot();
+        tip.style.setProperty("--hl-fixed-top", s.top + "px");
+        tip.style.setProperty("--hl-fixed-left", s.left + "px");
+        tip.style.setProperty("--hl-fixed-width", s.width + "px");
+        tip.style.setProperty("--hl-fixed-max-height", s.maxHeight + "px");
+        tip.style.setProperty("position", "fixed", "important");
+        tip.style.setProperty("top", s.top + "px", "important");
+        tip.style.setProperty("left", s.left + "px", "important");
+        tip.style.setProperty("right", "auto", "important");
+        tip.style.setProperty("bottom", "auto", "important");
+        tip.style.setProperty("transform", "none", "important");
+        tip.style.setProperty("width", s.width + "px", "important");
+        tip.style.setProperty("max-width", s.width + "px", "important");
+        tip.style.setProperty("max-height", s.maxHeight + "px", "important");
+    };
+    const repositionOpen = () => {
+        if (!isIpadMini()) return;
+        document
+            .querySelectorAll(".full-results-wrap .tip-wrap.headlines-tip .hl-tip-cb:checked")
+            .forEach((cb) => apply(cb.closest(".tip-wrap.headlines-tip")));
+    };
+    const onHeadlinesTap = (event) => {
+        if (!isIpadMini()) return;
+        const count =
+            event.target && event.target.closest
+                ? event.target.closest(".hl-tip-count")
+                : null;
+        if (!count) return;
+        const wrap = count.closest(".tip-wrap.headlines-tip");
+        window.requestAnimationFrame(() => {
+            apply(wrap);
+            window.requestAnimationFrame(() => apply(wrap));
+        });
+    };
+    if (window.__scoopIpadMiniHeadlinesCenterTapHandler) {
+        document.removeEventListener(
+            "pointerdown",
+            window.__scoopIpadMiniHeadlinesCenterTapHandler,
+            true
+        );
+        document.removeEventListener(
+            "click",
+            window.__scoopIpadMiniHeadlinesCenterTapHandler,
+            true
+        );
+    }
+    window.__scoopIpadMiniHeadlinesCenterTapHandler = onHeadlinesTap;
+    document.addEventListener("pointerdown", onHeadlinesTap, true);
+    document.addEventListener("click", onHeadlinesTap, true);
+    document.addEventListener(
+        "change",
+        (event) => {
+            if (!isIpadMini()) return;
+            if (event.target && event.target.classList && event.target.classList.contains("hl-tip-cb")) {
+                window.requestAnimationFrame(() =>
+                    apply(event.target.closest(".tip-wrap.headlines-tip"))
+                );
+            }
+        },
+        true
+    );
+    if (!window.__scoopIpadMiniHeadlinesCenterWatch) {
+        window.__scoopIpadMiniHeadlinesCenterWatch = true;
+        window.addEventListener("resize", repositionOpen, { passive: true });
+        window.setInterval(repositionOpen, 2000);
+    }
+    window.__scoopIpadMiniHeadlinesCenterStandalone = 1;
+    repositionOpen();
+})();
+"""
+
+
 def install_tooltip_scroll_handler() -> None:
     """Inject mobile headline CSS; HTML backdrop label closes panel on outside tap."""
     from theme_mode import inject_dark_mode_styles
@@ -4046,19 +4775,8 @@ def install_tooltip_scroll_handler() -> None:
     _inject_mobile_phone_headlines_css()
     _ensure_generic_tooltip_mobile_assets()
 
-    if st.session_state.get(TOOLTIP_INSTALLED_KEY) == TOOLTIP_SCRIPT_VERSION:
-        _inject_name_tooltip_override()
-        _inject_tablet_analyze_link_css()
-        inject_dark_mode_styles()
-        inject_desktop_sidebar_nav_market()
-        inject_desktop_tablet_disclaimer_flow()
-        _inject_tablet_hl_heading_color_css()
-        install_page_layout_resync()
-        st.html(
-            f"<style id='scoop-streamlit-chrome-hide'>{EARLY_STREAMLIT_CHROME_HIDE}</style>",
-            unsafe_allow_javascript=True,
-        )
-        return
+    # Always re-inject tip/scroll JS. Streamlit reruns (disclaimer agree, widgets)
+    # wipe prior <script> tags; session_state alone cannot keep handlers alive.
     st.html(
         f"<style id='scoop-mobile-headlines-css'>{_MOBILE_HEADLINES_CSS}</style>"
         f"<style id='scoop-mobile-tablet-card-order-css'>{_MOBILE_TABLET_CARD_ORDER_CSS}</style>"
@@ -4075,17 +4793,15 @@ def install_tooltip_scroll_handler() -> None:
         + _responsive_bootstrap_markup()
         + f"<style id='scoop-desktop-sidebar-layout-css'>{DESKTOP_SIDEBAR_LAYOUT}</style>"
         + f"<style id='scoop-desktop-zoom-layout-css'>{DESKTOP_ZOOM_LAYOUT}</style>"
-        + f"<style id='scoop-sidebar-nav-compact-css'>{SIDEBAR_NAV_COMPACT}</style>"
-        + f"<script>{_COMBINED_PAGE_JS}</script>",
+        + f"<style id='scoop-sidebar-nav-compact-css'>{SIDEBAR_NAV_COMPACT}</style>",
         unsafe_allow_javascript=True,
     )
+    # Chunked: a single giant <script> is dropped by Streamlit; tablet tips never bind.
+    _inject_js_source(_COMBINED_PAGE_JS, key="combined-page-v61")
     inject_desktop_sidebar_nav_market()
     inject_desktop_tablet_disclaimer_flow()
     st.session_state[TOOLTIP_INSTALLED_KEY] = TOOLTIP_SCRIPT_VERSION
-    _inject_name_tooltip_override()
     _inject_tablet_analyze_link_css()
-    from theme_mode import inject_dark_mode_styles
-
     inject_dark_mode_styles()
     _inject_tablet_hl_heading_color_css()
     install_page_layout_resync()
@@ -4093,5 +4809,14 @@ def install_tooltip_scroll_handler() -> None:
         f"<style id='scoop-streamlit-chrome-hide'>{EARLY_STREAMLIT_CHROME_HIDE}</style>",
         unsafe_allow_javascript=True,
     )
+    # Final: after page/screener CSS so open tablet tips stay visible beside the trigger.
+    _inject_name_tooltip_override()
     # Last paint: tablet Headlines heading blue in light (regular) and dark mode.
     _inject_tablet_hl_heading_color_css()
+    # Small enough for Streamlit to keep; survives when the combined bundle is dropped.
+    st.html(
+        f"<script id='scoop-tablet-generic-tip-standalone'>{_TABLET_GENERIC_TIP_STANDALONE_JS}</script>"
+        f"<script id='scoop-tablet-headlines-center-standalone'>{_TABLET_HEADLINES_CENTER_STANDALONE_JS}</script>"
+        f"<script id='scoop-ipad-mini-headlines-center-standalone'>{_IPAD_MINI_HEADLINES_CENTER_STANDALONE_JS}</script>",
+        unsafe_allow_javascript=True,
+    )

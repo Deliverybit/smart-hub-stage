@@ -839,21 +839,61 @@ _TABLET_GENERIC_TIP_RELIABILITY_CSS = f"""
         }}
 """
 
+# Tablet: generic tips (NOT headlines) sit beside the tapped text, vertically centered on the card row.
+_TABLET_BESIDE_GENERIC_TIP_TEXT = f"""
+        {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip) .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
+        {_RESPONSIVE_TIP_SCOPE} [data-testid="stHorizontalBlock"] .tip-wrap:not(.headlines-tip) .tip-text {{
+            position: fixed !important;
+            left: var(--scoop-tablet-tip-left, -10000px) !important;
+            top: var(--scoop-tablet-tip-top, -10000px) !important;
+            right: auto !important;
+            bottom: auto !important;
+            transform: none !important;
+            width: var(--scoop-tablet-tip-width, min(20rem, 42vw)) !important;
+            min-width: 0 !important;
+            max-width: min(22rem, calc(100vw - 1.5rem)) !important;
+            margin: 0 !important;
+            z-index: 100002 !important;
+            background: #1e1e2f !important;
+            background-color: #1e1e2f !important;
+            color: #e2e8f0 !important;
+            border: 1px solid #555 !important;
+            border-radius: 8px !important;
+            padding: 16px 20px !important;
+            font-size: 0.95rem !important;
+            line-height: 1.5 !important;
+            font-weight: 400 !important;
+            white-space: normal !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45) !important;
+            pointer-events: none !important;
+            max-height: min(50vh, 22rem) !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            box-sizing: border-box !important;
+            word-break: break-word !important;
+            overflow-wrap: anywhere !important;
+            text-align: left !important;
+        }}
+"""
+
 RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS = f"""
-@media (max-width: 768px) {{
+@media (max-width: 743px) {{
 {_MOBILE_FIXED_GENERIC_TIP_TEXT}
 {_MOBILE_GENERIC_TIP_OPEN_CLOSE_CSS}
 }}
 @media (max-width: 375px) {{
 {_IPHONE_SE_FIXED_GENERIC_TIP_TEXT}
 }}
-@media (min-width: 376px) and (max-width: 768px) {{
+@media (min-width: 376px) and (max-width: 743px) {{
 {_OTHER_MOBILE_FIXED_GENERIC_TIP_TEXT}
 }}
-@media (min-width: 769px) and (max-width: 1366px) {{
-{_MOBILE_FIXED_GENERIC_TIP_TEXT}
+/* iPad Mini (744–768) + tablet (769–1366): beside-row generic tips. Headlines excluded. */
+@media (min-width: 744px) and (max-width: 1366px) {{
+{_TABLET_BESIDE_GENERIC_TIP_TEXT}
 {_MOBILE_GENERIC_TIP_OPEN_CLOSE_CSS}
-{_OTHER_MOBILE_FIXED_GENERIC_TIP_TEXT}
 {_TABLET_GENERIC_TIP_RELIABILITY_CSS}
         {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text::before,
         {_RESPONSIVE_TIP_SCOPE} .tip-wrap:not(.headlines-tip) .tip-text::after {{
@@ -861,8 +901,56 @@ RESPONSIVE_NAME_VALUE_TOOLTIP_OVERRIDE_CSS = f"""
             display: none !important;
             border: 0 !important;
         }}
+        /* Beat page hover/scroll rules so JS-opened tablet tips stay visible. */
+        html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open .tip-text,
+        html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open .tip-text,
+        html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open .tip-text,
+        html body .stApp [data-testid="stAppViewContainer"] .stMarkdown [data-testid="stHorizontalBlock"] .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open .tip-text,
+        html.scoop-tooltip-scrolling body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open .tip-text,
+        body.scoop-tooltip-scrolling .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open .tip-text {{
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            display: block !important;
+        }}
 }}
 """ + DARK_RESPONSIVE_NAME_VALUE_TIP_UNDERLINE_CSS
+
+# Injected last (st.html) so page screener CSS cannot keep open tablet tips at right:0 / hidden.
+TABLET_GENERIC_TIP_FINAL_CSS = f"""
+@media (min-width: 744px) and (max-width: 1366px) {{
+{_TABLET_BESIDE_GENERIC_TIP_TEXT}
+        {_TABLET_PAGE_TIP_SCOPE} .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text,
+        {_TABLET_PAGE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text,
+        {_TABLET_PAGE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text,
+        {_TABLET_PAGE_TIP_SCOPE} [data-testid="stHorizontalBlock"] .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text,
+        html.scoop-tooltip-scrolling {_TABLET_PAGE_TIP_SCOPE} .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text,
+        body.scoop-tooltip-scrolling {_TABLET_PAGE_TIP_SCOPE} .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text,
+        html.scoop-tooltip-scrolling {_TABLET_PAGE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text,
+        body.scoop-tooltip-scrolling {_TABLET_PAGE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text {{
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            display: block !important;
+            position: fixed !important;
+            left: var(--scoop-tablet-tip-left, -10000px) !important;
+            top: var(--scoop-tablet-tip-top, -10000px) !important;
+            right: auto !important;
+            bottom: auto !important;
+            transform: none !important;
+            margin: 0 !important;
+            z-index: 100002 !important;
+            max-width: min(22rem, calc(100vw - 1.5rem)) !important;
+            overflow-x: hidden !important;
+        }}
+        /* Company/name values: never pin to the cell's right edge in tablet. */
+        {_TABLET_PAGE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
+        {_TABLET_PAGE_TIP_SCOPE} .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip).scoop-mobile-tip-open > .tip-text {{
+            right: auto !important;
+            left: var(--scoop-tablet-tip-left, -10000px) !important;
+        }}
+}}
+"""
 
 # Shared mobile card layout for screener Full Results + Top Picks + tooltips/headlines.
 TABLET_SCREENER_MOBILE_LAYOUT = (
