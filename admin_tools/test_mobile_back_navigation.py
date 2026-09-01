@@ -59,6 +59,14 @@ def test_back_link_hidden_on_desktop_via_tab_nav() -> None:
     assert ".scoop-mobile-back-home-bar" in css
     assert MOBILE_BACK_HOME_BAR in css
     assert "@media (min-width: 1367px)" in MOBILE_BACK_HOME_BAR
+    assert "@media (max-width: 1366px)" in MOBILE_BACK_HOME_BAR
+    assert 'stCustomComponentV1' in MOBILE_BACK_HOME_BAR
+    assert "position: relative !important" in MOBILE_BACK_HOME_BAR
+    assert "5.2rem" not in MOBILE_BACK_HOME_BAR
+    assert ":not(:has(.disclaimer-footer))" in MOBILE_BACK_HOME_BAR
+    assert ":has(.disclaimer-footer)" in MOBILE_BACK_HOME_BAR
+    assert "flex-shrink: 0" in MOBILE_BACK_HOME_BAR
+    assert ".disclaimer-footer" in MOBILE_BACK_HOME_BAR
     assert 'html[data-scoop-tab-nav="1"]' in css
     assert 'html body .stApp [data-testid="stExpandSidebarButton"]' in css
     assert 'html body .stApp section[data-testid="stSidebar"]' in css
@@ -67,17 +75,20 @@ def test_back_link_hidden_on_desktop_via_tab_nav() -> None:
 def test_back_bar_renders_independently_of_viewport_probe() -> None:
     source = inspect.getsource(landing_page.render_responsive_navigation)
     assert "render_mobile_back_home_bar" in source
-    back_block = source.split("is_mobile_tablet_viewport")[0]
+    back_block = source.split("render_desktop_sidebar_nav()")[0]
     assert "render_mobile_back_home_bar" in back_block
 
 
-def test_desktop_skips_mobile_inner_top_bar() -> None:
+def test_desktop_sidebar_always_mounted() -> None:
+    """Desktop nav must always mount; mobile CSS hides the Streamlit sidebar."""
     source = inspect.getsource(landing_page.render_responsive_navigation)
     assert "render_mobile_inner_top_bar" in source
-    assert "is_mobile_tablet_viewport" in source
     assert "render_desktop_sidebar_nav()" in source
     mobile_block = source.split("render_desktop_sidebar_nav()")[0]
     assert "render_mobile_inner_top_bar" in mobile_block
+    # No longer gated on viewport probe — stale mobile cache hid desktop nav.
+    assert "is_desktop_viewport" not in source
+    assert "Always mount sidebar nav" in source
 
 
 def test_inner_top_bar_injects_layout_css() -> None:
@@ -95,7 +106,7 @@ def main() -> int:
         test_analyze_has_market_back_button,
         test_back_link_hidden_on_desktop_via_tab_nav,
         test_back_bar_renders_independently_of_viewport_probe,
-        test_desktop_skips_mobile_inner_top_bar,
+        test_desktop_sidebar_always_mounted,
         test_inner_top_bar_injects_layout_css,
     ]
     for fn in tests:

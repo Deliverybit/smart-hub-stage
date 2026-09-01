@@ -1924,8 +1924,11 @@ _DESKTOP_FLEX_SPLIT_RULES = """
     section[data-testid="stSidebar"],
     section[data-testid="stSidebar"][aria-expanded="false"],
     section[data-testid="stSidebar"][aria-expanded="true"] {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
         flex: 0 1 auto !important;
-        align-self: flex-start !important;
+        align-self: stretch !important;
         position: relative !important;
         transform: none !important;
         translate: none !important;
@@ -1945,15 +1948,60 @@ _DESKTOP_FLEX_SPLIT_RULES = """
         min-height: 100vh !important;
         max-height: 100vh !important;
     }
-    [data-testid="stSidebar"] > div,
+    /* Do NOT style all `> div` — Streamlit adds an empty sibling that was
+       stealing half the sidebar height and cutting off lower nav links. */
+    [data-testid="stSidebar"] > div:not([data-testid="stSidebarContent"]) {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
+        flex: 0 0 0 !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+    }
     [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
-        overflow-x: visible !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        flex: 1 1 auto !important;
+        overflow-x: hidden !important;
         overflow-y: auto !important;
         width: 100% !important;
         min-width: 0 !important;
         max-width: 100% !important;
-        height: 100vh !important;
-        max-height: 100vh !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        box-sizing: border-box !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        flex: 1 1 auto !important;
+        box-sizing: border-box !important;
+        align-self: stretch !important;
+        /* Streamlit default bottom pad (~180px) pushes Terms below the fold. */
+        padding-top: 0.5rem !important;
+        padding-bottom: 1rem !important;
+        overflow: visible !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stSidebarUserContent"] > div,
+    [data-testid="stSidebar"] [data-testid="stSidebarUserContent"] [data-testid="stVerticalBlock"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        align-self: stretch !important;
+    }
+    [data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stPageLink"]),
+    [data-testid="stSidebar"] [data-testid="stPageLink"],
+    [data-testid="stSidebar"] [data-testid="stPageLink"] a {
+        width: 100% !important;
+        max-width: 100% !important;
         box-sizing: border-box !important;
     }
     [data-testid="stAppViewContainer"] > div:not([data-testid="stSidebar"]) {
@@ -1971,11 +2019,13 @@ _DESKTOP_FLEX_SPLIT_RULES = """
         max-width: 100% !important;
         overflow-x: auto !important;
         box-sizing: border-box !important;
-        padding-top: calc(0.75rem + env(safe-area-inset-top, 0px) + 2.75rem) !important;
+        /* Desktop: tight top — do not reserve mobile fixed-header clearance. */
+        padding-top: 0.5rem !important;
     }
     [data-testid="stSidebarBackdrop"] {
         display: none !important;
     }
+    /* Desktop sidebar stays mounted and visible; hide collapse/expand chrome. */
     [data-testid="stExpandSidebarButton"],
     [data-testid="stSidebarCollapseButton"],
     [data-testid="collapsedControl"],
@@ -2011,10 +2061,102 @@ _DESKTOP_FLEX_SPLIT_RULES = """
     }
 """
 
+# Final desktop sidebar force — beats tab-nav hide + kill-slideout leftovers.
+# Column flex + stretch so nav buttons span the full sidebar width (row flex
+# was shrinking stSidebarContent/user content to ~content width).
+_DESKTOP_SIDEBAR_FORCE_VISIBLE = """
+    html body .stApp section[data-testid="stSidebar"],
+    html body .stApp section[data-testid="stSidebar"][aria-expanded="false"],
+    html body .stApp section[data-testid="stSidebar"][aria-expanded="true"],
+    html[data-scoop-tab-nav="1"] body .stApp section[data-testid="stSidebar"],
+    html[data-scoop-tab-nav="1"] body .stApp section[data-testid="stSidebar"][aria-expanded="false"],
+    html[data-scoop-tab-nav="1"] body .stApp section[data-testid="stSidebar"][aria-expanded="true"] {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        transform: none !important;
+        translate: none !important;
+        width: var(--scoop-desktop-sidebar-width, clamp(12rem, 18vw, 22rem)) !important;
+        min-width: 12rem !important;
+        max-width: min(32vw, 36rem) !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        overflow: visible !important;
+        position: relative !important;
+        left: auto !important;
+        top: auto !important;
+        z-index: 2 !important;
+    }
+    html body .stApp [data-testid="stSidebar"] > div:not([data-testid="stSidebarContent"]),
+    html[data-scoop-tab-nav="1"] body .stApp [data-testid="stSidebar"] > div:not([data-testid="stSidebarContent"]) {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
+        flex: 0 0 0 !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+    }
+    html body .stApp [data-testid="stSidebar"] [data-testid="stSidebarContent"],
+    html[data-scoop-tab-nav="1"] body .stApp [data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex: 1 1 auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        /* Fixed px — page CSS sometimes sets html font-size huge, which bloated rem padding. */
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+    }
+    html body .stApp [data-testid="stSidebar"] [data-testid="stSidebarUserContent"],
+    html[data-scoop-tab-nav="1"] body .stApp [data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        align-self: stretch !important;
+        padding-top: 0.5rem !important;
+        padding-bottom: 1rem !important;
+        overflow: visible !important;
+    }
+    html body .stApp [data-testid="stSidebar"] [data-testid="stSidebarUserContent"] > div,
+    html body .stApp [data-testid="stSidebar"] [data-testid="stSidebarUserContent"] [data-testid="stVerticalBlock"],
+    html[data-scoop-tab-nav="1"] body .stApp [data-testid="stSidebar"] [data-testid="stSidebarUserContent"] > div,
+    html[data-scoop-tab-nav="1"] body .stApp [data-testid="stSidebar"] [data-testid="stSidebarUserContent"] [data-testid="stVerticalBlock"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        align-self: stretch !important;
+    }
+    html body .stApp [data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stPageLink"]),
+    html body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"],
+    html body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"] a {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+"""
+
 # Injected last on every page — beats tablet overlay rules and fixes desktop clipping.
 DESKTOP_SIDEBAR_LAYOUT = f"""
 @media (min-width: 1367px) {{
 {_DESKTOP_FLEX_SPLIT_RULES}
+{_DESKTOP_SIDEBAR_FORCE_VISIBLE}
 }}
 """
 
@@ -2023,6 +2165,7 @@ DESKTOP_SIDEBAR_LAYOUT = f"""
 DESKTOP_ZOOM_LAYOUT = f"""
 html[data-scoop-desktop-layout="1"] {{
 {_DESKTOP_FLEX_SPLIT_RULES}
+{_DESKTOP_SIDEBAR_FORCE_VISIBLE}
 }}
 """
 
@@ -2108,24 +2251,54 @@ _DESKTOP_MARKET_NAV_SPACING_RULES = f"""
     [data-testid="stSidebar"] [data-testid="stVerticalBlock"] {{
         gap: 0 !important;
     }}
-    [data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stPageLink"] a[href$="_Top_10"]),
-    [data-testid="stSidebar"] [data-testid="element-container"]:has([data-testid="stPageLink"] a[href$="_Top_10"]) {{
+    /* Full-width nav rows (markets + Terms) across the sidebar. */
+    [data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stPageLink"]),
+    [data-testid="stSidebar"] [data-testid="element-container"]:has([data-testid="stPageLink"]) {{
         margin: 0 !important;
         padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        display: block !important;
+        box-sizing: border-box !important;
     }}
-    [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) {{
+    [data-testid="stSidebar"] [data-testid="stPageLink"] {{
         margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        display: block !important;
+        box-sizing: border-box !important;
+    }}
+    [data-testid="stSidebar"] [data-testid="stPageLink"] a {{
+        display: flex !important;
+        align-items: center !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+    }}
+    [data-testid="stSidebar"] [data-testid="stPageLink"] span,
+    [data-testid="stSidebar"] [data-testid="stPageLink"] p,
+    [data-testid="stSidebar"] [data-testid="stPageLink"] div {{
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+        word-break: break-word !important;
+        max-width: 100% !important;
     }}
     [data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stPageLink"] a[href$="_Top_10"]) + [data-testid="stElementContainer"]:has([data-testid="stPageLink"] a[href$="_Top_10"]),
     [data-testid="stSidebar"] [data-testid="element-container"]:has([data-testid="stPageLink"] a[href$="_Top_10"]) + [data-testid="stElementContainer"]:has([data-testid="stPageLink"] a[href$="_Top_10"]),
-    [data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stPageLink"] a[href$="_Top_10"]) + [data-testid="stElementContainer"]:has([data-testid="stPageLink"] a[href$="_Top_10"]),
-    [data-testid="stSidebar"] [data-testid="element-container"]:has([data-testid="stPageLink"] a[href$="_Top_10"]) + [data-testid="stElementContainer"]:has([data-testid="stPageLink"] a[href$="_Top_10"]) {{
+    [data-testid="stSidebar"] [data-testid="stElementContainer"]:has([data-testid="stPageLink"] a[href$="_Top_10"]) + [data-testid="element-container"]:has([data-testid="stPageLink"] a[href$="_Top_10"]),
+    [data-testid="stSidebar"] [data-testid="element-container"]:has([data-testid="stPageLink"] a[href$="_Top_10"]) + [data-testid="element-container"]:has([data-testid="stPageLink"] a[href$="_Top_10"]) {{
         margin-top: {_DESKTOP_MARKET_NAV_GAP} !important;
     }}
 """
 
 _DESKTOP_MARKET_NAV_LIGHT_RULES = """
-    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) {
+    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]),
+    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href*="Terms_of_Service"]) {
+        width: 100% !important;
+        max-width: 100% !important;
         border: 2px solid #334155 !important;
         border-radius: 0.75rem !important;
         background: #ffffff !important;
@@ -2134,13 +2307,17 @@ _DESKTOP_MARKET_NAV_LIGHT_RULES = """
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
         transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
     }
-    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):hover {
+    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):hover,
+    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href*="Terms_of_Service"]):hover {
         border-color: #0f172a !important;
         box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1) !important;
     }
-    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) a {
-        display: block !important;
+    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) a,
+    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href*="Terms_of_Service"]) a {
+        display: flex !important;
+        align-items: center !important;
         width: 100% !important;
+        max-width: 100% !important;
         border-radius: 0.55rem !important;
         padding: 0.45rem 0.65rem !important;
         box-sizing: border-box !important;
@@ -2148,7 +2325,10 @@ _DESKTOP_MARKET_NAV_LIGHT_RULES = """
 """
 
 _DESKTOP_MARKET_NAV_DARK_RULES = """
-    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) {
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]),
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href*="Terms_of_Service"]) {
+        width: 100% !important;
+        max-width: 100% !important;
         border: 2px solid #94a3b8 !important;
         border-radius: 0.75rem !important;
         background: #000000 !important;
@@ -2156,13 +2336,17 @@ _DESKTOP_MARKET_NAV_DARK_RULES = """
         box-sizing: border-box !important;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35) !important;
     }
-    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):hover {
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):hover,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href*="Terms_of_Service"]):hover {
         border-color: #e2e8f0 !important;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45) !important;
     }
-    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) a {
-        display: block !important;
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) a,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href*="Terms_of_Service"]) a {
+        display: flex !important;
+        align-items: center !important;
         width: 100% !important;
+        max-width: 100% !important;
         border-radius: 0.55rem !important;
         padding: 0.45rem 0.65rem !important;
         box-sizing: border-box !important;
@@ -2174,7 +2358,13 @@ _DESKTOP_MARKET_NAV_DARK_RULES = """
     html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) p,
     html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) a:visited,
     html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) a:hover,
-    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) a:active {
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]) a:active,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href*="Terms_of_Service"]) span,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href*="Terms_of_Service"]) div,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href*="Terms_of_Service"]) p,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href*="Terms_of_Service"]) a:visited,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href*="Terms_of_Service"]) a:hover,
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href*="Terms_of_Service"]) a:active {
         color: #ffffff !important;
         background-color: transparent !important;
     }
@@ -2795,9 +2985,9 @@ DESKTOP_SIDEBAR_LOGO_RULES = """
         border: none !important;
         box-shadow: none !important;
         padding: 0 !important;
-        margin: 0 -1rem 0.25rem -1rem !important;
-        width: calc(100% + 2rem) !important;
-        max-width: calc(100% + 2rem) !important;
+        margin: 0 -12px 0.25rem -12px !important;
+        width: calc(100% + 24px) !important;
+        max-width: calc(100% + 24px) !important;
     }
     [data-testid="stSidebar"] [data-testid="stImage"] {
         background: transparent !important;
@@ -3320,52 +3510,91 @@ RESPONSIVE_ANALYZE_TOP_COMPACT = f"""
 """
 
 # Market screener landing pages (_Top_10): drop header padding, js_eval gaps, and block spacing.
-_DESKTOP_SCREENER_TOP_COMPACT_RULES = """
-    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"],
-    html[data-scoop-screener-active="1"] section.main > div,
-    html[data-scoop-screener-active="1"] [data-testid="stAppViewContainer"] > section.main {
-        padding-top: 12px !important;
-    }
-    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {
+# Match active OR gated — consent gate never sets screener-active alone, which left
+# desktop with ~30px flex gaps per injector and a large white band above index cards.
+def _desktop_screener_top_compact_for(flag_attr: str) -> str:
+    """Build compact rules for one html data-* flag (never comma-join flags)."""
+    root = f"html[{flag_attr}=\"1\"]"
+    return f"""
+    {root} [data-testid="stMainBlockContainer"],
+    {root} section.main > div,
+    {root} [data-testid="stAppViewContainer"] > section.main {{
+        padding-top: 0.5rem !important;
+    }}
+    {root} [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {{
         gap: 0 !important;
-    }
-    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(iframe[src*="streamlit_js_eval"]) {
+    }}
+    {root} [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(iframe[src*="streamlit_js_eval"]),
+    {root} [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(iframe[src*="streamlit_js_eval"]),
+    {root} [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(iframe[data-testid="stCustomComponentV1"]),
+    {root} [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(iframe[data-testid="stCustomComponentV1"]),
+    {root} [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stHtml"]),
+    {root} [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stHtml"]) {{
         display: none !important;
         height: 0 !important;
         min-height: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
         overflow: hidden !important;
-    }
-    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] style) {
+        border: none !important;
+    }}
+    /* Style-only injectors: trim margins only. Never height:0 - market blocks
+       often ship page CSS in the same markdown as visible copy. */
+    {root} [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] style):not(:has(.disclaimer-footer)):not(:has(.scoop-env-banner)),
+    {root} [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stMarkdownContainer"] style):not(:has(.disclaimer-footer)):not(:has(.scoop-env-banner)) {{
         margin: 0 !important;
         padding: 0 !important;
         min-height: 0 !important;
-    }
-    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] hr:not(.search-52w-range-divider) {
+    }}
+    {root} [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-env-banner),
+    {root} [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.scoop-env-banner) {{
+        display: block !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 0 10px 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }}
+    {root} .scoop-env-banner {{
+        position: relative !important;
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 0 0 10px 0 !important;
+        padding: 0.35rem 0.75rem !important;
+        line-height: 1.3 !important;
+    }}
+    {root} [data-testid="stMainBlockContainer"] hr:not(.search-52w-range-divider) {{
         display: none !important;
         margin: 0 !important;
         padding: 0 !important;
         border: none !important;
         height: 0 !important;
-    }
-    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] h1 {
+    }}
+    {root} [data-testid="stMainBlockContainer"] h1 {{
         margin-top: 0.5rem !important;
         margin-bottom: 0.55rem !important;
-    }
-    html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(+ [data-testid="stElementContainer"] h1) {
+    }}
+    {root} [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(+ [data-testid="stElementContainer"] h1) {{
         margin-bottom: 0 !important;
         padding-bottom: 0 !important;
-    }
+    }}
 """
+
+
+_DESKTOP_SCREENER_TOP_COMPACT_RULES = (
+    _desktop_screener_top_compact_for("data-scoop-screener-active")
+    + _desktop_screener_top_compact_for("data-scoop-screener-gated")
+)
 
 DESKTOP_SCREENER_TOP_COMPACT = f"""
 @media (min-width: 1367px) {{
 {_DESKTOP_SCREENER_TOP_COMPACT_RULES}
 }}
-html[data-scoop-desktop-layout="1"][data-scoop-screener-active="1"] {{
-{_DESKTOP_SCREENER_TOP_COMPACT_RULES}
-}}
+/* Zoomed desktop: do not nest full html selectors inside another html rule
+   (CSS nesting would re-target incorrectly). Repeat with desktop-layout flag. */
+{_DESKTOP_SCREENER_TOP_COMPACT_RULES.replace('html[data-scoop-screener-active="1"]', 'html[data-scoop-desktop-layout="1"][data-scoop-screener-active="1"]').replace('html[data-scoop-screener-gated="1"]', 'html[data-scoop-desktop-layout="1"][data-scoop-screener-gated="1"]')}
 """
 
 # Desktop screener gating view (terms not yet accepted): full-width banners + intro.
@@ -4045,15 +4274,17 @@ ASUS_ZENBOOK_FOLD_TERMS_LAYOUT = f"""
 
 # Mobile/tablet tab navigation — replaces slide-out sidebar; desktop split sidebar unchanged.
 _RESPONSIVE_TAB_NAV_HIDE_SIDEBAR_RULES = """
-    html[data-scoop-tab-nav="1"] section[data-testid="stSidebar"],
-    html[data-scoop-tab-nav="1"] [data-testid="stSidebarBackdrop"],
-    html[data-scoop-tab-nav="1"] [data-testid="stSidebarNav"],
-    html[data-scoop-tab-nav="1"] [data-testid="stSidebarCollapseButton"],
-    html[data-scoop-tab-nav="1"] [data-testid="stExpandSidebarButton"],
-    html[data-scoop-tab-nav="1"] [data-testid="collapsedControl"],
-    html[data-scoop-tab-nav="1"] [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
-    html[data-scoop-tab-nav="1"] [data-testid="stHeader"] [data-testid="collapsedControl"],
-    html[data-scoop-tab-nav="1"] [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] {
+    /* Never hide the sidebar when desktop layout is forced (wide monitors /
+       zoom), even if tab-nav briefly sticks on from a race or emulator MQ. */
+    html[data-scoop-tab-nav="1"]:not([data-scoop-desktop-layout="1"]) section[data-testid="stSidebar"],
+    html[data-scoop-tab-nav="1"]:not([data-scoop-desktop-layout="1"]) [data-testid="stSidebarBackdrop"],
+    html[data-scoop-tab-nav="1"]:not([data-scoop-desktop-layout="1"]) [data-testid="stSidebarNav"],
+    html[data-scoop-tab-nav="1"]:not([data-scoop-desktop-layout="1"]) [data-testid="stSidebarCollapseButton"],
+    html[data-scoop-tab-nav="1"]:not([data-scoop-desktop-layout="1"]) [data-testid="stExpandSidebarButton"],
+    html[data-scoop-tab-nav="1"]:not([data-scoop-desktop-layout="1"]) [data-testid="collapsedControl"],
+    html[data-scoop-tab-nav="1"]:not([data-scoop-desktop-layout="1"]) [data-testid="stHeader"] [data-testid="stExpandSidebarButton"],
+    html[data-scoop-tab-nav="1"]:not([data-scoop-desktop-layout="1"]) [data-testid="stHeader"] [data-testid="collapsedControl"],
+    html[data-scoop-tab-nav="1"]:not([data-scoop-desktop-layout="1"]) [data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] {
         display: none !important;
         visibility: hidden !important;
         pointer-events: none !important;
@@ -4326,7 +4557,7 @@ MOBILE_BACK_HOME_BAR = """
         max-width: 100% !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
-        margin: 0 0 0.15rem 0 !important;
+        margin: 0.25rem 0 0.35rem 0 !important;
         box-sizing: border-box !important;
         pointer-events: auto !important;
     }
@@ -4412,33 +4643,36 @@ MOBILE_BACK_HOME_BAR = """
         background: #334155 !important;
         box-shadow: inset 0 0 0 1px #94a3b8 !important;
     }
+    /* Spacer no longer doubles banner clearance — back bar is in document flow. */
     .scoop-mobile-back-home-spacer {
-        display: block !important;
+        display: none !important;
         height: 0 !important;
         margin: 0 !important;
         pointer-events: none !important;
     }
+    /* Keep the staging banner in document flow on phone/tablet so it does not
+       need a large fixed-position clearance spacer above Back / content. */
     html:not([data-scoop-home-page="1"]) [data-testid="stElementContainer"]:has(.scoop-env-banner),
     html:not([data-scoop-home-page="1"]) [data-testid="element-container"]:has(.scoop-env-banner) {
         display: block !important;
         height: auto !important;
-        min-height: calc(5.2rem + env(safe-area-inset-top, 0px)) !important;
-        margin: 0 !important;
+        min-height: 0 !important;
+        margin: 0 0 10px 0 !important;
         padding: 0 !important;
         overflow: visible !important;
     }
     html:not([data-scoop-home-page="1"]) .scoop-env-banner {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        z-index: 1000020 !important;
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        z-index: 2 !important;
         display: block !important;
         visibility: visible !important;
-        width: 100vw !important;
-        max-width: 100vw !important;
+        width: 100% !important;
+        max-width: 100% !important;
         box-sizing: border-box !important;
-        margin: 0 !important;
+        margin: 0 0 10px 0 !important;
         border-radius: 0 !important;
         padding: 0.35rem 0.65rem !important;
         padding-left: calc(0.65rem + env(safe-area-inset-left, 0px)) !important;
@@ -4456,10 +4690,8 @@ MOBILE_BACK_HOME_BAR = """
         min-height: 0 !important;
         word-break: break-word !important;
     }
-    html:not([data-scoop-home-page="1"]):has(.scoop-env-banner) .scoop-mobile-back-home-spacer {
-        height: calc(5.2rem + env(safe-area-inset-top, 0px)) !important;
-        margin-bottom: 0.35rem !important;
-    }
+    html:not([data-scoop-home-page="1"]) [data-testid="stElementContainer"]:has(.scoop-mobile-back-home-bar),
+    html:not([data-scoop-home-page="1"]) [data-testid="element-container"]:has(.scoop-mobile-back-home-bar),
     html:not([data-scoop-home-page="1"]) [data-testid="stElementContainer"]:has(.scoop-mobile-back-home-spacer),
     html:not([data-scoop-home-page="1"]) [data-testid="element-container"]:has(.scoop-mobile-back-home-spacer) {
         display: block !important;
@@ -4469,8 +4701,111 @@ MOBILE_BACK_HOME_BAR = """
         margin: 0 !important;
         padding: 0 !important;
     }
-    html[data-scoop-tab-nav="1"]:not([data-scoop-home-page="1"]) [data-testid="stMarkdownContainer"]:has(div[style*="linear-gradient(135deg"]) {
-        margin-top: 1.85rem !important;
+    /* Kill stacked top padding from page CSS on phone/tablet inner pages only. */
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"],
+    html:not([data-scoop-home-page="1"]) section.main > div,
+    html:not([data-scoop-home-page="1"]) [data-testid="stAppViewContainer"] > section.main {
+        padding-top: 0.15rem !important;
+    }
+    /* Collapse Streamlit header chrome — it was reserving ~68px above content. */
+    html:not([data-scoop-home-page="1"]) [data-testid="stHeader"] {
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        border: none !important;
+        background: transparent !important;
+    }
+    /* Collapse bootstrap injectors (stHtml scripts, js_eval iframes, style-only
+       markdown). These were stacking vertical-block gaps into large dead space.
+       @media (max-width: 1366px) keeps desktop unchanged. */
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {
+        gap: 0.35rem !important;
+    }
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stHtml"]),
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stHtml"]),
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(iframe[data-testid="stCustomComponentV1"]),
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(iframe[data-testid="stCustomComponentV1"]),
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(iframe[src*="streamlit_js_eval"]),
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(iframe[src*="streamlit_js_eval"]) {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        border: none !important;
+    }
+    /* Style markdown injectors: trim margins only. Do NOT force height:0 /
+       overflow:hidden — that clipped the shared style+disclaimer-footer block. */
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] style):not(:has(.scoop-env-banner)):not(:has(.scoop-mobile-back-home-bar)):not(:has(.disclaimer-footer)),
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stMarkdownContainer"] style):not(:has(.scoop-env-banner)):not(:has(.scoop-mobile-back-home-bar)):not(:has(.disclaimer-footer)) {
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 0 !important;
+    }
+    html:not([data-scoop-home-page="1"]) [data-testid="stMarkdownContainer"]:has(div[style*="linear-gradient(135deg"]) {
+        margin-top: 0.15rem !important;
+    }
+    /* Bottom disclaimer banner — in-flow under content, no top dead space.
+       Specificity must beat the style-markdown collapse rule (also :has(style)). */
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] style):has(.disclaimer-footer),
+    html body .stApp [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stMarkdownContainer"] style):has(.disclaimer-footer),
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] style):has(.disclaimer-footer),
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stMarkdownContainer"] style):has(.disclaimer-footer),
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.disclaimer-footer),
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.disclaimer-footer) {
+        display: block !important;
+        visibility: visible !important;
+        height: auto !important;
+        max-height: none !important;
+        min-height: min-content !important;
+        flex: 0 0 auto !important;
+        flex-grow: 0 !important;
+        flex-shrink: 0 !important;
+        align-self: stretch !important;
+        margin: 0.75rem 0 0 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+    html body .stApp .disclaimer-footer,
+    html:not([data-scoop-home-page="1"]) .disclaimer-footer {
+        display: block !important;
+        visibility: visible !important;
+        position: static !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+        padding: 0.45rem 0.65rem !important;
+        background: #020617 !important;
+        border-top: 1px solid #334155 !important;
+        color: #e2e8f0 !important;
+        font-size: clamp(0.68rem, 1.9vw, 0.82rem) !important;
+        font-weight: 500 !important;
+        line-height: 1.35 !important;
+        text-align: center !important;
+        white-space: normal !important;
+        z-index: auto !important;
+    }
+    html:not([data-scoop-home-page="1"]) .disclaimer-footer strong,
+    html:not([data-scoop-home-page="1"]) .disclaimer-footer a {
+        font-size: inherit !important;
+        color: inherit !important;
+    }
+    html:not([data-scoop-home-page="1"]) .disclaimer-footer a {
+        color: #93c5fd !important;
+        text-decoration: underline !important;
+        font-weight: 600 !important;
+    }
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"],
+    html:not([data-scoop-home-page="1"]) .stMainBlockContainer {
+        padding-bottom: 1.25rem !important;
     }
 }
 @media (min-width: 1367px) {

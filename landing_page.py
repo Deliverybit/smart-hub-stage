@@ -122,6 +122,14 @@ def is_mobile_tablet_viewport(*, page: str | None = None) -> bool:
     return responsive is not False
 
 
+def is_desktop_viewport(*, page: str | None = None) -> bool | None:
+    """True for desktop, False for mobile/tablet, None while the JS probe is loading."""
+    responsive = probe_responsive_viewport(key=_nav_viewport_key(page))
+    if responsive is None:
+        return None
+    return not responsive
+
+
 def probe_terms_force_responsive() -> bool | None:
     """True when consent-page Terms navigation requested responsive chrome.
 
@@ -243,6 +251,15 @@ def enforce_mobile_home_before_market(current_page: str | None) -> None:
     """
     if not current_page or current_page not in MOBILE_MARKET_SCREENER_PAGES:
         return
+
+    # Honor Analyze-return before the viewport probe. The return query can be
+    # present on an early run (responsive still None) and cleared by the terms
+    # gate on a later run — waiting for the probe caused a first-click bounce
+    # to home on phone/tablet.
+    if _mobile_analyze_return_bypass():
+        mark_mobile_home_seen()
+        return
+
     # Strict True — do not treat an in-flight viewport probe as mobile.
     responsive = probe_responsive_viewport(key=_nav_viewport_key(current_page))
     if responsive is not True:
@@ -255,9 +272,6 @@ def enforce_mobile_home_before_market(current_page: str | None) -> None:
     if seen is None:
         # Wait for sessionStorage probe — do not redirect on a false negative.
         st.stop()
-        return
-    if _mobile_analyze_return_bypass():
-        mark_mobile_home_seen()
         return
     st.switch_page(HOME_PAGE)
 
@@ -297,9 +311,9 @@ def render_desktop_sidebar_nav() -> None:
     render_dark_mode_toggle()
     st.sidebar.markdown("---")
     for path, label in HOME_NAV_MARKETS:
-        st.sidebar.page_link(path, label=label)
+        st.sidebar.page_link(path, label=label, use_container_width=True)
     st.sidebar.markdown("---")
-    st.sidebar.page_link(TERMS_PAGE, label="📜 Terms of Service")
+    st.sidebar.page_link(TERMS_PAGE, label="📜 Terms of Service", use_container_width=True)
 
 
 def render_mobile_back_home_bar(*, current_page: str | None) -> None:
@@ -388,11 +402,43 @@ def render_mobile_back_home_bar(*, current_page: str | None) -> None:
         cb.checked = readDark();
         apply(cb.checked);
     }
+    function revealDisclaimerBanner(doc) {
+        if (!doc || !doc.querySelectorAll) return;
+        doc.querySelectorAll(".disclaimer-footer").forEach(function(footer) {
+            const slot = footer.closest(
+                '[data-testid="stElementContainer"], [data-testid="element-container"]'
+            );
+            if (!slot) return;
+            slot.classList.add("scoop-disclaimer-slot");
+            // Inline !important beats stale bootstrap collapse rules until CSS reloads.
+            slot.style.setProperty("display", "block", "important");
+            slot.style.setProperty("height", "auto", "important");
+            slot.style.setProperty("max-height", "none", "important");
+            slot.style.setProperty("min-height", "min-content", "important");
+            slot.style.setProperty("overflow", "visible", "important");
+            slot.style.setProperty("flex", "0 0 auto", "important");
+            slot.style.setProperty("flex-shrink", "0", "important");
+            footer.style.setProperty("display", "block", "important");
+            footer.style.setProperty("visibility", "visible", "important");
+            footer.style.setProperty("position", "static", "important");
+        });
+    }
+    function revealAll() {
+        docs().forEach(revealDisclaimerBanner);
+    }
     bind(document.getElementById("scoop-mobile-dark-cb"));
     document.addEventListener("change", function(ev) {
         const t = ev.target;
         if (t && t.id === "scoop-mobile-dark-cb") apply(t.checked);
     }, true);
+    revealAll();
+    [120, 400, 1000, 2000].forEach(function(ms) {
+        setTimeout(revealAll, ms);
+    });
+    try {
+        const obs = new MutationObserver(function() { revealAll(); });
+        obs.observe(document.documentElement, { childList: true, subtree: true });
+    } catch (e) {}
 })();
 </script>
 """,
@@ -548,15 +594,9 @@ def render_responsive_navigation(*, current_page: str | None = None) -> None:
             clear_terms_force_responsive_marker()
             inject_streamlit_chrome_hide()
             return
-        if is_mobile_tablet_viewport(page=current_page):
-            inject_streamlit_chrome_hide()
-            return
-        render_desktop_sidebar_nav()
-        inject_streamlit_chrome_hide()
-        return
 
-    if is_mobile_tablet_viewport(page=current_page):
-        inject_streamlit_chrome_hide()
-        return
+    # Always mount sidebar nav widgets. Mobile/tablet CSS hides the Streamlit
+    # sidebar; desktop must never skip this or navigation is missing entirely
+    # when a stale "mobile" viewport cache wins.
     render_desktop_sidebar_nav()
     inject_streamlit_chrome_hide()

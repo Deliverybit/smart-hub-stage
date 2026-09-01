@@ -35,6 +35,7 @@ st.set_page_config(
     page_title="ICE Commodities",
     page_icon=logo_path_str(),
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 render_environment_banner(st)
 install_theme_support()

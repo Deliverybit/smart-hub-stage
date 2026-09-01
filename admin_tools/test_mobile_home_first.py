@@ -80,6 +80,25 @@ def test_enforce_allows_after_home_seen() -> None:
     assert calls == []
 
 
+def test_enforce_allows_analyze_return_before_viewport_probe() -> None:
+    """Return query must mark home-seen even while the viewport probe is pending."""
+    calls: list[str] = []
+    fake_st = SimpleNamespace(
+        session_state={},
+        query_params={"scoop_from_analyze": "1"},
+        switch_page=lambda path: calls.append(path),
+        stop=lambda: None,
+        html=lambda *args, **kwargs: None,
+    )
+    with patch.object(landing_page, "st", fake_st), patch.object(
+        landing_page, "probe_responsive_viewport", return_value=None
+    ) as probe:
+        landing_page.enforce_mobile_home_before_market("pages/1_NYSE_Top_10.py")
+    assert calls == []
+    assert fake_st.session_state.get(landing_page.MOBILE_HOME_SEEN_KEY) is True
+    probe.assert_not_called()
+
+
 def test_enforce_allows_when_storage_hydrates() -> None:
     calls: list[str] = []
     fake_st = SimpleNamespace(
@@ -122,6 +141,7 @@ def main() -> int:
         test_enforce_skips_desktop_and_non_screeners,
         test_enforce_redirects_mobile_screener_without_home,
         test_enforce_allows_after_home_seen,
+        test_enforce_allows_analyze_return_before_viewport_probe,
         test_enforce_allows_when_storage_hydrates,
         test_enforce_waits_when_storage_probe_pending,
     ]

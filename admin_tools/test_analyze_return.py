@@ -17,6 +17,7 @@ def test_mark_analyze_return_uses_parent_session_storage() -> None:
     js = analyze_page._mark_analyze_return_js()
     assert "window.parent" in js
     assert "scoop-return-from-analyze" in js
+    assert "scoop-mobile-home-seen" in js
     assert "scoop-landing-seen" in js
     assert "__scoopClearResponsiveExpandTimers" in js
 
@@ -76,6 +77,13 @@ def test_analyze_click_js_handles_mobile_targets() -> None:
     assert "NASDAQ_Top_10" in js
 
 
+def test_mobile_page_nav_skips_analyze_back_link() -> None:
+    source = (ROOT / "tooltip_scroll.py").read_text(encoding="utf-8")
+    assert 'el.closest("a.scoop-analyze-back")' in source
+    assert "scoop-mobile-home-seen" in source
+    assert "PAGE_NAV_BIND_VERSION = 9" in source
+
+
 def main() -> int:
     tests = [
         test_mark_analyze_return_uses_parent_session_storage,
@@ -84,6 +92,7 @@ def main() -> int:
         test_analyze_back_labels_name_markets_explicitly,
         test_analyze_link_includes_ticker_query,
         test_analyze_click_js_handles_mobile_targets,
+        test_mobile_page_nav_skips_analyze_back_link,
     ]
     for fn in tests:
         fn()

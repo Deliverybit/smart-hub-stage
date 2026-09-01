@@ -25,7 +25,7 @@ def test_tooltip_scroll_holds_terms_on_tablet() -> None:
     source = (ROOT / "tooltip_scroll.py").read_text(encoding="utf-8")
     assert "__scoopShouldHoldTermsMainView" in source
     assert "__scoopViewportWidth() <= 1366" in source
-    assert "PAGE_NAV_BIND_VERSION = 8" in source
+    assert "PAGE_NAV_BIND_VERSION = 9" in source
     assert (
         "if (__scoopIsTermsPage() && __scoopShouldHoldTermsMainView())" in source
     )

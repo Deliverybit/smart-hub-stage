@@ -1236,7 +1236,7 @@ _PAGE_NAV_LAYOUT_RESYNC_JS = (
 
     const TERMS_NAV_COLLAPSE_KEY = "scoop-terms-nav-collapse";
     const TERMS_NAV_SUPPRESS_MS = 15000;
-    const PAGE_NAV_BIND_VERSION = 8;
+    const PAGE_NAV_BIND_VERSION = 9;
 
     const enforceMobileTermsMainView = () => {
         if (!__scoopShouldHoldTermsMainView()) {
@@ -1303,10 +1303,15 @@ _PAGE_NAV_LAYOUT_RESYNC_JS = (
         if (!el || typeof el.closest !== "function") {
             return;
         }
+        // Analyze "Back to <market>" uses href*="Top_10" — let its own onclick
+        // mark return flags; do not hijack that navigation.
+        if (el.closest("a.scoop-analyze-back")) {
+            return;
+        }
         const link = el.closest(
             '[data-testid="stPageLink"] a, [data-testid="stSidebarNav"] a, a[href*="Top_10"], a[href*="Terms_of_Service"]'
         );
-        if (!link) {
+        if (!link || link.classList?.contains("scoop-analyze-back")) {
             return;
         }
         if (/Terms_of_Service/i.test(link.getAttribute("href") || "")) {
@@ -1464,6 +1469,7 @@ _ANALYZE_RETURN_NAV_JS = (
     const markAnalyzeReturn = () => {
         try {
             appWin.sessionStorage.setItem(RETURN_KEY, "1");
+            appWin.sessionStorage.setItem("scoop-mobile-home-seen", "1");
             appWin.sessionStorage.setItem("scoop-landing-seen", "1");
             appWin.__scoopSuppressSidebarExpand = Date.now() + SUPPRESS_MS;
             if (typeof appWin.__scoopClearResponsiveExpandTimers === "function") {
@@ -3999,16 +4005,27 @@ _DESKTOP_SIDEBAR_JS = (
 
     const expandSidebarIfNeeded = () => {
         const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
-        if (!sidebar || sidebar.getAttribute("aria-expanded") !== "false") {
-            return;
+        if (!sidebar) {
+            return false;
+        }
+        if (sidebar.getAttribute("aria-expanded") === "true") {
+            return true;
         }
         const expand =
+            doc.querySelector('[data-testid="stExpandSidebarButton"] button') ||
             doc.querySelector('[data-testid="stExpandSidebarButton"]') ||
             doc.querySelector('[data-testid="collapsedControl"] button') ||
             doc.querySelector('[data-testid="collapsedControl"]');
-        if (expand) {
+        if (expand && typeof expand.click === "function") {
             expand.click();
         }
+        // Desktop CSS keeps the split sidebar visible; still force expanded state.
+        if (typeof __scoopApplySidebarExpandedState === "function") {
+            __scoopApplySidebarExpandedState(true);
+        } else {
+            sidebar.setAttribute("aria-expanded", "true");
+        }
+        return sidebar.getAttribute("aria-expanded") === "true";
     };
 
     const ensureDesktopSidebarOpen = () => {
@@ -4016,33 +4033,47 @@ _DESKTOP_SIDEBAR_JS = (
             layout()?.syncSidebarLayout();
             return;
         }
+        doc.documentElement.setAttribute("data-scoop-desktop-layout", "1");
+        doc.documentElement.removeAttribute("data-scoop-tab-nav");
+        // Compact CSS keys off screener-active; gated consent views often miss it.
+        try {
+            if (/_Top_10/i.test(appWin.location.pathname || "")) {
+                doc.documentElement.setAttribute("data-scoop-screener-active", "1");
+            }
+        } catch (e) {}
         expandSidebarIfNeeded();
-        layout()?.syncSidebarLayout();
+        layout()?.syncSidebarLayout?.();
+        // Re-assert after sync — bootstrap races can re-set tab-nav briefly.
+        doc.documentElement.removeAttribute("data-scoop-tab-nav");
+        expandSidebarIfNeeded();
     };
 
-    if (appWin.__scoopDesktopSidebarBound) {
-        return;
+    if (!appWin.__scoopDesktopSidebarBound) {
+        appWin.__scoopDesktopSidebarBound = true;
+        doc.addEventListener(
+            "click",
+            (event) => {
+                if (!layout()?.isDesktopViewport()) {
+                    return;
+                }
+                const collapseTarget = event.target.closest(
+                    '[data-testid="stSidebarCollapseButton"], [data-testid="collapsedControl"]'
+                );
+                if (collapseTarget) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                    // Keep desktop sidebar open even if Streamlit tries to collapse.
+                    appWin.setTimeout(ensureDesktopSidebarOpen, 0);
+                }
+            },
+            true
+        );
     }
-    appWin.__scoopDesktopSidebarBound = true;
 
     ensureDesktopSidebarOpen();
-
-    doc.addEventListener(
-        "click",
-        (event) => {
-            if (!layout()?.isDesktopViewport()) {
-                return;
-            }
-            const collapseTarget = event.target.closest(
-                '[data-testid="stSidebarCollapseButton"], [data-testid="collapsedControl"]'
-            );
-            if (collapseTarget) {
-                event.preventDefault();
-                event.stopImmediatePropagation();
-            }
-        },
-        true
-    );
+    [50, 150, 400, 1000, 2000].forEach((delay) => {
+        appWin.setTimeout(ensureDesktopSidebarOpen, delay);
+    });
 })();
 """
 )
@@ -4066,9 +4097,14 @@ _RESPONSIVE_LAYOUT_SCRIPTS = (
 
 
 def _inject_responsive_bootstrap_css() -> str:
-    sidebar_css_json = json.dumps(RESPONSIVE_SIDEBAR_BOOTSTRAP)
-    tab_nav_css_json = json.dumps(RESPONSIVE_TAB_NAV_BOOTSTRAP)
-    chrome_hide_css_json = json.dumps(EARLY_STREAMLIT_CHROME_HIDE)
+    import importlib
+
+    import admin_tools.tablet_mobile_layout_css as _tml
+
+    importlib.reload(_tml)
+    sidebar_css_json = json.dumps(_tml.RESPONSIVE_SIDEBAR_BOOTSTRAP)
+    tab_nav_css_json = json.dumps(_tml.RESPONSIVE_TAB_NAV_BOOTSTRAP)
+    chrome_hide_css_json = json.dumps(_tml.EARLY_STREAMLIT_CHROME_HIDE)
     return f"""
 <script>
 (function() {{
@@ -4376,7 +4412,6 @@ def inject_desktop_sidebar_nav_market() -> None:
     """Inject global per-page sidebar CSS (nav containers, top compact, brand spacing)."""
     st.html(
         f"<style id='scoop-desktop-sidebar-nav-market-css'>{DESKTOP_SIDEBAR_NAV_MARKET}</style>"
-        f"<style id='scoop-desktop-screener-top-compact-css'>{DESKTOP_SCREENER_TOP_COMPACT}</style>"
         f"<style id='scoop-desktop-screener-gating-layout-css'>{DESKTOP_SCREENER_GATING_LAYOUT}</style>"
         f"<style id='scoop-responsive-screener-top-compact-css'>{RESPONSIVE_SCREENER_TOP_COMPACT}</style>"
         f"<style id='scoop-responsive-terms-top-compact-css'>{RESPONSIVE_TERMS_TOP_COMPACT}</style>"
@@ -4385,6 +4420,19 @@ def inject_desktop_sidebar_nav_market() -> None:
         f"<style id='scoop-responsive-sidebar-brand-toggle-buffer-css'>{RESPONSIVE_SIDEBAR_BRAND_TOGGLE_BUFFER}</style>"
         f"<style id='scoop-desktop-sidebar-brand-toggle-buffer-css'>{DESKTOP_SIDEBAR_BRAND_TOGGLE_BUFFER}</style>"
         f"<style id='scoop-desktop-sidebar-logo-css'>{DESKTOP_SIDEBAR_LOGO_RULES}</style>",
+        unsafe_allow_javascript=True,
+    )
+    # Separate inject so Streamlit cannot drop this block when co-bundled.
+    st.html(
+        f"<style id='scoop-desktop-screener-top-compact-css'>{DESKTOP_SCREENER_TOP_COMPACT}</style>"
+        "<script>(() => { try {"
+        "  const doc = (window.parent && window.parent !== window && window.parent.document)"
+        "    ? window.parent.document : document;"
+        "  const win = doc.defaultView || window;"
+        "  if (/_Top_10/i.test((win.location && win.location.pathname) || '')) {"
+        "    doc.documentElement.setAttribute('data-scoop-screener-active','1');"
+        "  }"
+        "} catch (e) {} })();</script>",
         unsafe_allow_javascript=True,
     )
 

@@ -100,6 +100,9 @@ def _mark_analyze_return_js() -> str:
         "try{"
         "var aw=window.parent||window;"
         "aw.sessionStorage.setItem('scoop-return-from-analyze','1');"
+        # Must match landing_page.MOBILE_HOME_SEEN_STORAGE so home-first gating
+        # does not bounce the first Back tap to the landing page.
+        "aw.sessionStorage.setItem('scoop-mobile-home-seen','1');"
         "aw.sessionStorage.setItem('scoop-landing-seen','1');"
         "aw.__scoopSuppressSidebarExpand=Date.now()+10000;"
         "if(typeof aw.__scoopClearResponsiveExpandTimers==='function')"
