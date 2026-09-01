@@ -2071,18 +2071,56 @@ _DESKTOP_FLEX_SPLIT_RULES = """
         background: transparent !important;
         border: none !important;
     }
-    /* Page CSS often sets a huge html font-size; keep the staging banner readable
-       and compact so it does not create a tall band above page titles. */
+    /* Page CSS sets a huge html font-size (~30px); size the staging banner in px /
+       viewport units so it stays legible and scales with desktop width. */
     .scoop-env-banner,
     .scoop-env-banner span {
-        font-size: 14px !important;
-        line-height: 1.35 !important;
-        font-weight: 600 !important;
+        font-size: clamp(16px, 0.7vw + 13px, 20px) !important;
+        line-height: 1.4 !important;
+        letter-spacing: 0.01em !important;
     }
     .scoop-env-banner {
-        padding: 0.4rem 0.75rem !important;
-        margin: 0 0 0.5rem 0 !important;
+        display: block !important;
+        position: relative !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        font-weight: 600 !important;
+        text-align: center !important;
+        white-space: normal !important;
+        word-break: normal !important;
+        overflow-wrap: anywhere !important;
+        /* px padding — rem would inflate with the page html font-size */
+        padding: clamp(8px, 0.45vw + 6px, 12px) clamp(12px, 0.9vw + 8px, 20px) !important;
+        margin: 0 !important;
         box-sizing: border-box !important;
+        border-radius: 6px !important;
+        z-index: 6 !important;
+    }
+    .scoop-env-banner span {
+        font-weight: 500 !important;
+        opacity: 0.9 !important;
+    }
+    /* Streamlit markdown uses a large negative margin-bottom; cancel it so the
+       staging banner keeps its full height and does not sit under index cards. */
+    [data-testid="stMarkdownContainer"]:has(.scoop-env-banner) {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    [data-testid="stElementContainer"]:has(.scoop-env-banner),
+    [data-testid="element-container"]:has(.scoop-env-banner) {
+        display: block !important;
+        height: auto !important;
+        min-height: fit-content !important;
+        overflow: visible !important;
+        margin: 0 0 1.25rem 0 !important;
+        padding: 0 !important;
+    }
+    .scoop-banner-desktop {
+        margin-top: 0.35rem !important;
     }
 """
 
@@ -3544,7 +3582,7 @@ def _desktop_screener_top_compact_for(flag_attr: str) -> str:
     {root} [data-testid="stMainBlockContainer"],
     {root} section.main > div,
     {root} [data-testid="stAppViewContainer"] > section.main {{
-        padding-top: 0.5rem !important;
+        padding-top: 0.65rem !important;
     }}
     {root} [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {{
         gap: 0 !important;
@@ -3571,24 +3609,56 @@ def _desktop_screener_top_compact_for(flag_attr: str) -> str:
         padding: 0 !important;
         min-height: 0 !important;
     }}
+    {root} [data-testid="stMainBlockContainer"] [data-testid="stMarkdownContainer"]:has(.scoop-env-banner) {{
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }}
     {root} [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-env-banner),
     {root} [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.scoop-env-banner) {{
         display: block !important;
         height: auto !important;
-        min-height: 0 !important;
-        margin: 0 0 10px 0 !important;
+        min-height: fit-content !important;
+        margin: 0 0 1.25rem 0 !important;
         padding: 0 !important;
         overflow: visible !important;
+    }}
+    {root} .scoop-env-banner,
+    {root} .scoop-env-banner span {{
+        font-size: clamp(16px, 0.7vw + 13px, 20px) !important;
+        line-height: 1.4 !important;
+        letter-spacing: 0.01em !important;
     }}
     {root} .scoop-env-banner {{
         position: relative !important;
         display: block !important;
         width: 100% !important;
         max-width: 100% !important;
+        height: auto !important;
         box-sizing: border-box !important;
-        margin: 0 0 10px 0 !important;
-        padding: 0.35rem 0.75rem !important;
-        line-height: 1.3 !important;
+        margin: 0 !important;
+        padding: clamp(8px, 0.45vw + 6px, 12px) clamp(12px, 0.9vw + 8px, 20px) !important;
+        font-weight: 600 !important;
+        text-align: center !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+        overflow: visible !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }}
+    {root} .scoop-env-banner span {{
+        font-weight: 500 !important;
+        opacity: 0.9 !important;
+    }}
+    {root} [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-banner-desktop),
+    {root} [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.scoop-banner-desktop),
+    {root} [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-banner-compact),
+    {root} [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.scoop-banner-compact) {{
+        margin-top: 0.35rem !important;
+        height: auto !important;
+        overflow: visible !important;
+    }}
+    {root} .scoop-banner-desktop {{
+        margin-top: 0.25rem !important;
     }}
     {root} [data-testid="stMainBlockContainer"] hr:not(.search-52w-range-divider) {{
         display: none !important;
@@ -3998,12 +4068,21 @@ _DESKTOP_TERMS_TOP_COMPACT_RULES = """
     }
     html[data-scoop-terms-active="1"] .scoop-env-banner,
     html[data-scoop-terms-active="1"] .scoop-env-banner span {
-        font-size: 14px !important;
-        line-height: 1.35 !important;
+        font-size: clamp(16px, 0.7vw + 13px, 20px) !important;
+        line-height: 1.4 !important;
+        letter-spacing: 0.01em !important;
     }
     html[data-scoop-terms-active="1"] .scoop-env-banner {
         margin: 0 0 0.35rem 0 !important;
-        padding: 0.4rem 0.75rem !important;
+        padding: clamp(8px, 0.45vw + 6px, 12px) clamp(12px, 0.9vw + 8px, 20px) !important;
+        font-weight: 600 !important;
+        text-align: center !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere !important;
+    }
+    html[data-scoop-terms-active="1"] .scoop-env-banner span {
+        font-weight: 500 !important;
+        opacity: 0.9 !important;
     }
     html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] hr:not(.search-52w-range-divider) {
         display: none !important;
