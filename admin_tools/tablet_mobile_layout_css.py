@@ -2059,6 +2059,31 @@ _DESKTOP_FLEX_SPLIT_RULES = """
         max-width: 100% !important;
         box-sizing: border-box !important;
     }
+    /* Empty Streamlit header (collapse chrome already hidden) sits absolute over
+       main content and clips the staging banner. Collapse it on desktop. */
+    [data-testid="stHeader"] {
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        background: transparent !important;
+        border: none !important;
+    }
+    /* Page CSS often sets a huge html font-size; keep the staging banner readable
+       and compact so it does not create a tall band above page titles. */
+    .scoop-env-banner,
+    .scoop-env-banner span {
+        font-size: 14px !important;
+        line-height: 1.35 !important;
+        font-weight: 600 !important;
+    }
+    .scoop-env-banner {
+        padding: 0.4rem 0.75rem !important;
+        margin: 0 0 0.5rem 0 !important;
+        box-sizing: border-box !important;
+    }
 """
 
 # Final desktop sidebar force — beats tab-nav hide + kill-slideout leftovers.
@@ -3928,12 +3953,12 @@ RESPONSIVE_SCREENER_TOP_COMPACT = f"""
 }}
 """ + _MARKET_MOBILE_TABLET_TOGGLE_BOXED + _MOBILE_TABLET_TERMS_CHECKBOX_RESTORE + _MOBILE_TABLET_DARK_MODE_PILL_LAYOUT_FINAL + _MOBILE_TABLET_CONSENT_DISCLAIMER_GAP_FINAL + _MOBILE_TABLET_DARK_MODE_UNBOX_ALWAYS
 
-# Mobile/tablet Terms page: collapse bootstrap gaps before title and divider lines.
+# Desktop Terms page: collapse bootstrap gaps above the title (no large white band).
 _DESKTOP_TERMS_TOP_COMPACT_RULES = """
     html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"],
     html[data-scoop-terms-active="1"] section.main > div,
     html[data-scoop-terms-active="1"] [data-testid="stAppViewContainer"] > section.main {
-        padding-top: 12px !important;
+        padding-top: 0.35rem !important;
     }
     html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {
         gap: 0 !important;
@@ -3956,11 +3981,29 @@ _DESKTOP_TERMS_TOP_COMPACT_RULES = """
         padding: 0 !important;
         overflow: hidden !important;
     }
-    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] style),
-    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stMarkdownContainer"] style) {
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has([data-testid="stMarkdownContainer"] style):not(:has(.scoop-env-banner)):not(:has(.disclaimer-footer)),
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has([data-testid="stMarkdownContainer"] style):not(:has(.scoop-env-banner)):not(:has(.disclaimer-footer)) {
         margin: 0 !important;
         padding: 0 !important;
         min-height: 0 !important;
+    }
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stElementContainer"]:has(.scoop-env-banner),
+    html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] [data-testid="element-container"]:has(.scoop-env-banner) {
+        display: block !important;
+        height: auto !important;
+        min-height: 0 !important;
+        margin: 0 0 0.35rem 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+    html[data-scoop-terms-active="1"] .scoop-env-banner,
+    html[data-scoop-terms-active="1"] .scoop-env-banner span {
+        font-size: 14px !important;
+        line-height: 1.35 !important;
+    }
+    html[data-scoop-terms-active="1"] .scoop-env-banner {
+        margin: 0 0 0.35rem 0 !important;
+        padding: 0.4rem 0.75rem !important;
     }
     html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] hr:not(.search-52w-range-divider) {
         display: none !important;
@@ -3979,7 +4022,7 @@ _DESKTOP_TERMS_TOP_COMPACT_RULES = """
         overflow: hidden !important;
     }
     html[data-scoop-terms-active="1"] [data-testid="stMainBlockContainer"] h1 {
-        margin-top: 0.5rem !important;
+        margin-top: 0.15rem !important;
         margin-bottom: 0.35rem !important;
     }
 """
@@ -3988,9 +4031,8 @@ DESKTOP_TERMS_TOP_COMPACT = f"""
 @media (min-width: 1367px) {{
 {_DESKTOP_TERMS_TOP_COMPACT_RULES}
 }}
-html[data-scoop-desktop-layout="1"][data-scoop-terms-active="1"] {{
-{_DESKTOP_TERMS_TOP_COMPACT_RULES}
-}}
+/* Zoomed desktop: do not nest full html selectors inside another html rule. */
+{_DESKTOP_TERMS_TOP_COMPACT_RULES.replace('html[data-scoop-terms-active="1"]', 'html[data-scoop-desktop-layout="1"][data-scoop-terms-active="1"]')}
 """
 
 _RESPONSIVE_TERMS_TOP_COMPACT_RULES = """
@@ -4557,7 +4599,8 @@ MOBILE_BACK_HOME_BAR = """
         max-width: 100% !important;
         padding-left: 0 !important;
         padding-right: 0 !important;
-        margin: 0.25rem 0 0.35rem 0 !important;
+        margin: 0.25rem 0 0 0 !important;
+        padding-bottom: 0 !important;
         box-sizing: border-box !important;
         pointer-events: auto !important;
     }
@@ -4690,16 +4733,38 @@ MOBILE_BACK_HOME_BAR = """
         min-height: 0 !important;
         word-break: break-word !important;
     }
+    /* Space under Back/Dark mode before market index cards.
+       Spacer lives in the same markdown as the bar — do not zero this margin
+       with a later :has(.scoop-mobile-back-home-spacer) rule.
+       Also cancel Streamlit's negative markdown margin-bottom (-18px) that
+       pulls the index cards up into the button row. */
+    html:not([data-scoop-home-page="1"]) [data-testid="stMarkdownContainer"]:has(.scoop-mobile-back-home-bar) {
+        margin-bottom: 0 !important;
+    }
     html:not([data-scoop-home-page="1"]) [data-testid="stElementContainer"]:has(.scoop-mobile-back-home-bar),
-    html:not([data-scoop-home-page="1"]) [data-testid="element-container"]:has(.scoop-mobile-back-home-bar),
-    html:not([data-scoop-home-page="1"]) [data-testid="stElementContainer"]:has(.scoop-mobile-back-home-spacer),
-    html:not([data-scoop-home-page="1"]) [data-testid="element-container"]:has(.scoop-mobile-back-home-spacer) {
+    html:not([data-scoop-home-page="1"]) [data-testid="element-container"]:has(.scoop-mobile-back-home-bar) {
+        display: block !important;
+        height: auto !important;
+        min-height: 0 !important;
+        overflow: visible !important;
+        margin: 0 0 12px 0 !important;
+        padding: 0 !important;
+    }
+    html:not([data-scoop-home-page="1"]) [data-testid="stElementContainer"]:has(.scoop-mobile-back-home-spacer):not(:has(.scoop-mobile-back-home-bar)),
+    html:not([data-scoop-home-page="1"]) [data-testid="element-container"]:has(.scoop-mobile-back-home-spacer):not(:has(.scoop-mobile-back-home-bar)) {
         display: block !important;
         height: auto !important;
         min-height: 0 !important;
         overflow: visible !important;
         margin: 0 !important;
         padding: 0 !important;
+    }
+    /* Keep index-card markdown from pulling up into the Back/Dark mode row. */
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="stMarkdownContainer"]:has(div[style*="flex-wrap"][style*="margin-bottom"]),
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="stMarkdownContainer"]:has(div[style*="border-left:4px solid"]),
+    html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] [data-testid="stMarkdownContainer"]:has(.scoop-banner-compact) {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
     }
     /* Kill stacked top padding from page CSS on phone/tablet inner pages only. */
     html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"],
