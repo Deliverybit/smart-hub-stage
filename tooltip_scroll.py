@@ -693,26 +693,10 @@ const __scoopApplySidebarExpandedState = (expanded) => {
         layout()?.syncSidebarLayout?.();
         return;
     }
-    if (__scoopIsTabletOnlyViewport()) {
-        const clicked = expanded
-            ? __scoopClickFirstSidebarControl(doc, [
-                  '[data-testid="stHeader"] [data-testid="stExpandSidebarButton"] button',
-                  '[data-testid="stExpandSidebarButton"] button',
-                  '[data-testid="stExpandSidebarButton"]',
-                  '[data-testid="collapsedControl"] button',
-                  '[data-testid="collapsedControl"]',
-              ])
-            : __scoopClickFirstSidebarControl(doc, [
-                  '[data-testid="stHeader"] [data-testid="stSidebarCollapseButton"] button',
-                  'section[data-testid="stSidebar"] [data-testid="stSidebarCollapseButton"] button',
-                  '[data-testid="stSidebarCollapseButton"] button',
-                  '[data-testid="stSidebarCollapseButton"]',
-              ]);
-        if (!clicked) {
-            sidebar.setAttribute("aria-expanded", expanded ? "true" : "false");
-        }
+    // Mobile/tablet: tab nav replaces slideout; never click Streamlit Expand/Collapse.
+    if (__scoopViewportWidth() <= 1366) {
+        sidebar.setAttribute("aria-expanded", "false");
         layout()?.syncSidebarLayout?.();
-        appWin.requestAnimationFrame(() => layout()?.syncSidebarLayout?.());
         return;
     }
     sidebar.setAttribute("aria-expanded", expanded ? "true" : "false");
@@ -1851,27 +1835,8 @@ _RESPONSIVE_SIDEBAR_JS = (
                 if (!expandTarget && !collapseTarget) {
                     return;
                 }
-                if (__scoopIsTabletOnlyViewport()) {
-                    appWin.__scoopResponsiveSidebarUserToggled = true;
-                    appWin.__scoopSuppressSidebarExpand = 0;
-                    if (expandTarget && __scoopIsAnalyzePage()) {
-                        appWin.__scoopAnalyzeSidebarUserOpened = true;
-                    }
-                    __scoopScheduleTabletSidebarLayoutSync();
-                    return;
-                }
                 event.preventDefault();
                 event.stopPropagation();
-                appWin.__scoopResponsiveSidebarUserToggled = true;
-                appWin.__scoopSuppressSidebarExpand = 0;
-                if (expandTarget && __scoopIsAnalyzePage()) {
-                    appWin.__scoopAnalyzeSidebarUserOpened = true;
-                }
-                const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
-                if (!sidebar) {
-                    return;
-                }
-                __scoopApplySidebarExpandedState(!!expandTarget);
             },
             true
         );
@@ -4142,8 +4107,7 @@ def _inject_responsive_bootstrap_css() -> str:
             el.id = id;
             (targetDoc.head || targetDoc.documentElement).appendChild(el);
         }}
-        // Old overlay slideout CSS fights tab-nav; skip it on mobile/tablet.
-        el.textContent = isMobileTablet ? "" : sidebarCss;
+        el.textContent = sidebarCss;
         let tabEl = targetDoc.getElementById(tabId);
         if (!tabEl) {{
             tabEl = targetDoc.createElement("style");
