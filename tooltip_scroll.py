@@ -195,7 +195,7 @@ _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
 
 _GENERIC_TOOLTIP_MOBILE_JS = _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS
 
-GENERIC_TOOLTIP_CSS_VERSION = 27
+GENERIC_TOOLTIP_CSS_VERSION = 30
 GENERIC_TOOLTIP_CSS_KEY = "_scoop_generic_tooltip_css_version"
 
 _DARK_RESPONSIVE_TIP_UNDERLINE_CSS = (
@@ -221,25 +221,41 @@ html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .hl-tip-count 
     + DARK_RESPONSIVE_NAME_VALUE_TIP_UNDERLINE_CSS
 )
 
+# Desktop keeps existing dark outline via dark_mode_css; phone/tablet need a higher-
+# specificity pass after generic tip layout sets border: 1px solid #555.
+# Light mode uses the same green as screener card accents (#22c55e).
 _DARK_POPUP_OUTLINE_CSS = """
-html[data-scoop-theme="dark"] .stMarkdown .tip-wrap .tip-text,
-html[data-scoop-theme="dark"] .tip-wrap .tip-text {
+@media (max-width: 1366px) {
+html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap .tip-text,
+html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text,
+html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip) .tip-text,
+html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
+html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip .tip-text {
     border: 2px solid #ffffff !important;
 }
-html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .tip-text,
-html[data-scoop-theme="dark"] .full-results-wrap .tip-wrap.headlines-tip .tip-text {
-    border: 2px solid #ffffff !important;
-}
-html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .tip-text .hl-tip-heading,
-html[data-scoop-theme="dark"] .full-results-wrap .tip-wrap.headlines-tip .tip-text .hl-tip-heading {
+html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip .tip-text .hl-tip-heading,
+html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text .hl-tip-heading {
     border: 2px solid #ffffff !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.45) !important;
 }
-html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll,
-html[data-scoop-theme="dark"] .full-results-wrap .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll {
+html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll,
+html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll {
     border-left: 2px solid #ffffff !important;
     border-right: 2px solid #ffffff !important;
     border-bottom: 2px solid #ffffff !important;
+}
+html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap .tip-text,
+html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text,
+html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip) .tip-text,
+html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
+html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip .tip-text,
+html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap .tip-text,
+html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text,
+html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip) .tip-text,
+html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
+html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip .tip-text {
+    border: 2px solid #22c55e !important;
+}
 }
 """
 
