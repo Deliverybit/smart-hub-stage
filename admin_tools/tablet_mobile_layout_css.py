@@ -4016,12 +4016,39 @@ _MOBILE_TABLET_DARK_MODE_UNBOX_ALWAYS = f"""
 }}
 """
 
+# Phone only: index cards must span the content width (inline max-width:50% is for
+# desktop/tablet side-by-side rows). Do not require screener-active — gated consent
+# views on real phones were left at half-width when that attribute was missing.
+_MOBILE_INDEX_BANNER_FULL_WIDTH = """
+@media (max-width: 768px) {
+    .scoop-banner-compact,
+    [data-testid="stMarkdownContainer"] div:has(> .scoop-index-card) {
+        display: flex !important;
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        gap: 1rem !important;
+    }
+    .scoop-index-card,
+    .scoop-banner-compact > div,
+    [data-testid="stMarkdownContainer"] div:has(> .scoop-index-card) > .scoop-index-card {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+}
+"""
+
 RESPONSIVE_SCREENER_TOP_COMPACT = f"""
 @media (max-width: 1366px) {{
 {_RESPONSIVE_SCREENER_TOP_COMPACT_RULES}
 {_MOBILE_SCREENER_TOGGLE_BANNER_GAP_FINAL}
 }}
-""" + _MARKET_MOBILE_TABLET_TOGGLE_BOXED + _MOBILE_TABLET_TERMS_CHECKBOX_RESTORE + _MOBILE_TABLET_DARK_MODE_PILL_LAYOUT_FINAL + _MOBILE_TABLET_CONSENT_DISCLAIMER_GAP_FINAL + _MOBILE_TABLET_DARK_MODE_UNBOX_ALWAYS
+""" + _MOBILE_INDEX_BANNER_FULL_WIDTH + _MARKET_MOBILE_TABLET_TOGGLE_BOXED + _MOBILE_TABLET_TERMS_CHECKBOX_RESTORE + _MOBILE_TABLET_DARK_MODE_PILL_LAYOUT_FINAL + _MOBILE_TABLET_CONSENT_DISCLAIMER_GAP_FINAL + _MOBILE_TABLET_DARK_MODE_UNBOX_ALWAYS
 
 # Desktop Terms page: collapse bootstrap gaps above the title (no large white band).
 _DESKTOP_TERMS_TOP_COMPACT_RULES = """

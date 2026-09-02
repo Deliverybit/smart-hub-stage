@@ -4321,7 +4321,7 @@ def _banner_card(label, price, chg, prefix="$"):
     c = "#22c55e" if chg >= 0 else "#ef4444"
     a = "▲" if chg >= 0 else "▼"
     return (
-        f'<div style="flex:1;min-width:220px;max-width:50%;background:linear-gradient(135deg,#1e293b,#0f172a);'
+        f'<div class="scoop-index-card" style="flex:1;min-width:220px;max-width:50%;background:linear-gradient(135deg,#1e293b,#0f172a);'
         f'border:1px solid #334155;border-left:4px solid {c};border-radius:12px;'
         f'padding:1.2rem 1.8rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">'
         f'<span style="font-size:1.4rem;color:#e2e8f0;font-weight:500;">{label}</span>'
