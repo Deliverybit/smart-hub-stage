@@ -148,44 +148,241 @@ _RESPONSIVE_GENERIC_TOOLTIP_CSS = f"""
 
 _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
 (() => {
-    const VERSION = 7;
-    if (window.__scoopGenericTooltipBindVersion === VERSION) {
+    const VERSION = 9;
+    let appDoc = document;
+    let appWin = window;
+    try {
+        if (window.parent && window.parent !== window && window.parent.document) {
+            appDoc = window.parent.document;
+            appWin = window.parent;
+        }
+    } catch (e) {
+        appDoc = document;
+        appWin = window;
+    }
+    if (appWin.__scoopGenericTooltipBindVersion === VERSION) {
         return;
     }
-    window.__scoopGenericTooltipBindVersion = VERSION;
+    appWin.__scoopGenericTooltipBindVersion = VERSION;
+
+    const DESKTOP_MIN = 1367;
+    const OPEN_CLASS = "scoop-desktop-name-tip-open";
+    const TIP_CLEAR_PROPS = [
+        "position",
+        "left",
+        "top",
+        "right",
+        "bottom",
+        "transform",
+        "width",
+        "max-width",
+        "min-width",
+        "max-height",
+        "overflow-y",
+        "visibility",
+        "opacity",
+        "margin-left",
+        "z-index",
+        "pointer-events",
+        "--tip-center-x",
+        "--tip-center-y",
+        "--tip-fixed-width",
+        "--tip-fixed-max-height",
+        "--scoop-mobile-tip-top",
+        "--scoop-se-name-tip-top",
+    ];
+    const isDesktop = () => (appWin.innerWidth || 0) >= DESKTOP_MIN;
+
+    const isDesktopNameTip = (wrap) => {
+        if (!wrap || !wrap.classList || wrap.classList.contains("headlines-tip")) {
+            return false;
+        }
+        if (wrap.classList.contains("scoop-name-tip")) {
+            return true;
+        }
+        const td = wrap.closest(
+            'td[data-label="Company"], td[data-label="Name"], td[data-label="Commodity"]'
+        );
+        return !!(td && wrap.closest(".fr-val"));
+    };
+
+    const clearDesktopNameTipLayout = (wrap) => {
+        wrap.classList.remove(OPEN_CLASS);
+        const tip = wrap.querySelector(":scope > .tip-text");
+        if (!tip) {
+            return;
+        }
+        TIP_CLEAR_PROPS.forEach((prop) => tip.style.removeProperty(prop));
+    };
 
     const resetGenericTooltips = () => {
-        document.querySelectorAll(".tip-wrap:not(.headlines-tip)").forEach((wrap) => {
-            wrap.classList.remove("generic-tip-open", "scoop-mobile-tip-open");
+        appDoc.querySelectorAll(".tip-wrap:not(.headlines-tip)").forEach((wrap) => {
+            wrap.classList.remove("generic-tip-open", "scoop-mobile-tip-open", OPEN_CLASS);
             const tip = wrap.querySelector(":scope > .tip-text");
             if (!tip) {
                 return;
             }
-            [
-                "position",
-                "left",
-                "top",
-                "right",
-                "bottom",
-                "transform",
-                "width",
-                "max-width",
-                "min-width",
-                "max-height",
-                "overflow-y",
-                "visibility",
-                "--tip-center-x",
-                "--tip-center-y",
-                "--tip-fixed-width",
-                "--tip-fixed-max-height",
-                "--scoop-mobile-tip-top",
-                "--scoop-se-name-tip-top",
-            ].forEach((prop) => tip.style.removeProperty(prop));
+            TIP_CLEAR_PROPS.forEach((prop) => tip.style.removeProperty(prop));
+        });
+    };
+
+    const getDesktopLayoutParts = () => {
+        const view = appDoc.querySelector('[data-testid="stAppViewContainer"]');
+        const sidebar = appDoc.querySelector('section[data-testid="stSidebar"]');
+        if (!view) {
+            return { view: null, sidebar: null, main: null };
+        }
+        const main = [...view.children].find(
+            (child) => child.getAttribute("data-testid") !== "stSidebar"
+        );
+        return { view, sidebar: sidebar || null, main: main || null };
+    };
+
+    // Fixed positioning escapes column overflow clipping under the sidebar.
+    const positionDesktopNameTip = (wrap) => {
+        const tip = wrap.querySelector(":scope > .tip-text");
+        if (!tip || !isDesktop() || !wrap.classList.contains(OPEN_CLASS)) {
+            return;
+        }
+        const { sidebar } = getDesktopLayoutParts();
+        const gap = 10;
+        const sbRight = sidebar ? sidebar.getBoundingClientRect().right : 0;
+        const viewRight = Math.max(
+            sbRight + 120,
+            Math.min(
+                appWin.innerWidth - gap,
+                (appDoc.documentElement && appDoc.documentElement.clientWidth) || appWin.innerWidth
+            ) - gap
+        );
+        const maxWidth = Math.max(220, Math.min(700, viewRight - (sbRight + gap)));
+
+        tip.style.setProperty("position", "fixed", "important");
+        tip.style.setProperty("visibility", "visible", "important");
+        tip.style.setProperty("opacity", "1", "important");
+        tip.style.setProperty("pointer-events", "auto", "important");
+        tip.style.setProperty("z-index", "2147483000", "important");
+        tip.style.setProperty("bottom", "auto", "important");
+        tip.style.setProperty("right", "auto", "important");
+        tip.style.setProperty("transform", "none", "important");
+        tip.style.setProperty("max-width", `${Math.round(maxWidth)}px`, "important");
+        tip.style.setProperty("min-width", `${Math.min(360, Math.round(maxWidth))}px`, "important");
+        tip.style.setProperty("width", "max-content", "important");
+        tip.style.setProperty("left", "0px", "important");
+        tip.style.setProperty("top", "0px", "important");
+
+        const anchor = wrap.getBoundingClientRect();
+        const tipRect = tip.getBoundingClientRect();
+        const width = Math.max(tipRect.width || 0, Math.min(360, maxWidth));
+        const height = tipRect.height || 72;
+
+        let left = anchor.left + anchor.width / 2 - width / 2;
+        let top = anchor.top - height - 12;
+        if (left < sbRight + gap) {
+            left = sbRight + gap;
+        }
+        if (left + width > viewRight) {
+            left = Math.max(sbRight + gap, viewRight - width);
+        }
+        if (top < gap) {
+            top = Math.min(appWin.innerHeight - height - gap, anchor.bottom + 12);
+        }
+
+        tip.style.setProperty("left", `${Math.round(left)}px`, "important");
+        tip.style.setProperty("top", `${Math.round(top)}px`, "important");
+        tip.style.setProperty("width", `${Math.round(width)}px`, "important");
+    };
+
+    const openDesktopNameTip = (wrap) => {
+        if (!isDesktop() || !isDesktopNameTip(wrap)) {
+            return;
+        }
+        appDoc.querySelectorAll(`.tip-wrap.${OPEN_CLASS}`).forEach((other) => {
+            if (other !== wrap) {
+                clearDesktopNameTipLayout(other);
+            }
+        });
+        wrap.classList.add(OPEN_CLASS);
+        appWin.requestAnimationFrame(() => {
+            positionDesktopNameTip(wrap);
+            appWin.requestAnimationFrame(() => positionDesktopNameTip(wrap));
+        });
+    };
+
+    const closeDesktopNameTip = (wrap) => {
+        if (!wrap || !wrap.classList.contains(OPEN_CLASS)) {
+            return;
+        }
+        clearDesktopNameTipLayout(wrap);
+    };
+
+    const bindDesktopNameTips = () => {
+        if (appDoc.documentElement.dataset.scoopDesktopNameTipBound === String(VERSION)) {
+            return;
+        }
+        appDoc.documentElement.dataset.scoopDesktopNameTipBound = String(VERSION);
+        appDoc.addEventListener(
+            "mouseover",
+            (event) => {
+                if (!isDesktop()) {
+                    return;
+                }
+                const raw = event.target;
+                const el = raw && raw.nodeType === 1 ? raw : raw && raw.parentElement;
+                if (!el || typeof el.closest !== "function") {
+                    return;
+                }
+                const wrap = el.closest(".tip-wrap:not(.headlines-tip)");
+                if (!wrap || !isDesktopNameTip(wrap)) {
+                    return;
+                }
+                openDesktopNameTip(wrap);
+            },
+            true
+        );
+        appDoc.addEventListener(
+            "mouseout",
+            (event) => {
+                const raw = event.target;
+                const el = raw && raw.nodeType === 1 ? raw : raw && raw.parentElement;
+                if (!el || typeof el.closest !== "function") {
+                    return;
+                }
+                const wrap = el.closest(".tip-wrap:not(.headlines-tip)");
+                if (!wrap || !wrap.classList.contains(OPEN_CLASS)) {
+                    return;
+                }
+                const related = event.relatedTarget;
+                if (related && typeof related.nodeType === "number") {
+                    if (wrap.contains(related)) {
+                        return;
+                    }
+                }
+                closeDesktopNameTip(wrap);
+            },
+            true
+        );
+        appWin.addEventListener(
+            "scroll",
+            () => {
+                if (!isDesktop()) {
+                    return;
+                }
+                appDoc.querySelectorAll(`.tip-wrap.${OPEN_CLASS}`).forEach(positionDesktopNameTip);
+            },
+            true
+        );
+        appWin.addEventListener("resize", () => {
+            if (!isDesktop()) {
+                appDoc.querySelectorAll(`.tip-wrap.${OPEN_CLASS}`).forEach(closeDesktopNameTip);
+                return;
+            }
+            appDoc.querySelectorAll(`.tip-wrap.${OPEN_CLASS}`).forEach(positionDesktopNameTip);
         });
     };
 
     resetGenericTooltips();
-    window.__scoopGenericTooltipApi = {
+    bindDesktopNameTips();
+    appWin.__scoopGenericTooltipApi = {
         positionGenericTooltip: () => {},
         scheduleGenericTooltipPosition: () => {},
         repositionVisibleGenericTooltips: resetGenericTooltips,
@@ -195,7 +392,7 @@ _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
 
 _GENERIC_TOOLTIP_MOBILE_JS = _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS
 
-GENERIC_TOOLTIP_CSS_VERSION = 30
+GENERIC_TOOLTIP_CSS_VERSION = 32
 GENERIC_TOOLTIP_CSS_KEY = "_scoop_generic_tooltip_css_version"
 
 _DARK_RESPONSIVE_TIP_UNDERLINE_CSS = (
@@ -503,6 +700,26 @@ _DESKTOP_TOOLTIP_TYPE_CSS = """
     .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text .hl-tip-line a {
         font-size: 1.25rem !important;
         line-height: 1.55 !important;
+    }
+
+    /*
+     * Desktop name tips: JS sets .scoop-desktop-name-tip-open and positions the
+     * popup with position:fixed so column overflow / sidebar stacking cannot clip it.
+     */
+    html body .stApp [data-testid="stAppViewContainer"] .tip-wrap.scoop-desktop-name-tip-open .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .tip-wrap.scoop-name-tip.scoop-desktop-name-tip-open .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap.scoop-desktop-name-tip-open .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap.scoop-desktop-name-tip-open .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap.scoop-desktop-name-tip-open .tip-text {
+        position: fixed !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        z-index: 2147483000 !important;
+        transform: none !important;
+        bottom: auto !important;
+        right: auto !important;
+        margin: 0 !important;
     }
 }
 """
@@ -4066,6 +4283,7 @@ _COMBINED_PAGE_JS = (
     + _RESPONSIVE_SIDEBAR_JS
     + _ANALYZE_RETURN_NAV_JS
     + _DESKTOP_SIDEBAR_JS
+    + _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS
 )
 
 _RESPONSIVE_LAYOUT_SCRIPTS = (
@@ -4277,7 +4495,7 @@ def _inject_responsive_bootstrap_css() -> str:
 BOOTSTRAP_INSTALLED_KEY = "_scoop_responsive_bootstrap_installed"
 BOOTSTRAP_SCRIPT_VERSION = 10
 TOOLTIP_INSTALLED_KEY = "_scoop_tooltip_scroll_installed"
-TOOLTIP_SCRIPT_VERSION = 68
+TOOLTIP_SCRIPT_VERSION = 70
 SIDEBAR_HANDLER_INSTALLED_KEY = "_scoop_responsive_sidebar_handler_v3"
 
 
@@ -4348,10 +4566,11 @@ def _inject_tablet_hl_heading_color_css() -> None:
 
 def _inject_desktop_headlines_css() -> None:
     """Always inject desktop Headlines count styling (survives tooltip handler early return)."""
-    st.markdown(
+    # st.html keeps complex :has() / attribute selectors; st.markdown can truncate them.
+    st.html(
         f"<style id='scoop-desktop-headlines-css'>{_DESKTOP_HEADLINES_CSS}</style>"
         f"<style id='scoop-desktop-tooltip-type-css'>{_DESKTOP_TOOLTIP_TYPE_CSS}</style>",
-        unsafe_allow_html=True,
+        unsafe_allow_javascript=True,
     )
 
 
@@ -5356,7 +5575,7 @@ def install_tooltip_scroll_handler() -> None:
         unsafe_allow_javascript=True,
     )
     # Chunked: a single giant <script> is dropped by Streamlit; tablet tips never bind.
-    _inject_js_source(_COMBINED_PAGE_JS, key="combined-page-v68")
+    _inject_js_source(_COMBINED_PAGE_JS, key="combined-page-v70")
     inject_desktop_sidebar_nav_market()
     inject_desktop_tablet_disclaimer_flow()
     st.session_state[TOOLTIP_INSTALLED_KEY] = TOOLTIP_SCRIPT_VERSION
@@ -5364,6 +5583,11 @@ def install_tooltip_scroll_handler() -> None:
     inject_dark_mode_styles()
     _inject_tablet_hl_heading_color_css()
     install_page_layout_resync()
+    # Dedicated inject so desktop name-tip fixed positioning always binds.
+    st.html(
+        f"<script id='scoop-desktop-name-tip-js'>{_GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS}</script>",
+        unsafe_allow_javascript=True,
+    )
     st.html(
         f"<style id='scoop-streamlit-chrome-hide'>{EARLY_STREAMLIT_CHROME_HIDE}</style>",
         unsafe_allow_javascript=True,

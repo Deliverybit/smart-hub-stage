@@ -3146,7 +3146,7 @@ else:
                     badge = "📉 NEAR 52W LOW"
                 st.markdown(
                     f'<div style="font-size:1.5rem;line-height:1.8;">'
-                    f'<span class="tip-wrap" style="font-weight:700;">'
+                    f'<span class="tip-wrap scoop-name-tip" style="font-weight:700;">'
                     f'{row["Name"]}<span class="tip-text">{tip}</span></span><br>'
                     f'52W Low: <b style="color:#22c55e;">{_format_crypto_price(row["52W Low"])}</b> · '
                     f'52W High: <b>{_format_crypto_price(row["52W High"])}</b><br>'

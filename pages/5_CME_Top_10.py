@@ -3056,7 +3056,7 @@ else:
                     badge = "📉 NEAR 52W LOW"
                 st.markdown(
                     f'<div style="font-size:1.5rem;line-height:1.8;">'
-                    f'<span class="tip-wrap" style="font-weight:700;">'
+                    f'<span class="tip-wrap scoop-name-tip" style="font-weight:700;">'
                     f'{row["Commodity"]}<span class="tip-text">{tip}</span></span><br>'
                     f'52W Low: <b style="color:#22c55e;">${row["52W Low"]:,.2f}</b> · '
                     f'52W High: <b>${row["52W High"]:,.2f}</b><br>'
