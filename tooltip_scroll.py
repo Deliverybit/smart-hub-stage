@@ -148,7 +148,7 @@ _RESPONSIVE_GENERIC_TOOLTIP_CSS = f"""
 
 _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
 (() => {
-    const VERSION = 9;
+    const VERSION = 10;
     let appDoc = document;
     let appWin = window;
     try {
@@ -239,22 +239,21 @@ _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
     };
 
     // Fixed positioning escapes column overflow clipping under the sidebar.
+    // First-column tips (CME/Crypto/etc.) are pinned just right of the nav, like NASDAQ.
     const positionDesktopNameTip = (wrap) => {
         const tip = wrap.querySelector(":scope > .tip-text");
         if (!tip || !isDesktop() || !wrap.classList.contains(OPEN_CLASS)) {
             return;
         }
         const { sidebar } = getDesktopLayoutParts();
-        const gap = 10;
+        const gap = 12;
         const sbRight = sidebar ? sidebar.getBoundingClientRect().right : 0;
-        const viewRight = Math.max(
-            sbRight + 120,
+        const viewRight =
             Math.min(
                 appWin.innerWidth - gap,
                 (appDoc.documentElement && appDoc.documentElement.clientWidth) || appWin.innerWidth
-            ) - gap
-        );
-        const maxWidth = Math.max(220, Math.min(700, viewRight - (sbRight + gap)));
+            ) - gap;
+        const maxWidth = Math.max(220, Math.min(420, viewRight - (sbRight + gap)));
 
         tip.style.setProperty("position", "fixed", "important");
         tip.style.setProperty("visibility", "visible", "important");
@@ -265,24 +264,30 @@ _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
         tip.style.setProperty("right", "auto", "important");
         tip.style.setProperty("transform", "none", "important");
         tip.style.setProperty("max-width", `${Math.round(maxWidth)}px`, "important");
-        tip.style.setProperty("min-width", `${Math.min(360, Math.round(maxWidth))}px`, "important");
-        tip.style.setProperty("width", "max-content", "important");
-        tip.style.setProperty("left", "0px", "important");
+        tip.style.setProperty("min-width", "0", "important");
+        tip.style.setProperty("width", "auto", "important");
+        tip.style.setProperty("left", `${Math.round(sbRight + gap)}px`, "important");
         tip.style.setProperty("top", "0px", "important");
+        tip.style.setProperty("box-sizing", "border-box", "important");
 
         const anchor = wrap.getBoundingClientRect();
-        const tipRect = tip.getBoundingClientRect();
-        const width = Math.max(tipRect.width || 0, Math.min(360, maxWidth));
+        // Measure natural size at a safe left, then place.
+        tip.style.setProperty("width", "max-content", "important");
+        let tipRect = tip.getBoundingClientRect();
+        let width = Math.min(Math.max(tipRect.width || 280, 200), maxWidth);
+        tip.style.setProperty("width", `${Math.round(width)}px`, "important");
+        tipRect = tip.getBoundingClientRect();
         const height = tipRect.height || 72;
 
+        // Center on the name when there is room; otherwise pin to sidebar edge (col 1).
         let left = anchor.left + anchor.width / 2 - width / 2;
-        let top = anchor.top - height - 12;
         if (left < sbRight + gap) {
             left = sbRight + gap;
         }
         if (left + width > viewRight) {
             left = Math.max(sbRight + gap, viewRight - width);
         }
+        let top = anchor.top - height - 12;
         if (top < gap) {
             top = Math.min(appWin.innerHeight - height - gap, anchor.bottom + 12);
         }
@@ -302,6 +307,7 @@ _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
             }
         });
         wrap.classList.add(OPEN_CLASS);
+        positionDesktopNameTip(wrap);
         appWin.requestAnimationFrame(() => {
             positionDesktopNameTip(wrap);
             appWin.requestAnimationFrame(() => positionDesktopNameTip(wrap));
@@ -392,7 +398,7 @@ _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
 
 _GENERIC_TOOLTIP_MOBILE_JS = _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS
 
-GENERIC_TOOLTIP_CSS_VERSION = 32
+GENERIC_TOOLTIP_CSS_VERSION = 33
 GENERIC_TOOLTIP_CSS_KEY = "_scoop_generic_tooltip_css_version"
 
 _DARK_RESPONSIVE_TIP_UNDERLINE_CSS = (
@@ -418,16 +424,15 @@ html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .hl-tip-count 
     + DARK_RESPONSIVE_NAME_VALUE_TIP_UNDERLINE_CSS
 )
 
-# Desktop keeps existing dark outline via dark_mode_css; phone/tablet need a higher-
-# specificity pass after generic tip layout sets border: 1px solid #555.
-# Light mode uses the same green as screener card accents (#22c55e).
+# Tip popup outlines: same on phone/tablet/desktop.
+# Light/normal: green (#22c55e). Dark: white. Beats page `border: 1px solid #555`.
 _DARK_POPUP_OUTLINE_CSS = """
-@media (max-width: 1366px) {
 html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap .tip-text,
 html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text,
 html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip) .tip-text,
 html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
-html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip .tip-text {
+html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip .tip-text,
+html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown [data-testid="stHorizontalBlock"] .tip-wrap:not(.headlines-tip) .tip-text {
     border: 2px solid #ffffff !important;
 }
 html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip .tip-text .hl-tip-heading,
@@ -446,13 +451,14 @@ html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer
 html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip) .tip-text,
 html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
 html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip .tip-text,
+html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown [data-testid="stHorizontalBlock"] .tip-wrap:not(.headlines-tip) .tip-text,
 html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap .tip-text,
 html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text,
 html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap:not(.headlines-tip) .tip-text,
 html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
-html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip .tip-text {
+html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.headlines-tip .tip-text,
+html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown [data-testid="stHorizontalBlock"] .tip-wrap:not(.headlines-tip) .tip-text {
     border: 2px solid #22c55e !important;
-}
 }
 """
 
@@ -703,11 +709,25 @@ _DESKTOP_TOOLTIP_TYPE_CSS = """
     }
 
     /*
-     * Desktop name tips: JS sets .scoop-desktop-name-tip-open and positions the
-     * popup with position:fixed so column overflow / sidebar stacking cannot clip it.
+     * Desktop name tips: never show via absolute CSS hover (clips under sidebar on
+     * column-1 CME/Crypto/etc.). Only JS .scoop-desktop-name-tip-open + fixed pos.
      */
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.scoop-name-tip:not(.scoop-desktop-name-tip-open):hover .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.scoop-name-tip:not(.scoop-desktop-name-tip-open) .tip-text:hover,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-desktop-name-tip-open):hover .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-desktop-name-tip-open) .tip-text:hover,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-desktop-name-tip-open):hover .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-desktop-name-tip-open) .tip-text:hover,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-desktop-name-tip-open):hover .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-desktop-name-tip-open) .tip-text:hover {
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
     html body .stApp [data-testid="stAppViewContainer"] .tip-wrap.scoop-desktop-name-tip-open .tip-text,
     html body .stApp [data-testid="stAppViewContainer"] .tip-wrap.scoop-name-tip.scoop-desktop-name-tip-open .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .tip-wrap.scoop-desktop-name-tip-open:hover .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .tip-wrap.scoop-desktop-name-tip-open .tip-text:hover,
     html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap.scoop-desktop-name-tip-open .tip-text,
     html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap.scoop-desktop-name-tip-open .tip-text,
     html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap.scoop-desktop-name-tip-open .tip-text {
@@ -720,6 +740,17 @@ _DESKTOP_TOOLTIP_TYPE_CSS = """
         bottom: auto !important;
         right: auto !important;
         margin: 0 !important;
+    }
+    /* Match mobile/tablet tip outlines on desktop. */
+    html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap .tip-text,
+    html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text,
+    html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap .tip-text,
+    html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text {
+        border: 2px solid #22c55e !important;
+    }
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap .tip-text,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text {
+        border: 2px solid #ffffff !important;
     }
 }
 """
@@ -4495,7 +4526,7 @@ def _inject_responsive_bootstrap_css() -> str:
 BOOTSTRAP_INSTALLED_KEY = "_scoop_responsive_bootstrap_installed"
 BOOTSTRAP_SCRIPT_VERSION = 10
 TOOLTIP_INSTALLED_KEY = "_scoop_tooltip_scroll_installed"
-TOOLTIP_SCRIPT_VERSION = 70
+TOOLTIP_SCRIPT_VERSION = 71
 SIDEBAR_HANDLER_INSTALLED_KEY = "_scoop_responsive_sidebar_handler_v3"
 
 
@@ -5575,7 +5606,7 @@ def install_tooltip_scroll_handler() -> None:
         unsafe_allow_javascript=True,
     )
     # Chunked: a single giant <script> is dropped by Streamlit; tablet tips never bind.
-    _inject_js_source(_COMBINED_PAGE_JS, key="combined-page-v70")
+    _inject_js_source(_COMBINED_PAGE_JS, key="combined-page-v71")
     inject_desktop_sidebar_nav_market()
     inject_desktop_tablet_disclaimer_flow()
     st.session_state[TOOLTIP_INSTALLED_KEY] = TOOLTIP_SCRIPT_VERSION
