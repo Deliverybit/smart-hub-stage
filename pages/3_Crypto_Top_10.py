@@ -29,6 +29,7 @@ from screener_selection import (
 from screener_table import ANALYZE_COLUMN_TIP, analyze_link_html, build_source_ticker_map
 from landing_page import render_responsive_navigation
 from tooltip_scroll import install_tooltip_scroll_handler
+from desktop_headlines_dismiss import inject_desktop_headlines_dismiss
 import html
 
 # ── Page config ───────────────────────────────────────────────────────
@@ -330,6 +331,8 @@ st.markdown(
             pointer-events: auto !important;
             display: flex !important;
             flex-direction: column !important;
+            top: var(--hl-fixed-top, 100px) !important;
+            left: var(--hl-fixed-left) !important;
             background: #111827 !important;
             border: 1px solid #334155 !important;
             border-radius: 8px !important;
@@ -338,6 +341,12 @@ st.markdown(
             overscroll-behavior: contain !important;
             touch-action: pan-y !important;
             transition: none !important;
+        }
+        html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text,
+        html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text,
+        html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text,
+        html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text {
+            border: 2px solid #22c55e !important;
         }
         .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll {
             flex: 1 1 0 !important;
@@ -3364,3 +3373,4 @@ if not agreed:
     sync_screener_gating_layout(st, gated=True)
 
 install_tooltip_scroll_handler()
+inject_desktop_headlines_dismiss()

@@ -548,13 +548,22 @@ _DESKTOP_HEADLINES_CSS = """
         box-sizing: border-box !important;
     }
     .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text,
-    .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text {
+    .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text {
         visibility: visible !important;
         opacity: 1 !important;
         pointer-events: auto !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: stretch !important;
+        position: fixed !important;
+        /* Stay in the desktop slot even if positioning JS is in an iframe. */
+        top: var(--hl-fixed-top, 100px) !important;
+        left: var(--hl-fixed-left) !important;
+        right: auto !important;
+        bottom: auto !important;
+        transform: none !important;
         background: #111827 !important;
         border: 1px solid #334155 !important;
         border-radius: 8px !important;
@@ -565,6 +574,14 @@ _DESKTOP_HEADLINES_CSS = """
         overscroll-behavior: contain !important;
         touch-action: pan-y !important;
         transition: none !important;
+        z-index: 100020 !important;
+    }
+    /* Desktop normal/light only: same green outline as other tooltips. */
+    html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text,
+    html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text,
+    html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text,
+    html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text {
+        border: 2px solid #22c55e !important;
     }
     .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .hl-tip-heading {
         flex: 0 0 auto !important;
@@ -586,7 +603,7 @@ _DESKTOP_HEADLINES_CSS = """
         white-space: normal !important;
     }
     .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll {
-        flex: 1 1 0 !important;
+        flex: 1 1 auto !important;
         display: block !important;
         min-height: 0 !important;
         max-height: none !important;
@@ -627,8 +644,8 @@ _DESKTOP_HEADLINES_CSS = """
     .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text::after {
         display: none !important;
     }
-    html.scoop-tooltip-scrolling .full-results-wrap .tip-wrap.headlines-tip:not(.hl-tip-desktop-open) .tip-text,
-    body.scoop-tooltip-scrolling .full-results-wrap .tip-wrap.headlines-tip:not(.hl-tip-desktop-open) .tip-text {
+    html.scoop-tooltip-scrolling .full-results-wrap .tip-wrap.headlines-tip:not(.hl-tip-desktop-open):not(:has(.hl-tip-cb:checked)) .tip-text,
+    body.scoop-tooltip-scrolling .full-results-wrap .tip-wrap.headlines-tip:not(.hl-tip-desktop-open):not(:has(.hl-tip-cb:checked)) .tip-text {
         visibility: hidden !important;
         opacity: 0 !important;
         pointer-events: none !important;
@@ -639,24 +656,55 @@ _DESKTOP_HEADLINES_CSS = """
         display: flex !important;
         flex-direction: column !important;
         position: fixed !important;
+        top: var(--hl-fixed-top, 100px) !important;
+        left: var(--hl-fixed-left) !important;
         overflow: hidden !important;
         touch-action: pan-y !important;
         height: var(--hl-fixed-height, auto) !important;
         max-height: var(--hl-fixed-max-height, var(--hl-pop-h)) !important;
         width: var(--hl-fixed-width, var(--hl-pop-w)) !important;
         max-width: var(--hl-fixed-width, var(--hl-pop-w)) !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
     .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll,
-    .stMarkdown .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text .headlines-tip-scroll {
-        flex: 1 1 0 !important;
-        min-height: 0 !important;
+    .stMarkdown .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text .headlines-tip-scroll,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text .headlines-tip-scroll {
+        flex: 1 1 auto !important;
+        min-height: 4.5rem !important;
         overflow-x: hidden !important;
         overflow-y: auto !important;
+        visibility: visible !important;
+        opacity: 1 !important;
         max-height: var(--hl-scroll-max-height, none) !important;
         scrollbar-width: none !important;
         scrollbar-gutter: auto !important;
         pointer-events: auto !important;
         touch-action: pan-y !important;
+    }
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-list,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text .headlines-tip-list,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-line,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text .hl-tip-line,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-line a,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text .hl-tip-line a {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        pointer-events: auto !important;
+    }
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-line,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text .hl-tip-line {
+        color: #ffffff !important;
+    }
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-line a,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text .hl-tip-line a {
+        color: #93c5fd !important;
+        text-decoration: underline !important;
     }
     .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll::-webkit-scrollbar,
     .stMarkdown .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text .headlines-tip-scroll::-webkit-scrollbar {
@@ -751,6 +799,12 @@ _DESKTOP_TOOLTIP_TYPE_CSS = """
     html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap .tip-text,
     html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap:not(.headlines-tip) .tip-text {
         border: 2px solid #ffffff !important;
+    }
+    html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text,
+    html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text,
+    html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text,
+    html[data-scoop-theme="light"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text {
+        border: 2px solid #22c55e !important;
     }
 }
 """
@@ -2260,6 +2314,7 @@ _TOOLTIP_SCROLL_JS = """
     const DESKTOP_HEADLINES_WIDTH_TRIM = 70;
     const DESKTOP_HEADLINES_TOP = 100;
     const DESKTOP_HEADLINES_ANCHOR_GAP = 10;
+    const DESKTOP_HEADLINES_ABOVE_HEADING = 30;
     // Phone tips: ≤743. iPad Mini (744–768) + tablet (769–1366) use beside-row tips.
     const MOBILE_GENERIC_TIP_MAX = 743;
     const TABLET_GENERIC_TIP_MIN = 744;
@@ -2514,10 +2569,22 @@ _TOOLTIP_SCROLL_JS = """
             document.body.classList.add(className);
             return;
         }
-        if (
-            isDesktopHeadlinesSessionOpen() ||
-            isPhoneMobileHeadlinesOpen()
-        ) {
+        if (isDesktopLayoutViewport() && isDesktopHeadlinesSessionOpen()) {
+            if (event && isInsideDesktopHeadlinesPopup(event.target)) {
+                root.classList.remove(className);
+                document.body.classList.remove(className);
+                return;
+            }
+            document
+                .querySelectorAll(
+                    ".full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open, .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked)"
+                )
+                .forEach((wrap) => hideDesktopHeadlines(wrap));
+            root.classList.remove(className);
+            document.body.classList.remove(className);
+            return;
+        }
+        if (isPhoneMobileHeadlinesOpen()) {
             root.classList.remove(className);
             document.body.classList.remove(className);
             return;
@@ -2785,35 +2852,28 @@ _TOOLTIP_SCROLL_JS = """
 
     const getTableHeaderColumnRect = (pattern) => {
         const header = [...document.querySelectorAll(".full-results-wrap .full-results-table thead th")].find(
-            (th) => pattern.test((th.textContent || "").trim())
+            (th) => {
+                const t = (th.textContent || "").replace(/\s+/g, " ").trim();
+                if (pattern === "headlines-col") {
+                    return t.startsWith("Headlines") && !t.startsWith("Headline ");
+                }
+                return pattern.test(t);
+            }
         );
         return header ? header.getBoundingClientRect() : null;
     };
 
     const getHeadlinesColumnRect = () => {
-        return getTableHeaderColumnRect(/Headlines/i);
+        return getTableHeaderColumnRect("headlines-col");
     };
 
     const getDesktopHeadlinesPanelRect = () => {
-        const marketMood = getTableHeaderColumnRect(/Market\\s*Mood/i);
-        const headlineSentiment = getTableHeaderColumnRect(/Headline\\s*Sentiment/i);
-        if (marketMood && headlineSentiment) {
-            const left = Math.min(marketMood.left, headlineSentiment.left);
-            const right = Math.max(marketMood.right, headlineSentiment.right);
-            return {
-                left,
-                right,
-                width: Math.max(DESKTOP_HEADLINES_MIN_WIDTH, right - left),
-            };
-        }
-
         const headlinesCol = getHeadlinesColumnRect();
         if (headlinesCol) {
-            const width = Math.max(280, headlinesCol.width * 2.5);
+            const width = Math.max(280, Math.min(21 * 16, window.innerWidth * 0.36));
             const left = headlinesCol.right + HEADLINES_DESKTOP_OFFSET;
             return { left, right: left + width, width };
         }
-
         return null;
     };
 
@@ -2885,36 +2945,30 @@ _TOOLTIP_SCROLL_JS = """
     };
 
     const getDesktopHeadlinesAnchorTop = (tipHeight = 0) => {
-        let top = DESKTOP_HEADLINES_TOP;
-        const floorTop = getNearLowBadgeFloorTop();
-        if (floorTop !== null) {
-            top = Math.max(top, floorTop);
-        }
-
-        if (tipHeight > 0) {
-            const viewBottom = window.innerHeight - VIEWPORT_PAD;
-            const minTop = floorTop !== null ? floorTop : VIEWPORT_PAD;
-            if (top + tipHeight > viewBottom) {
-                top = Math.max(minTop, viewBottom - tipHeight);
+        const headlinesCol = getHeadlinesColumnRect();
+        if (headlinesCol) {
+            const desiredBottom = headlinesCol.top - DESKTOP_HEADLINES_ABOVE_HEADING;
+            let top = desiredBottom - (tipHeight || 0);
+            if (top < VIEWPORT_PAD) {
+                top = VIEWPORT_PAD;
             }
+            return Math.round(top);
         }
-
-        return top;
+        return DESKTOP_HEADLINES_TOP;
     };
 
     const getDesktopHeadlinesSlot = (tipHeight = 0) => {
         const viewLeft = VIEWPORT_PAD;
         const viewRight = window.innerWidth - VIEWPORT_PAD;
-        const rootSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-
-        const tableRect = getFullResultsTableRect();
+        const headlinesCol = getHeadlinesColumnRect();
         const top = getDesktopHeadlinesAnchorTop(tipHeight);
-        const maxHeight = Math.max(200, window.innerHeight - top - VIEWPORT_PAD);
+        const capBottom = headlinesCol
+            ? headlinesCol.top - DESKTOP_HEADLINES_ABOVE_HEADING
+            : window.innerHeight - VIEWPORT_PAD;
+        const maxHeight = Math.max(120, capBottom - top);
 
         let left = viewLeft;
-        let width = Math.round(
-            Math.min(viewRight - viewLeft, Math.max(280, Math.min(21 * rootSize, window.innerWidth * 0.36)))
-        );
+        let width = Math.round(Math.min(viewRight - viewLeft, Math.max(280, window.innerWidth * 0.36)));
 
         const panelRect = getDesktopHeadlinesPanelRect();
         if (panelRect && panelRect.width > 0) {
@@ -2922,25 +2976,20 @@ _TOOLTIP_SCROLL_JS = """
             width = Math.round(panelRect.width);
         }
 
-        width = Math.max(DESKTOP_HEADLINES_MIN_WIDTH, width - DESKTOP_HEADLINES_WIDTH_TRIM);
-
-        if (left > viewRight - DESKTOP_HEADLINES_MIN_WIDTH) {
-            left = Math.max(viewLeft, viewRight - width);
-        }
         if (left + width > viewRight) {
             left = Math.max(viewLeft, viewRight - width);
         }
         if (left < viewLeft) {
             left = viewLeft;
         }
-        width = Math.min(Math.max(DESKTOP_HEADLINES_MIN_WIDTH, width), viewRight - left);
+        width = Math.min(Math.max(280, width), viewRight - left);
 
         return {
             top,
             left: Math.round(left),
             width: Math.round(width),
             maxHeight: Math.round(maxHeight),
-            tableBottom: tableRect ? Math.round(tableRect.bottom) : null,
+            tableBottom: null,
         };
     };
 
@@ -4097,8 +4146,8 @@ _TOOLTIP_SCROLL_JS = """
         document.addEventListener("mousemove", allowTooltip, { passive: true, capture: true });
     }
 
-    if (window.__scoopDesktopHeadlinesBindVersion !== 32) {
-        window.__scoopDesktopHeadlinesBindVersion = 32;
+    if (window.__scoopDesktopHeadlinesBindVersion !== 34) {
+        window.__scoopDesktopHeadlinesBindVersion = 34;
 
         if (window.__scoopDesktopHeadlinesMouseLeave) {
             document.removeEventListener("mouseleave", window.__scoopDesktopHeadlinesMouseLeave, true);
@@ -4137,13 +4186,35 @@ _TOOLTIP_SCROLL_JS = """
             repositionVisibleGenericTooltips();
         };
 
-        window.__scoopDesktopHeadlinesWindowScroll = () => {
-            window.__scoopDesktopHeadlinesApi?.repositionOpenDesktopHeadlines();
+        window.__scoopDesktopHeadlinesWindowScroll = (event) => {
+            if (isDesktopLayoutViewport()) {
+                if (!(event && isInsideDesktopHeadlinesPopup(event.target))) {
+                    document
+                        .querySelectorAll(
+                            ".full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open, .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked)"
+                        )
+                        .forEach((wrap) => {
+                            window.__scoopDesktopHeadlinesApi?.hideDesktopHeadlines(wrap);
+                        });
+                }
+                return;
+            }
             repositionOpenPhoneMobileHeadlines();
         };
 
-        window.__scoopDesktopHeadlinesDocScroll = () => {
-            window.__scoopDesktopHeadlinesApi?.repositionOpenDesktopHeadlines();
+        window.__scoopDesktopHeadlinesDocScroll = (event) => {
+            if (isDesktopLayoutViewport()) {
+                if (!(event && isInsideDesktopHeadlinesPopup(event.target))) {
+                    document
+                        .querySelectorAll(
+                            ".full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open, .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked)"
+                        )
+                        .forEach((wrap) => {
+                            window.__scoopDesktopHeadlinesApi?.hideDesktopHeadlines(wrap);
+                        });
+                }
+                return;
+            }
             repositionOpenPhoneMobileHeadlines();
         };
 
@@ -4161,13 +4232,33 @@ _TOOLTIP_SCROLL_JS = """
             capture: true,
         });
 
+        if (window.__scoopDesktopHeadlinesLabelClick) {
+            document.removeEventListener("click", window.__scoopDesktopHeadlinesLabelClick, true);
+        }
         window.__scoopDesktopHeadlinesLabelClick = (event) => {
             if (!isDesktopLayoutViewport()) {
                 return;
             }
-            if (!event.target.closest(".hl-tip-count")) {
+            const label =
+                event.target && event.target.closest
+                    ? event.target.closest(".hl-tip-count")
+                    : null;
+            if (!label) {
                 return;
             }
+            const wrap = label.closest(".tip-wrap.headlines-tip");
+            const checkbox = wrap && wrap.querySelector(".hl-tip-cb");
+            if (!checkbox) {
+                return;
+            }
+            if (event.cancelable) {
+                event.preventDefault();
+            }
+            event.stopPropagation();
+            checkbox.checked = !checkbox.checked;
+            try {
+                checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+            } catch (e) {}
             const scrollEl =
                 document.querySelector('[data-testid="stAppViewContainer"]') ||
                 document.scrollingElement ||
@@ -5574,6 +5665,280 @@ _IPAD_MINI_HEADLINES_CENTER_STANDALONE_JS = r"""
 })();
 """
 
+# Parent-document binder matching the pre-fix desktop Headlines slot and behaviors.
+_DESKTOP_HEADLINES_STANDALONE_JS = r"""
+(() => {
+    const VERSION = 9;
+    const DESKTOP_MIN = 1367;
+    const PAD = 12;
+    const RIGHT_GAP = 12;
+    const ABOVE_HEADING = 30;
+    let appDoc = document;
+    let appWin = window;
+    try {
+        if (window.parent && window.parent !== window && window.parent.document) {
+            appDoc = window.parent.document;
+            appWin = window.parent;
+        }
+    } catch (e) {
+        appDoc = document;
+        appWin = window;
+    }
+    if (appWin.__scoopDesktopHeadlinesStandalone === VERSION) {
+        return;
+    }
+    appWin.__scoopDesktopHeadlinesStandalone = VERSION;
+
+    const isDesktop = () => (appWin.innerWidth || 0) >= DESKTOP_MIN;
+
+    const headerRect = (pattern, { exactHeadlines } = {}) => {
+        const header = [...appDoc.querySelectorAll(".full-results-wrap .full-results-table thead th")].find(
+            (th) => {
+                const t = (th.textContent || "").replace(/\s+/g, " ").trim();
+                if (exactHeadlines) {
+                    return t.startsWith("Headlines") && !t.startsWith("Headline ");
+                }
+                return pattern.test(t);
+            }
+        );
+        return header ? header.getBoundingClientRect() : null;
+    };
+
+    const slotFor = (tipHeight = 0) => {
+        const viewRight = appWin.innerWidth - PAD;
+        const headlines = headerRect(/^Headlines$/i, { exactHeadlines: true });
+        const colTop = headlines ? headlines.top : 160;
+        const colRight = headlines ? headlines.right : PAD;
+        const capBottom = colTop - ABOVE_HEADING;
+        let left = Math.round(colRight + RIGHT_GAP);
+        let width = Math.round(Math.max(240, Math.min(appWin.innerWidth * 0.36, viewRight - left)));
+        if (width < 240) {
+            width = 240;
+            left = Math.max(PAD, viewRight - width);
+        }
+        let top = Math.round(capBottom - (tipHeight || 0));
+        if (top < PAD) top = PAD;
+        const maxHeight = Math.max(120, capBottom - top);
+        return { top, left, width, maxHeight };
+    };
+
+    const headingBase = (heading) => {
+        if (!heading) return "Headlines";
+        if (!heading.dataset.hlBaseLabel) {
+            const current = (heading.textContent || "Headlines").trim();
+            heading.dataset.hlBaseLabel = current.split(" - ")[0].trim() || "Headlines";
+        }
+        return heading.dataset.hlBaseLabel;
+    };
+
+    const companyName = (wrap) => {
+        const row = wrap && wrap.closest("tr");
+        if (!row) return "";
+        const inCommodity = !!wrap.closest(".commodity-results");
+        const valueCell =
+            row.querySelector('td[data-label="Company"] .fr-val') ||
+            row.querySelector('td[data-label="Name"] .fr-val') ||
+            (inCommodity ? row.querySelector('td[data-label="Commodity"] .fr-val') : null);
+        if (!valueCell) return "";
+        const tipWrap = valueCell.querySelector(".tip-wrap");
+        if (tipWrap) {
+            const clone = tipWrap.cloneNode(true);
+            clone.querySelectorAll(".tip-text").forEach((node) => node.remove());
+            return (clone.textContent || "").replace(/\s+/g, " ").trim();
+        }
+        return (valueCell.textContent || "").replace(/\s+/g, " ").trim();
+    };
+
+    const fitTip = (tip, slot) => {
+        const scroll = tip.querySelector(".headlines-tip-scroll");
+        const heading = tip.querySelector(".hl-tip-heading");
+        tip.style.removeProperty("height");
+        tip.style.removeProperty("--hl-fixed-height");
+        if (scroll) {
+            scroll.style.removeProperty("height");
+            scroll.style.removeProperty("max-height");
+        }
+        const headingHeight = heading ? heading.offsetHeight : 0;
+        const list = scroll && scroll.querySelector(".headlines-tip-list");
+        const listHeight = list ? list.scrollHeight : (scroll ? scroll.scrollHeight : 0);
+        const padY = scroll ? (
+            (parseFloat(getComputedStyle(scroll).paddingTop) || 0) +
+            (parseFloat(getComputedStyle(scroll).paddingBottom) || 0)
+        ) : 0;
+        const contentHeight = Math.max(tip.scrollHeight, headingHeight + listHeight + padY);
+        const usable = Math.max(120, slot.maxHeight);
+        const needsScroll = contentHeight > usable + 1;
+        const tipHeight = needsScroll ? usable : contentHeight;
+        tip.style.setProperty("--hl-fixed-height", `${tipHeight}px`);
+        tip.style.setProperty("height", `${tipHeight}px`);
+        if (scroll) {
+            const scrollHeight = Math.max(80, tipHeight - headingHeight);
+            scroll.style.setProperty("overflow-y", needsScroll ? "auto" : "visible", "important");
+            scroll.style.setProperty("flex", "1 1 auto", "important");
+            scroll.style.setProperty("min-height", "4.5rem", "important");
+            if (needsScroll) {
+                scroll.style.setProperty("height", `${scrollHeight}px`, "important");
+                scroll.style.setProperty("max-height", `${scrollHeight}px`, "important");
+            }
+        }
+        return tipHeight;
+    };
+
+    const closeOthers = (keep) => {
+        appDoc.querySelectorAll(".full-results-wrap .tip-wrap.headlines-tip").forEach((wrap) => {
+            if (wrap === keep) return;
+            const cb = wrap.querySelector(".hl-tip-cb");
+            if (cb) cb.checked = false;
+            wrap.classList.remove("hl-tip-desktop-open");
+            const tip = wrap.querySelector(":scope > .tip-text");
+            if (!tip) return;
+            ["--hl-fixed-top", "--hl-fixed-left", "--hl-fixed-width", "--hl-fixed-max-height", "--hl-fixed-height", "height"]
+                .forEach((p) => tip.style.removeProperty(p));
+            const heading = wrap.querySelector(".hl-tip-heading");
+            if (heading) heading.textContent = headingBase(heading);
+        });
+    };
+
+    const apply = (wrap) => {
+        if (!isDesktop() || !wrap) return;
+        const tip = wrap.querySelector(":scope > .tip-text");
+        if (!tip) return;
+        closeOthers(wrap);
+        wrap.classList.add("hl-tip-desktop-open");
+        appWin.__scoopDesktopHlOpenedAt = Date.now();
+        const heading = tip.querySelector(".hl-tip-heading");
+        if (heading) {
+            const company = companyName(wrap);
+            heading.textContent = company ? `${headingBase(heading)} - ${company}` : headingBase(heading);
+        }
+        let slot = slotFor();
+        tip.style.setProperty("--hl-fixed-top", `${slot.top}px`);
+        tip.style.setProperty("--hl-fixed-left", `${slot.left}px`);
+        tip.style.setProperty("--hl-fixed-width", `${slot.width}px`);
+        tip.style.setProperty("--hl-fixed-max-height", `${slot.maxHeight}px`);
+        tip.style.setProperty("visibility", "visible", "important");
+        tip.style.setProperty("opacity", "1", "important");
+        tip.style.setProperty("pointer-events", "auto", "important");
+        tip.style.setProperty("display", "flex", "important");
+        tip.style.setProperty("flex-direction", "column", "important");
+        const tipHeight = fitTip(tip, slot);
+        slot = slotFor(tipHeight);
+        tip.style.setProperty("--hl-fixed-top", `${slot.top}px`);
+        tip.style.setProperty("--hl-fixed-left", `${slot.left}px`);
+        tip.style.setProperty("--hl-fixed-width", `${slot.width}px`);
+        tip.style.setProperty("--hl-fixed-max-height", `${slot.maxHeight}px`);
+        fitTip(tip, slot);
+    };
+
+    const sync = (wrap) => {
+        if (!isDesktop() || !wrap) return;
+        const cb = wrap.querySelector(".hl-tip-cb");
+        if (cb && cb.checked) {
+            apply(wrap);
+            return;
+        }
+        wrap.classList.remove("hl-tip-desktop-open");
+        const heading = wrap.querySelector(".hl-tip-heading");
+        if (heading) heading.textContent = headingBase(heading);
+    };
+
+    const closeAll = () => {
+        appDoc.querySelectorAll(".full-results-wrap .tip-wrap.headlines-tip").forEach((wrap) => {
+            const cb = wrap.querySelector(".hl-tip-cb");
+            if (cb) cb.checked = false;
+            wrap.classList.remove("hl-tip-desktop-open");
+            const tip = wrap.querySelector(":scope > .tip-text");
+            if (tip) {
+                ["--hl-fixed-top", "--hl-fixed-left", "--hl-fixed-width", "--hl-fixed-max-height", "--hl-fixed-height", "height"]
+                    .forEach((p) => tip.style.removeProperty(p));
+            }
+            const heading = wrap.querySelector(".hl-tip-heading");
+            if (heading) heading.textContent = headingBase(heading);
+        });
+    };
+
+    const isInsideOpenPopup = (node) => {
+        if (!node || !node.closest) return false;
+        const wrap = node.closest(".tip-wrap.headlines-tip");
+        if (!wrap) return false;
+        const cb = wrap.querySelector(".hl-tip-cb");
+        const open = (cb && cb.checked) || wrap.classList.contains("hl-tip-desktop-open");
+        if (!open) return false;
+        return !!(node.closest(".tip-text") && !node.closest(".hl-tip-backdrop"));
+    };
+
+    const onDismissPointer = (event) => {
+        if (!isDesktop() || !event || !event.target || !event.target.closest) return;
+        if (event.type === "pointerdown" && event.pointerType === "mouse" && event.button !== 0) return;
+        const t = event.target;
+        if (t.closest(".hl-tip-count")) return;
+        if (isInsideOpenPopup(t)) return;
+        closeAll();
+    };
+
+    const onDismissScroll = (event) => {
+        if (!isDesktop()) return;
+        if (event && event.target && isInsideOpenPopup(event.target)) return;
+        if (Date.now() - (appWin.__scoopDesktopHlOpenedAt || 0) < 250) return;
+        closeAll();
+    };
+
+    const onClick = (event) => {
+        if (!isDesktop() || !event || !event.target || !event.target.closest) return;
+        if (event.target.closest("a")) return;
+        const label = event.target.closest(".hl-tip-count");
+        if (!label) return;
+        const wrap = label.closest(".tip-wrap.headlines-tip");
+        if (!wrap) return;
+        appWin.__scoopDesktopHlOpenedAt = Date.now();
+        appWin.requestAnimationFrame(() => sync(wrap));
+    };
+
+    const onChange = (event) => {
+        if (!isDesktop() || !event || !event.target) return;
+        if (!event.target.classList || !event.target.classList.contains("hl-tip-cb")) return;
+        sync(event.target.closest(".tip-wrap.headlines-tip"));
+    };
+
+    const bindScroller = (el) => {
+        if (!el || el.__scoopHlScrollBound === VERSION) return;
+        el.__scoopHlScrollBound = VERSION;
+        el.addEventListener("scroll", onDismissScroll, { capture: true, passive: true });
+        el.addEventListener("wheel", onDismissScroll, { capture: true, passive: true });
+    };
+
+    const scrollTargets = () => [
+        appWin,
+        appDoc,
+        appDoc.scrollingElement,
+        appDoc.documentElement,
+        appDoc.body,
+        appDoc.querySelector('[data-testid="stAppViewContainer"]'),
+        appDoc.querySelector('[data-testid="stMain"]'),
+        appDoc.querySelector(".stApp"),
+    ].filter(Boolean);
+
+    if (appWin.__scoopDesktopHlDismissPointer) {
+        appDoc.removeEventListener("pointerdown", appWin.__scoopDesktopHlDismissPointer, true);
+        appDoc.removeEventListener("mousedown", appWin.__scoopDesktopHlDismissPointer, true);
+    }
+    appWin.__scoopDesktopHlDismissPointer = onDismissPointer;
+    appWin.__scoopDesktopHlDismissScroll = onDismissScroll;
+    appDoc.addEventListener("pointerdown", onDismissPointer, true);
+    appDoc.addEventListener("mousedown", onDismissPointer, true);
+    appDoc.addEventListener("click", onClick, true);
+    appDoc.addEventListener("change", onChange, true);
+    scrollTargets().forEach(bindScroller);
+    if (!appWin.__scoopDesktopHlScrollWatch) {
+        appWin.__scoopDesktopHlScrollWatch = true;
+        appWin.setInterval(() => {
+            if (!isDesktop()) return;
+            scrollTargets().forEach(bindScroller);
+        }, 1200);
+    }
+})();
+"""
+
 
 def install_tooltip_scroll_handler() -> None:
     """Inject mobile headline CSS; HTML backdrop label closes panel on outside tap."""
@@ -5616,7 +5981,8 @@ def install_tooltip_scroll_handler() -> None:
     install_page_layout_resync()
     # Dedicated inject so desktop name-tip fixed positioning always binds.
     st.html(
-        f"<script id='scoop-desktop-name-tip-js'>{_GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS}</script>",
+        f"<script id='scoop-desktop-name-tip-js'>{_GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS}</script>"
+        f"<script id='scoop-desktop-headlines-standalone'>{_DESKTOP_HEADLINES_STANDALONE_JS}</script>",
         unsafe_allow_javascript=True,
     )
     st.html(
@@ -5633,6 +5999,8 @@ def install_tooltip_scroll_handler() -> None:
         f"<script id='scoop-tablet-generic-tip-standalone'>{_TABLET_GENERIC_TIP_STANDALONE_JS}</script>"
         f"<script id='scoop-tablet-headlines-center-standalone'>{_TABLET_HEADLINES_CENTER_STANDALONE_JS}</script>"
         f"<script id='scoop-ipad-mini-headlines-center-standalone'>{_IPAD_MINI_HEADLINES_CENTER_STANDALONE_JS}</script>"
-        f"<script id='scoop-tablet-tip-dismiss-standalone'>{_TABLET_TIP_DISMISS_STANDALONE_JS}</script>",
+        f"<script id='scoop-tablet-tip-dismiss-standalone'>{_TABLET_TIP_DISMISS_STANDALONE_JS}</script>"
+        f"<script id='scoop-desktop-headlines-standalone'>{_DESKTOP_HEADLINES_STANDALONE_JS}</script>"
+        f"<style id='scoop-desktop-headlines-css'>{_DESKTOP_HEADLINES_CSS}</style>",
         unsafe_allow_javascript=True,
     )
