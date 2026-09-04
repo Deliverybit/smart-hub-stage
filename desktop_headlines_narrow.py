@@ -26,16 +26,23 @@ _CSS = """
         right: auto !important;
         bottom: auto !important;
         box-sizing: border-box !important;
-        width: 280px !important;
-        max-width: 280px !important;
+        width: var(--hl-fixed-width, 280px) !important;
+        max-width: var(--hl-fixed-width, 44vw) !important;
         min-width: 280px !important;
-        min-height: 12rem !important;
-        max-height: calc(100vh - 24px) !important;
+        min-height: 280px !important;
+        border: 2px solid #22c55e !important;
+        max-height: var(--hl-fixed-max-height, calc(100vh - 24px)) !important;
         overflow: hidden !important;
         z-index: 2147483000 !important;
         word-break: normal !important;
         overflow-wrap: break-word !important;
         hyphens: none !important;
+    }
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) > .tip-text,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip.hl-tip-desktop-open > .tip-text,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip:has(.hl-tip-cb:checked):hover > .tip-text,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip.hl-tip-desktop-open:hover > .tip-text {
+        border: 2px solid #ffffff !important;
     }
     html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) > .tip-text .hl-tip-heading,
     html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip.hl-tip-desktop-open > .tip-text .hl-tip-heading {
@@ -45,6 +52,9 @@ _CSS = """
         overflow-wrap: break-word !important;
         hyphens: none !important;
         line-height: 1.3 !important;
+        color: #93c5fd !important;
+        border: 0 !important;
+        border-bottom: 1px solid #334155 !important;
     }
     html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) > .tip-text .headlines-tip-scroll,
     html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip.hl-tip-desktop-open > .tip-text .headlines-tip-scroll {
@@ -68,16 +78,20 @@ _CSS = """
         word-break: normal !important;
         overflow-wrap: break-word !important;
     }
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) > .tip-text .hl-tip-line,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip.hl-tip-desktop-open > .tip-text .hl-tip-line,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) > .tip-text .hl-tip-line a,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip.hl-tip-desktop-open > .tip-text .hl-tip-line a {
+        color: #ffffff !important;
+    }
 }
 """
 
 _JS = r"""
 (() => {
-    const VERSION = 1;
+    const VERSION = 4;
     const DESKTOP_MIN = 1367;
-    const BOX_W = 280;
     const M = 12;
-    const GAP = 12;
     let appDoc = document;
     let appWin = window;
     try {
@@ -89,6 +103,11 @@ _JS = r"""
     appWin.__scoopDesktopHlNarrowV = VERSION;
 
     const isDesktop = () => (appWin.innerWidth || 0) >= DESKTOP_MIN;
+    const inView = (r) => {
+        const vh = appWin.innerHeight || 800;
+        const vw = appWin.innerWidth || 1600;
+        return r && r.width > 40 && r.bottom > 0 && r.top < vh && r.right > 0 && r.left < vw;
+    };
 
     const headlinesTh = () => [...appDoc.querySelectorAll(".full-results-wrap .full-results-table thead th")].find((th) => {
         const t = (th.textContent || "").replace(/\s+/g, " ").trim();
@@ -133,56 +152,73 @@ _JS = r"""
             const company = companyName(wrap);
             heading.textContent = company ? `${headingBase(heading)} - ${company}` : headingBase(heading);
         }
-        const td = wrap.closest('td[data-label="Headlines"]');
-        const th = headlinesTh();
-        const colRight = td ? td.getBoundingClientRect().right : (th ? th.getBoundingClientRect().right : M);
+        const ths = [...appDoc.querySelectorAll(".full-results-wrap .full-results-table thead th")];
+        const moodTh = ths.find((el) => (el.textContent || "").replace(/\s+/g, " ").trim().startsWith("Market Mood"));
+        const moodTds = [...appDoc.querySelectorAll('.full-results-wrap td[data-label="Market Mood"]')];
+        const vis = moodTds.map((el) => el.getBoundingClientRect()).filter(inView);
+        const thRect = moodTh ? moodTh.getBoundingClientRect() : null;
+        const table = appDoc.querySelector(".full-results-wrap .full-results-table");
+        const tbody = table && table.tBodies && table.tBodies[0];
         const vw = appWin.innerWidth || 1600;
         const vh = appWin.innerHeight || 900;
-        let left = Math.round(colRight + GAP);
-        if (left + BOX_W > vw - M) left = vw - M - BOX_W;
+        const tableBottom = tbody
+            ? tbody.getBoundingClientRect().bottom
+            : (table ? table.getBoundingClientRect().bottom : vh - M);
+        const MIN_W = 280;
+        const MIN_H = 280;
+        let left = M;
+        let width = MIN_W;
+        let top = M;
+        if (vis.length) {
+            left = Math.min(...vis.map((r) => r.left));
+            width = Math.max(...vis.map((r) => r.width));
+            top = inView(thRect) ? thRect.top - 8 : Math.min(...vis.map((r) => r.top)) - 8;
+        } else if (moodTds[0]) {
+            const r = moodTds[0].getBoundingClientRect();
+            left = r.left;
+            width = r.width;
+        }
+        width = Math.max(MIN_W, Math.round(width));
+        left = Math.round(left);
+        top = Math.round(top);
+        if (top < M) top = M;
         if (left < M) left = M;
+        if (left + width > vw - M) width = Math.max(MIN_W, vw - M - left);
+        let height = Math.round(Math.min(tableBottom, vh - M) - top);
+        if (vis.length) {
+            height = Math.max(height, Math.round(Math.max(...vis.map((r) => r.bottom)) - top));
+        }
+        if (top + height > vh - M) height = Math.round(vh - M - top);
+        height = Math.max(MIN_H, height);
 
         tip.style.setProperty("position", "fixed", "important");
         tip.style.setProperty("left", left + "px", "important");
-        tip.style.setProperty("width", BOX_W + "px", "important");
-        tip.style.setProperty("max-width", BOX_W + "px", "important");
-        tip.style.setProperty("min-width", BOX_W + "px", "important");
+        tip.style.setProperty("top", top + "px", "important");
+        tip.style.setProperty("width", width + "px", "important");
+        tip.style.setProperty("max-width", width + "px", "important");
+        tip.style.setProperty("min-width", "280px", "important");
+        tip.style.setProperty("height", height + "px", "important");
+        tip.style.setProperty("max-height", height + "px", "important");
         tip.style.setProperty("visibility", "visible", "important");
         tip.style.setProperty("opacity", "1", "important");
         tip.style.setProperty("display", "flex", "important");
         tip.style.setProperty("flex-direction", "column", "important");
         tip.style.setProperty("pointer-events", "auto", "important");
         tip.style.setProperty("--hl-fixed-left", left + "px");
-        tip.style.setProperty("--hl-fixed-width", BOX_W + "px");
+        tip.style.setProperty("--hl-fixed-top", top + "px");
+        tip.style.setProperty("--hl-fixed-width", width + "px");
+        tip.style.setProperty("--hl-fixed-height", height + "px");
+        tip.style.setProperty("--hl-fixed-max-height", height + "px");
 
         const scroll = tip.querySelector(".headlines-tip-scroll");
         const headingEl = tip.querySelector(".hl-tip-heading");
-        const list = scroll && scroll.querySelector(".headlines-tip-list");
         const headingH = headingEl ? headingEl.offsetHeight : 48;
-        const listH = list ? list.scrollHeight : (scroll ? scroll.scrollHeight : 240);
-        const contentH = headingH + listH + 24;
-        const maxH = Math.max(200, vh - 2 * M);
-        const height = Math.min(Math.max(contentH, headingH + 128), maxH);
-        let top = M;
-        if (th) {
-            const preferred = Math.round(th.getBoundingClientRect().top - 30 - height);
-            if (preferred >= M) top = preferred;
-        }
-        if (top + height > vh - M) top = Math.max(M, vh - M - height);
-        if (top < M) top = M;
-
-        tip.style.setProperty("top", top + "px", "important");
-        tip.style.setProperty("height", height + "px", "important");
-        tip.style.setProperty("max-height", maxH + "px", "important");
-        tip.style.setProperty("--hl-fixed-top", top + "px");
-        tip.style.setProperty("--hl-fixed-height", height + "px");
-        tip.style.setProperty("--hl-fixed-max-height", maxH + "px");
         if (scroll) {
-            const scrollH = Math.max(128, height - headingH);
+            const scrollH = Math.max(80, height - headingH);
             scroll.style.setProperty("overflow-y", "auto", "important");
             scroll.style.setProperty("height", scrollH + "px", "important");
             scroll.style.setProperty("max-height", scrollH + "px", "important");
-            scroll.style.setProperty("min-height", "8rem", "important");
+            scroll.style.setProperty("min-height", "0", "important");
             scroll.style.setProperty("visibility", "visible", "important");
         }
     };

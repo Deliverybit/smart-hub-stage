@@ -222,6 +222,11 @@ html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .tip-wrap.headlines
 html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .tip-text {
     background-color: #111827 !important;
     color: #f1f5f9 !important;
+}
+
+@media (max-width: 1366px) {
+html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text,
+html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .tip-text {
     border: 2px solid #ffffff !important;
 }
 
@@ -239,11 +244,27 @@ html[data-scoop-theme="dark"] .stMarkdown .tip-wrap.headlines-tip .tip-text .hea
     border-right: 2px solid #ffffff !important;
     border-bottom: 2px solid #ffffff !important;
 }
+}
 
+@media (max-width: 1366px) {
 html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll,
 html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll li,
 html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll a {
     color: #e2e8f0 !important;
+}
+}
+
+@media (min-width: 1367px) {
+html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text,
+html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text {
+    border: 2px solid #ffffff !important;
+}
+html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-line a,
+html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text .hl-tip-line a,
+html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll a,
+html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text .headlines-tip-scroll a {
+    color: #ffffff !important;
+}
 }
 
 html[data-scoop-theme="dark"] div[data-testid="stCheckbox"] {

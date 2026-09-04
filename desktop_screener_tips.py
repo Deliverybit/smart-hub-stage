@@ -13,8 +13,8 @@ _CSS = """
         visibility: visible !important;
         opacity: 1 !important;
         overflow: hidden !important;
-        width: 264px !important;
-        max-width: 264px !important;
+        width: var(--hl-fixed-width, 160px) !important;
+        max-width: var(--hl-fixed-width, 160px) !important;
         min-width: 0 !important;
     }
     html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open > .tip-text .headlines-tip-scroll,
@@ -36,7 +36,11 @@ _CSS = """
         color: #ffffff !important;
     }
     html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open > .tip-text .hl-tip-line a {
-        color: #93c5fd !important;
+        color: #ffffff !important;
+    }
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open > .tip-text .hl-tip-line a,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) > .tip-text .hl-tip-line a {
+        color: #ffffff !important;
     }
 }
 """
@@ -140,35 +144,34 @@ _JS = r"""
 
     const slotFor = (wrap, tipHeight = 0) => {
         const viewH = appWin.innerHeight || 800;
-        const viewRight = appWin.innerWidth - PAD;
-        const th = headlinesTh();
-        const td = wrap && wrap.closest('td[data-label="Headlines"]');
-        const thRect = th ? th.getBoundingClientRect() : null;
-        const cellRect = td ? td.getBoundingClientRect() : null;
-        const fallbackCell = appDoc.querySelector('.full-results-wrap td[data-label="Headlines"]');
-        const fallbackRect = fallbackCell ? fallbackCell.getBoundingClientRect() : null;
-        const colRight = (cellRect && cellRect.width > 0)
-            ? cellRect.right
-            : (thRect && thRect.width > 0)
-                ? thRect.right
-                : (fallbackRect ? fallbackRect.right : PAD);
-        const left = Math.round(colRight + RIGHT_GAP);
-        const room = Math.max(0, viewRight - left);
-        const width = Math.round(Math.max(180, Math.min(NARROW_W, room || NARROW_W)));
-        const headerOnScreen = !!(thRect && thRect.bottom > 40 && thRect.top < viewH - 8);
-        let top;
-        let maxHeight;
-        if (headerOnScreen) {
-            const capBottom = thRect.top - ABOVE_HEADING;
-            top = Math.round(capBottom - (tipHeight || 0));
-            if (top < PAD) top = PAD;
-            maxHeight = capBottom - top;
-        } else {
-            top = PAD;
-            maxHeight = viewH - 2 * PAD;
+        const viewW = appWin.innerWidth || 1600;
+        const moodTh = [...appDoc.querySelectorAll(".full-results-wrap .full-results-table thead th")].find((th) =>
+            (th.textContent || "").replace(/\s+/g, " ").trim().startsWith("Market Mood")
+        );
+        const moodTd = appDoc.querySelector('.full-results-wrap td[data-label="Market Mood"]');
+        const mood = (moodTh && moodTh.getBoundingClientRect().width > 24)
+            ? moodTh.getBoundingClientRect()
+            : (moodTd ? moodTd.getBoundingClientRect() : null);
+        const table = appDoc.querySelector(".full-results-wrap .full-results-table");
+        const tbody = table && table.tBodies && table.tBodies[0];
+        const tableBottom = tbody
+            ? tbody.getBoundingClientRect().bottom
+            : (table ? table.getBoundingClientRect().bottom : viewH - PAD);
+        let left = PAD;
+        let width = 160;
+        let top = PAD;
+        if (mood && mood.width > 0) {
+            left = Math.round(mood.left);
+            width = Math.round(mood.width);
+            top = Math.round(mood.top - 8);
         }
-        maxHeight = Math.max(280, Math.min(maxHeight, viewH - top - PAD));
-        return { top, left, width, maxHeight, colRight };
+        if (top < PAD) top = PAD;
+        if (left < PAD) left = PAD;
+        if (left + width > viewW - PAD) width = Math.max(120, viewW - PAD - left);
+        let maxHeight = Math.round(tableBottom - top);
+        if (top + maxHeight > viewH - PAD) maxHeight = Math.round(viewH - PAD - top);
+        maxHeight = Math.max(160, maxHeight);
+        return { top, left, width, maxHeight, colRight: left + width };
     };
 
     const applySlot = (tip, slot) => {
@@ -310,12 +313,10 @@ _JS = r"""
     }
     appWin.__scoopDesktopScreenerTipsOver = onNameOver;
     appWin.__scoopDesktopScreenerTipsOut = onNameOut;
-    appWin.__scoopDesktopScreenerTipsClick = onHlClick;
-    appWin.__scoopDesktopScreenerTipsChange = onHlChange;
+    appWin.__scoopDesktopScreenerTipsClick = null;
+    appWin.__scoopDesktopScreenerTipsChange = null;
     appDoc.addEventListener("mouseover", onNameOver, true);
     appDoc.addEventListener("mouseout", onNameOut, true);
-    appDoc.addEventListener("click", onHlClick, true);
-    appDoc.addEventListener("change", onHlChange, true);
 })();
 """
 

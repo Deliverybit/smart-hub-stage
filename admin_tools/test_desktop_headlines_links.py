@@ -23,7 +23,12 @@ def test_desktop_open_headlines_keep_fixed_slot() -> None:
     assert "top: var(--hl-fixed-top, -10000px)" in css
     assert "left: var(--hl-fixed-left, -10000px)" in css
     assert "left: var(--hl-fixed-left) !important;" not in css
-    assert "min-width: 280px" in css
+    assert "min-width: 280px !important" in css
+    assert "min-height: 280px !important" in css
+    assert "border: 2px solid #22c55e !important" in css
+    assert 'html[data-scoop-theme="dark"]' in css
+    assert "border: 2px solid #ffffff !important" in css
+    assert "color: #93c5fd !important" in css
     assert "position: fixed !important" in css
 
 
@@ -33,6 +38,7 @@ def test_desktop_open_headlines_show_links() -> None:
     assert "flex: 1 1 auto !important" in css
     assert ".hl-tip-line a" in css
     assert "color: #93c5fd !important" in css
+    assert "html:not([data-scoop-theme=\"dark\"])" in css
     assert ":not(.hl-tip-desktop-open):not(:has(.hl-tip-cb:checked))" in css
 
 

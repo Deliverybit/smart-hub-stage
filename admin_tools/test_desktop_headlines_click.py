@@ -106,11 +106,13 @@ def main() -> int:
         raise SystemExit("FAIL not desktop")
     if not opened.get("open") or opened.get("links", 0) < 1:
         raise SystemExit(f"FAIL did not open: {opened}")
+    border = (opened.get("border") or "").lower()
     theme = (opened.get("theme") or "").lower()
-    if theme != "dark":
-        border = (opened.get("border") or "").lower()
-        if "rgb(34, 197, 94)" not in border and "#22c55e" not in border:
-            raise SystemExit(f"FAIL desktop normal Headlines missing green box: {opened}")
+    if theme == "dark":
+        if "rgb(255, 255, 255)" not in border and "rgb(255,255,255)" not in border:
+            raise SystemExit(f"FAIL dark desktop Headlines missing white box: {opened}")
+    elif "rgb(34, 197, 94)" not in border and "#22c55e" not in border:
+        raise SystemExit(f"FAIL desktop Headlines missing green box: {opened}")
     if after_outside.get("open"):
         raise SystemExit(f"FAIL still open after outside click: {after_outside}")
     if after_other_tip.get("open"):
