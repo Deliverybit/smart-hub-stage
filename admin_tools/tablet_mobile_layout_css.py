@@ -3413,6 +3413,39 @@ html[data-scoop-desktop-layout="1"][data-scoop-screener-gated="1"] {{
 }}
 """
 
+# After terms consent: hide How it works, Sentiment, and Top Picks on phone/tablet only.
+# The gated landing page keeps those blocks; desktop (min-width 1367px) is unchanged.
+POST_CONSENT_MOBILE_SCREENER_HIDE = """
+[data-testid="stElementContainer"]:has(.scoop-top-picks-anchor),
+[data-testid="element-container"]:has(.scoop-top-picks-anchor) {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+@media (max-width: 1366px) {
+    html:not([data-scoop-screener-gated="1"]) .scoop-landing-info,
+    html:not([data-scoop-screener-gated="1"]) .scoop-landing-sentiment,
+    html:not([data-scoop-screener-gated="1"]) .scoop-landing-divider {
+        display: none !important;
+    }
+    html:not([data-scoop-screener-gated="1"]) [data-testid="stElementContainer"]:has(.scoop-top-picks-anchor) + [data-testid="stElementContainer"],
+    html:not([data-scoop-screener-gated="1"]) [data-testid="element-container"]:has(.scoop-top-picks-anchor) + [data-testid="element-container"],
+    html:not([data-scoop-screener-gated="1"]) [data-testid="stElementContainer"]:has(.scoop-top-picks-anchor) + [data-testid="stElementContainer"] + [data-testid="stElementContainer"],
+    html:not([data-scoop-screener-gated="1"]) [data-testid="element-container"]:has(.scoop-top-picks-anchor) + [data-testid="element-container"] + [data-testid="element-container"] {
+        display: none !important;
+    }
+}
+@media (min-width: 1367px) {
+    html:not([data-scoop-screener-gated="1"]) .scoop-landing-compact .scoop-landing-info,
+    html:not([data-scoop-screener-gated="1"]) .scoop-landing-compact .scoop-landing-sentiment,
+    html:not([data-scoop-screener-gated="1"]) .scoop-landing-divider {
+        display: block !important;
+    }
+}
+"""
+
 # Mobile/tablet screener landing pages: collapse bootstrap gaps (js_eval, stHtml, page CSS).
 _RESPONSIVE_SCREENER_TOP_COMPACT_RULES = """
     html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {

@@ -29,6 +29,9 @@ from screener_table import ANALYZE_COLUMN_TIP, analyze_link_html, build_source_t
 from landing_page import render_responsive_navigation
 from tooltip_scroll import install_tooltip_scroll_handler
 from desktop_headlines_dismiss import inject_desktop_headlines_dismiss
+from desktop_screener_tips import inject_desktop_screener_tips
+from desktop_headlines_narrow import inject_desktop_headlines_narrow
+from post_consent_mobile_screener_hide import inject_post_consent_mobile_screener_hide
 import html
 
 # ── Page config ───────────────────────────────────────────────────────
@@ -250,9 +253,15 @@ st.markdown(
             top: auto !important;
             bottom: calc(100% + 8px) !important;
             transform: none !important;
-            width: max-content !important;
-            min-width: 260px !important;
-            max-width: min(360px, calc(100vw - 2rem)) !important;
+            width: auto !important;
+            min-width: 360px !important;
+            max-width: min(700px, calc(100vw - 2rem)) !important;
+            font-size: 1.25rem !important;
+            line-height: 1.55 !important;
+            padding: 1.15rem 1.35rem !important;
+            white-space: normal !important;
+            overflow-wrap: break-word !important;
+            word-break: normal !important;
             max-height: min(45vh, 22rem) !important;
             overflow-y: auto !important;
             pointer-events: none !important;
@@ -2760,6 +2769,7 @@ st.markdown(
 
 agreed = terms_accepted(st, "agree_terms_nyse")
 sync_screener_gating_layout(st, gated=not agreed)
+inject_post_consent_mobile_screener_hide()
 ensure_timezone_cookie(st)
 if agreed:
     log_terms_acceptance(st, consent_key="agree_terms_nyse")
@@ -3129,6 +3139,7 @@ else:
         getattr(st, level)(status_msg)
 
         # ── Metrics row for top 3 ─────────────────────────────────────
+        st.markdown('<div class="scoop-top-picks-anchor" hidden></div>', unsafe_allow_html=True)
         st.markdown("### 🏆 Top Picks")
         top_cols = st.columns(min(3, len(df)))
         for idx, col in enumerate(top_cols):
@@ -3369,5 +3380,13 @@ st.markdown(
 if not agreed:
     sync_screener_gating_layout(st, gated=True)
 
-install_tooltip_scroll_handler()
+import importlib
+import tooltip_scroll as _tooltip_scroll
+importlib.reload(_tooltip_scroll)
+_tooltip_scroll.install_tooltip_scroll_handler()
 inject_desktop_headlines_dismiss()
+inject_desktop_screener_tips()
+import desktop_headlines_narrow as _hl_narrow
+importlib.reload(_hl_narrow)
+_hl_narrow.inject_desktop_headlines_narrow()
+inject_post_consent_mobile_screener_hide()

@@ -52,6 +52,7 @@ def test_landing_css_mobile_tablet_adds_spacing() -> None:
     assert "margin-bottom: 0.8rem" in css
     assert "margin-bottom: 0.45rem" not in css
     assert ".scoop-screener-last-updated" in css
+    assert 'html:not([data-scoop-screener-gated="1"]) .scoop-landing-info' in css
 
 
 def test_landing_css_desktop_adds_spacing() -> None:

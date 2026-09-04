@@ -148,7 +148,7 @@ _RESPONSIVE_GENERIC_TOOLTIP_CSS = f"""
 
 _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
 (() => {
-    const VERSION = 10;
+    const VERSION = 15;
     let appDoc = document;
     let appWin = window;
     try {
@@ -213,6 +213,12 @@ _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
             return;
         }
         TIP_CLEAR_PROPS.forEach((prop) => tip.style.removeProperty(prop));
+        tip.style.setProperty("visibility", "hidden", "important");
+        tip.style.setProperty("opacity", "0", "important");
+        tip.style.setProperty("pointer-events", "none", "important");
+        tip.style.setProperty("left", "-10000px", "important");
+        tip.style.setProperty("top", "-10000px", "important");
+        tip.style.setProperty("transition", "none", "important");
     };
 
     const resetGenericTooltips = () => {
@@ -253,39 +259,40 @@ _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
                 appWin.innerWidth - gap,
                 (appDoc.documentElement && appDoc.documentElement.clientWidth) || appWin.innerWidth
             ) - gap;
-        const maxWidth = Math.max(220, Math.min(420, viewRight - (sbRight + gap)));
+        const minW = 360;
+        const maxW = Math.max(minW, Math.min(700, viewRight - (sbRight + gap)));
 
         tip.style.setProperty("position", "fixed", "important");
         tip.style.setProperty("visibility", "visible", "important");
         tip.style.setProperty("opacity", "1", "important");
-        tip.style.setProperty("pointer-events", "auto", "important");
+        tip.style.setProperty("pointer-events", "none", "important");
         tip.style.setProperty("z-index", "2147483000", "important");
         tip.style.setProperty("bottom", "auto", "important");
         tip.style.setProperty("right", "auto", "important");
         tip.style.setProperty("transform", "none", "important");
-        tip.style.setProperty("max-width", `${Math.round(maxWidth)}px`, "important");
-        tip.style.setProperty("min-width", "0", "important");
-        tip.style.setProperty("width", "auto", "important");
-        tip.style.setProperty("left", `${Math.round(sbRight + gap)}px`, "important");
-        tip.style.setProperty("top", "0px", "important");
+        tip.style.setProperty("white-space", "normal", "important");
+        tip.style.setProperty("overflow-wrap", "break-word", "important");
+        tip.style.setProperty("word-break", "normal", "important");
         tip.style.setProperty("box-sizing", "border-box", "important");
+        tip.style.setProperty("font-size", "1.25rem", "important");
+        tip.style.setProperty("line-height", "1.55", "important");
+        tip.style.setProperty("padding", "1.15rem 1.35rem", "important");
+        tip.style.setProperty("min-width", `${minW}px`, "important");
+        tip.style.setProperty("max-width", `${maxW}px`, "important");
+        tip.style.setProperty("width", "auto", "important");
 
         const anchor = wrap.getBoundingClientRect();
-        // Measure natural size at a safe left, then place.
-        tip.style.setProperty("width", "max-content", "important");
-        let tipRect = tip.getBoundingClientRect();
-        let width = Math.min(Math.max(tipRect.width || 280, 200), maxWidth);
-        tip.style.setProperty("width", `${Math.round(width)}px`, "important");
-        tipRect = tip.getBoundingClientRect();
+        const tipRect = tip.getBoundingClientRect();
         const height = tipRect.height || 72;
+        const boxW = Math.max(minW, Math.min(maxW, tipRect.width || minW));
 
         // Center on the name when there is room; otherwise pin to sidebar edge (col 1).
-        let left = anchor.left + anchor.width / 2 - width / 2;
+        let left = anchor.left + anchor.width / 2 - boxW / 2;
         if (left < sbRight + gap) {
             left = sbRight + gap;
         }
-        if (left + width > viewRight) {
-            left = Math.max(sbRight + gap, viewRight - width);
+        if (left + boxW > viewRight) {
+            left = Math.max(sbRight + gap, viewRight - boxW);
         }
         let top = anchor.top - height - 12;
         if (top < gap) {
@@ -294,7 +301,6 @@ _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
 
         tip.style.setProperty("left", `${Math.round(left)}px`, "important");
         tip.style.setProperty("top", `${Math.round(top)}px`, "important");
-        tip.style.setProperty("width", `${Math.round(width)}px`, "important");
     };
 
     const openDesktopNameTip = (wrap) => {
@@ -322,51 +328,47 @@ _GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS = """
     };
 
     const bindDesktopNameTips = () => {
-        if (appDoc.documentElement.dataset.scoopDesktopNameTipBound === String(VERSION)) {
-            return;
+        if (appWin.__scoopGenericTooltipNameOver) {
+            appDoc.removeEventListener("mouseover", appWin.__scoopGenericTooltipNameOver, true);
+            appDoc.removeEventListener("mouseout", appWin.__scoopGenericTooltipNameOut, true);
         }
-        appDoc.documentElement.dataset.scoopDesktopNameTipBound = String(VERSION);
-        appDoc.addEventListener(
-            "mouseover",
-            (event) => {
-                if (!isDesktop()) {
+        const onOver = (event) => {
+            if (!isDesktop()) {
+                return;
+            }
+            const raw = event.target;
+            const el = raw && raw.nodeType === 1 ? raw : raw && raw.parentElement;
+            if (!el || typeof el.closest !== "function") {
+                return;
+            }
+            const wrap = el.closest(".tip-wrap:not(.headlines-tip)");
+            if (!wrap || !isDesktopNameTip(wrap)) {
+                return;
+            }
+            openDesktopNameTip(wrap);
+        };
+        const onOut = (event) => {
+            const raw = event.target;
+            const el = raw && raw.nodeType === 1 ? raw : raw && raw.parentElement;
+            if (!el || typeof el.closest !== "function") {
+                return;
+            }
+            const wrap = el.closest(".tip-wrap:not(.headlines-tip)");
+            if (!wrap || !wrap.classList.contains(OPEN_CLASS)) {
+                return;
+            }
+            const related = event.relatedTarget;
+            if (related && typeof related.nodeType === "number") {
+                if (wrap.contains(related)) {
                     return;
                 }
-                const raw = event.target;
-                const el = raw && raw.nodeType === 1 ? raw : raw && raw.parentElement;
-                if (!el || typeof el.closest !== "function") {
-                    return;
-                }
-                const wrap = el.closest(".tip-wrap:not(.headlines-tip)");
-                if (!wrap || !isDesktopNameTip(wrap)) {
-                    return;
-                }
-                openDesktopNameTip(wrap);
-            },
-            true
-        );
-        appDoc.addEventListener(
-            "mouseout",
-            (event) => {
-                const raw = event.target;
-                const el = raw && raw.nodeType === 1 ? raw : raw && raw.parentElement;
-                if (!el || typeof el.closest !== "function") {
-                    return;
-                }
-                const wrap = el.closest(".tip-wrap:not(.headlines-tip)");
-                if (!wrap || !wrap.classList.contains(OPEN_CLASS)) {
-                    return;
-                }
-                const related = event.relatedTarget;
-                if (related && typeof related.nodeType === "number") {
-                    if (wrap.contains(related)) {
-                        return;
-                    }
-                }
-                closeDesktopNameTip(wrap);
-            },
-            true
-        );
+            }
+            closeDesktopNameTip(wrap);
+        };
+        appWin.__scoopGenericTooltipNameOver = onOver;
+        appWin.__scoopGenericTooltipNameOut = onOut;
+        appDoc.addEventListener("mouseover", onOver, true);
+        appDoc.addEventListener("mouseout", onOut, true);
         appWin.addEventListener(
             "scroll",
             () => {
@@ -547,6 +549,13 @@ _DESKTOP_HEADLINES_CSS = """
         z-index: 100020 !important;
         box-sizing: border-box !important;
     }
+    .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip:not(:has(.hl-tip-cb:checked)):not(.hl-tip-desktop-open):hover > .tip-text,
+    .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip:not(:has(.hl-tip-cb:checked)):not(.hl-tip-desktop-open) > .tip-text:hover {
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        left: -10000px !important;
+    }
     .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text,
     .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text,
     html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text,
@@ -558,9 +567,13 @@ _DESKTOP_HEADLINES_CSS = """
         flex-direction: column !important;
         align-items: stretch !important;
         position: fixed !important;
-        /* Stay in the desktop slot even if positioning JS is in an iframe. */
-        top: var(--hl-fixed-top, 100px) !important;
-        left: var(--hl-fixed-left) !important;
+        /* Stay in the desktop slot. Never use a bare var() — invalid left
+           collapses the panel into the ~40px count cell. */
+        top: var(--hl-fixed-top, 12px) !important;
+        left: var(--hl-fixed-left, -10000px) !important;
+        width: var(--hl-fixed-width, 280px) !important;
+        min-width: 280px !important;
+        max-width: var(--hl-fixed-width, 280px) !important;
         right: auto !important;
         bottom: auto !important;
         transform: none !important;
@@ -598,8 +611,8 @@ _DESKTOP_HEADLINES_CSS = """
         font-size: 1.65rem !important;
         line-height: 1.3 !important;
         border-bottom: 1px solid #334155 !important;
-        overflow-wrap: anywhere !important;
-        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        word-break: normal !important;
         white-space: normal !important;
     }
     .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll {
@@ -613,16 +626,15 @@ _DESKTOP_HEADLINES_CSS = """
         overscroll-behavior: contain !important;
         overscroll-behavior-y: contain !important;
         -webkit-overflow-scrolling: touch !important;
-        scrollbar-width: none !important;
+        scrollbar-width: thin !important;
         scrollbar-gutter: auto !important;
         pointer-events: auto !important;
         touch-action: pan-y !important;
         padding: 0.65rem 1rem 0.65rem 1rem !important;
     }
     .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .headlines-tip-scroll::-webkit-scrollbar {
-        display: none !important;
-        width: 0 !important;
-        height: 0 !important;
+        width: 8px !important;
+        height: 8px !important;
     }
     .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .headlines-tip-list {
         display: flex !important;
@@ -656,14 +668,15 @@ _DESKTOP_HEADLINES_CSS = """
         display: flex !important;
         flex-direction: column !important;
         position: fixed !important;
-        top: var(--hl-fixed-top, 100px) !important;
-        left: var(--hl-fixed-left) !important;
+        top: var(--hl-fixed-top, 12px) !important;
+        left: var(--hl-fixed-left, -10000px) !important;
         overflow: hidden !important;
         touch-action: pan-y !important;
         height: var(--hl-fixed-height, auto) !important;
         max-height: var(--hl-fixed-max-height, var(--hl-pop-h)) !important;
-        width: var(--hl-fixed-width, var(--hl-pop-w)) !important;
-        max-width: var(--hl-fixed-width, var(--hl-pop-w)) !important;
+        width: var(--hl-fixed-width, 280px) !important;
+        min-width: 280px !important;
+        max-width: var(--hl-fixed-width, 280px) !important;
         visibility: visible !important;
         opacity: 1 !important;
     }
@@ -678,7 +691,7 @@ _DESKTOP_HEADLINES_CSS = """
         visibility: visible !important;
         opacity: 1 !important;
         max-height: var(--hl-scroll-max-height, none) !important;
-        scrollbar-width: none !important;
+        scrollbar-width: thin !important;
         scrollbar-gutter: auto !important;
         pointer-events: auto !important;
         touch-action: pan-y !important;
@@ -708,9 +721,8 @@ _DESKTOP_HEADLINES_CSS = """
     }
     .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .headlines-tip-scroll::-webkit-scrollbar,
     .stMarkdown .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open .tip-text .headlines-tip-scroll::-webkit-scrollbar {
-        display: none !important;
-        width: 0 !important;
-        height: 0 !important;
+        width: 8px !important;
+        height: 8px !important;
     }
     .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-line,
     .stMarkdown .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) .tip-text .hl-tip-line a,
@@ -730,6 +742,11 @@ _DESKTOP_TOOLTIP_TYPE_CSS = """
     [data-testid="stMarkdownContainer"] .tip-wrap:not(.headlines-tip) .tip-text {
         font-size: 1.25rem !important;
         line-height: 1.55 !important;
+    }
+    .stMarkdown .tip-wrap:not(.headlines-tip):not(.scoop-name-tip) .tip-text,
+    .full-results-wrap .full-results-table .tip-wrap:not(.headlines-tip):not(.scoop-name-tip) .tip-text,
+    .full-results-table thead .tip-wrap .tip-text,
+    [data-testid="stMarkdownContainer"] .tip-wrap:not(.headlines-tip):not(.scoop-name-tip) .tip-text {
         padding: 1.15rem 1.35rem !important;
         min-width: 24rem !important;
         max-width: min(44rem, calc(100vw - 2rem)) !important;
@@ -738,10 +755,25 @@ _DESKTOP_TOOLTIP_TYPE_CSS = """
     .full-results-wrap .tip-wrap .tip-text a {
         font-size: inherit !important;
     }
-    .full-results-wrap .full-results-table tbody .tip-wrap:not(.headlines-tip) .tip-text {
+    .full-results-wrap .full-results-table tbody .tip-wrap:not(.headlines-tip):not(.scoop-name-tip) .tip-text {
         font-size: 1.2rem !important;
         min-width: 20rem !important;
         max-width: min(30rem, calc(100vw - 2rem)) !important;
+    }
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody .tip-wrap.scoop-name-tip .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) .tip-text {
+        width: auto !important;
+        min-width: 360px !important;
+        max-width: min(700px, calc(100vw - 2rem)) !important;
+        font-size: 1.25rem !important;
+        line-height: 1.55 !important;
+        padding: 1.15rem 1.35rem !important;
+        white-space: normal !important;
+        overflow-wrap: break-word !important;
+        word-break: normal !important;
+        height: auto !important;
     }
     .full-results-wrap .full-results-table tbody .tip-wrap.headlines-tip .tip-text .hl-tip-heading,
     .stMarkdown .full-results-wrap .tip-wrap.headlines-tip .tip-text .hl-tip-heading {
@@ -757,37 +789,44 @@ _DESKTOP_TOOLTIP_TYPE_CSS = """
     }
 
     /*
-     * Desktop name tips: never show via absolute CSS hover (clips under sidebar on
-     * column-1 CME/Crypto/etc.). Only JS .scoop-desktop-name-tip-open + fixed pos.
+     * Desktop name tips: CSS :hover paints a cell-clipped vertical box after the
+     * JS fixed (horizontal) tip closes. Never show name tips via CSS hover.
      */
-    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.scoop-name-tip:not(.scoop-desktop-name-tip-open):hover .tip-text,
-    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.scoop-name-tip:not(.scoop-desktop-name-tip-open) .tip-text:hover,
-    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-desktop-name-tip-open):hover .tip-text,
-    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-desktop-name-tip-open) .tip-text:hover,
-    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-desktop-name-tip-open):hover .tip-text,
-    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-desktop-name-tip-open) .tip-text:hover,
-    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-desktop-name-tip-open):hover .tip-text,
-    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip):not(.scoop-desktop-name-tip-open) .tip-text:hover {
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.scoop-name-tip > .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.scoop-name-tip:hover > .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap.scoop-name-tip .tip-text:hover,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip) > .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap:not(.headlines-tip):hover > .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip) > .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap:not(.headlines-tip):hover > .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip) > .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap:not(.headlines-tip):hover > .tip-text {
         visibility: hidden !important;
         opacity: 0 !important;
         pointer-events: none !important;
+        transition: none !important;
+        position: fixed !important;
+        left: -10000px !important;
+        top: -10000px !important;
     }
-    html body .stApp [data-testid="stAppViewContainer"] .tip-wrap.scoop-desktop-name-tip-open .tip-text,
-    html body .stApp [data-testid="stAppViewContainer"] .tip-wrap.scoop-name-tip.scoop-desktop-name-tip-open .tip-text,
-    html body .stApp [data-testid="stAppViewContainer"] .tip-wrap.scoop-desktop-name-tip-open:hover .tip-text,
-    html body .stApp [data-testid="stAppViewContainer"] .tip-wrap.scoop-desktop-name-tip-open .tip-text:hover,
-    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap.scoop-desktop-name-tip-open .tip-text,
-    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap.scoop-desktop-name-tip-open .tip-text,
-    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap.scoop-desktop-name-tip-open .tip-text {
+    html body .stApp [data-testid="stAppViewContainer"] .tip-wrap.scoop-desktop-name-tip-open > .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .tip-wrap.scoop-name-tip.scoop-desktop-name-tip-open > .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .tip-wrap.scoop-desktop-name-tip-open:hover > .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val .tip-wrap.scoop-desktop-name-tip-open > .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val .tip-wrap.scoop-desktop-name-tip-open > .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val .tip-wrap.scoop-desktop-name-tip-open > .tip-text {
         position: fixed !important;
         visibility: visible !important;
         opacity: 1 !important;
-        pointer-events: auto !important;
+        pointer-events: none !important;
         z-index: 2147483000 !important;
         transform: none !important;
         bottom: auto !important;
         right: auto !important;
         margin: 0 !important;
+        left: auto !important;
+        top: auto !important;
+        transition: none !important;
     }
     /* Match mobile/tablet tip outlines on desktop. */
     html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stAppViewContainer"] .stMarkdown .tip-wrap .tip-text,
@@ -5668,10 +5707,11 @@ _IPAD_MINI_HEADLINES_CENTER_STANDALONE_JS = r"""
 # Parent-document binder matching the pre-fix desktop Headlines slot and behaviors.
 _DESKTOP_HEADLINES_STANDALONE_JS = r"""
 (() => {
-    const VERSION = 9;
+    const VERSION = 11;
     const DESKTOP_MIN = 1367;
     const PAD = 12;
     const RIGHT_GAP = 12;
+    const BOX_W = 280;
     const ABOVE_HEADING = 30;
     let appDoc = document;
     let appWin = window;
@@ -5705,20 +5745,26 @@ _DESKTOP_HEADLINES_STANDALONE_JS = r"""
     };
 
     const slotFor = (tipHeight = 0) => {
-        const viewRight = appWin.innerWidth - PAD;
+        const viewH = appWin.innerHeight || 800;
+        const viewW = appWin.innerWidth || 1600;
         const headlines = headerRect(/^Headlines$/i, { exactHeadlines: true });
-        const colTop = headlines ? headlines.top : 160;
-        const colRight = headlines ? headlines.right : PAD;
-        const capBottom = colTop - ABOVE_HEADING;
+        const cell = appDoc.querySelector('.full-results-wrap td[data-label="Headlines"]');
+        const colRight = cell
+            ? cell.getBoundingClientRect().right
+            : (headlines ? headlines.right : PAD);
         let left = Math.round(colRight + RIGHT_GAP);
-        let width = Math.round(Math.max(240, Math.min(appWin.innerWidth * 0.36, viewRight - left)));
-        if (width < 240) {
-            width = 240;
-            left = Math.max(PAD, viewRight - width);
+        const width = BOX_W;
+        if (left + width > viewW - PAD) left = viewW - PAD - width;
+        if (left < PAD) left = PAD;
+        const maxHeight = Math.max(200, viewH - 2 * PAD);
+        let top = PAD;
+        if (headlines && tipHeight) {
+            const preferred = Math.round(headlines.top - ABOVE_HEADING - tipHeight);
+            if (preferred >= PAD) top = preferred;
         }
-        let top = Math.round(capBottom - (tipHeight || 0));
-        if (top < PAD) top = PAD;
-        const maxHeight = Math.max(120, capBottom - top);
+        if (top + (tipHeight || maxHeight) > viewH - PAD) {
+            top = Math.max(PAD, viewH - PAD - (tipHeight || maxHeight));
+        }
         return { top, left, width, maxHeight };
     };
 
@@ -5812,10 +5858,16 @@ _DESKTOP_HEADLINES_STANDALONE_JS = r"""
             heading.textContent = company ? `${headingBase(heading)} - ${company}` : headingBase(heading);
         }
         let slot = slotFor();
+        tip.style.setProperty("position", "fixed", "important");
         tip.style.setProperty("--hl-fixed-top", `${slot.top}px`);
         tip.style.setProperty("--hl-fixed-left", `${slot.left}px`);
         tip.style.setProperty("--hl-fixed-width", `${slot.width}px`);
         tip.style.setProperty("--hl-fixed-max-height", `${slot.maxHeight}px`);
+        tip.style.setProperty("top", `${slot.top}px`, "important");
+        tip.style.setProperty("left", `${slot.left}px`, "important");
+        tip.style.setProperty("width", `${slot.width}px`, "important");
+        tip.style.setProperty("min-width", `${slot.width}px`, "important");
+        tip.style.setProperty("max-width", `${slot.width}px`, "important");
         tip.style.setProperty("visibility", "visible", "important");
         tip.style.setProperty("opacity", "1", "important");
         tip.style.setProperty("pointer-events", "auto", "important");
@@ -5827,6 +5879,8 @@ _DESKTOP_HEADLINES_STANDALONE_JS = r"""
         tip.style.setProperty("--hl-fixed-left", `${slot.left}px`);
         tip.style.setProperty("--hl-fixed-width", `${slot.width}px`);
         tip.style.setProperty("--hl-fixed-max-height", `${slot.maxHeight}px`);
+        tip.style.setProperty("top", `${slot.top}px`, "important");
+        tip.style.setProperty("left", `${slot.left}px`, "important");
         fitTip(tip, slot);
     };
 
@@ -5981,8 +6035,7 @@ def install_tooltip_scroll_handler() -> None:
     install_page_layout_resync()
     # Dedicated inject so desktop name-tip fixed positioning always binds.
     st.html(
-        f"<script id='scoop-desktop-name-tip-js'>{_GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS}</script>"
-        f"<script id='scoop-desktop-headlines-standalone'>{_DESKTOP_HEADLINES_STANDALONE_JS}</script>",
+        f"<script id='scoop-desktop-name-tip-js'>{_GENERIC_TOOLTIP_DESKTOP_HOVER_RESET_JS}</script>",
         unsafe_allow_javascript=True,
     )
     st.html(
@@ -6000,7 +6053,8 @@ def install_tooltip_scroll_handler() -> None:
         f"<script id='scoop-tablet-headlines-center-standalone'>{_TABLET_HEADLINES_CENTER_STANDALONE_JS}</script>"
         f"<script id='scoop-ipad-mini-headlines-center-standalone'>{_IPAD_MINI_HEADLINES_CENTER_STANDALONE_JS}</script>"
         f"<script id='scoop-tablet-tip-dismiss-standalone'>{_TABLET_TIP_DISMISS_STANDALONE_JS}</script>"
-        f"<script id='scoop-desktop-headlines-standalone'>{_DESKTOP_HEADLINES_STANDALONE_JS}</script>"
         f"<style id='scoop-desktop-headlines-css'>{_DESKTOP_HEADLINES_CSS}</style>",
         unsafe_allow_javascript=True,
     )
+    # Chunked inject: a full inline Headlines <script> is dropped by Streamlit.
+    _inject_js_source(_DESKTOP_HEADLINES_STANDALONE_JS, key="desktop-hl-v11")

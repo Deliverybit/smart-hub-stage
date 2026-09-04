@@ -1,0 +1,328 @@
+"""Desktop-only: company name tooltips + Headlines panel position/content."""
+
+from __future__ import annotations
+
+import streamlit as st
+
+_CSS = """
+@media (min-width: 1367px) {
+    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open > .tip-text,
+    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) > .tip-text {
+        display: flex !important;
+        flex-direction: column !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        overflow: hidden !important;
+        width: 264px !important;
+        max-width: 264px !important;
+        min-width: 0 !important;
+    }
+    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open > .tip-text .headlines-tip-scroll,
+    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) > .tip-text .headlines-tip-scroll {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        min-height: 5rem !important;
+        overflow-y: auto !important;
+        pointer-events: auto !important;
+    }
+    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open > .tip-text .hl-tip-line,
+    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) > .tip-text .hl-tip-line,
+    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open > .tip-text .hl-tip-line a,
+    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .tip-wrap.headlines-tip:has(.hl-tip-cb:checked) > .tip-text .hl-tip-line a {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: #ffffff !important;
+    }
+    html body .stApp [data-testid="stAppViewContainer"] .full-results-wrap .tip-wrap.headlines-tip.hl-tip-desktop-open > .tip-text .hl-tip-line a {
+        color: #93c5fd !important;
+    }
+}
+"""
+
+_JS = r"""
+(() => {
+    const VERSION = 7;
+    const DESKTOP_MIN = 1367;
+    const OPEN_CLASS = "scoop-desktop-name-tip-open";
+    const PAD = 12;
+    const RIGHT_GAP = 12;
+    const ABOVE_HEADING = 30;
+    const NARROW_W = 264;
+    let appDoc = document;
+    let appWin = window;
+    try {
+        if (window.parent && window.parent !== window && window.parent.document) {
+            appDoc = window.parent.document;
+            appWin = window.parent;
+        }
+    } catch (e) {}
+    appWin.__scoopDesktopScreenerTipsV = VERSION;
+
+    const isDesktop = () => (appWin.innerWidth || 0) >= DESKTOP_MIN;
+
+    const isNameTip = (wrap) => {
+        if (!wrap || !wrap.classList || wrap.classList.contains("headlines-tip")) return false;
+        if (wrap.classList.contains("scoop-name-tip")) return true;
+        const td = wrap.closest('td[data-label="Company"], td[data-label="Name"], td[data-label="Commodity"]');
+        return !!(td && wrap.closest(".fr-val"));
+    };
+
+    const clearNameTip = (wrap) => {
+        if (!wrap) return;
+        wrap.classList.remove(OPEN_CLASS);
+        const tip = wrap.querySelector(":scope > .tip-text");
+        if (!tip) return;
+        ["position","left","top","right","bottom","transform","width","max-width","min-width",
+         "visibility","opacity","z-index","pointer-events"].forEach((p) => tip.style.removeProperty(p));
+        tip.style.setProperty("visibility", "hidden", "important");
+        tip.style.setProperty("opacity", "0", "important");
+        tip.style.setProperty("left", "-10000px", "important");
+        tip.style.setProperty("top", "-10000px", "important");
+        tip.style.setProperty("transition", "none", "important");
+    };
+
+    const positionNameTip = (wrap) => {
+        const tip = wrap && wrap.querySelector(":scope > .tip-text");
+        if (!tip || !isDesktop() || !wrap.classList.contains(OPEN_CLASS)) return;
+        const sidebar = appDoc.querySelector('section[data-testid="stSidebar"]');
+        const sbRight = sidebar ? sidebar.getBoundingClientRect().right : 0;
+        const viewRight = Math.min(appWin.innerWidth - PAD, (appDoc.documentElement && appDoc.documentElement.clientWidth) || appWin.innerWidth) - PAD;
+        const minW = 360;
+        const maxW = Math.max(minW, Math.min(700, viewRight - (sbRight + PAD)));
+        const anchor = wrap.getBoundingClientRect();
+        tip.style.setProperty("position", "fixed", "important");
+        tip.style.setProperty("visibility", "visible", "important");
+        tip.style.setProperty("opacity", "1", "important");
+        tip.style.setProperty("pointer-events", "none", "important");
+        tip.style.setProperty("z-index", "2147483000", "important");
+        tip.style.setProperty("bottom", "auto", "important");
+        tip.style.setProperty("right", "auto", "important");
+        tip.style.setProperty("transform", "none", "important");
+        tip.style.setProperty("white-space", "normal", "important");
+        tip.style.setProperty("overflow-wrap", "break-word", "important");
+        tip.style.setProperty("word-break", "normal", "important");
+        tip.style.setProperty("font-size", "1.25rem", "important");
+        tip.style.setProperty("line-height", "1.55", "important");
+        tip.style.setProperty("padding", "1.15rem 1.35rem", "important");
+        tip.style.setProperty("min-width", `${minW}px`, "important");
+        tip.style.setProperty("max-width", `${maxW}px`, "important");
+        tip.style.setProperty("width", "auto", "important");
+        const tipRect = tip.getBoundingClientRect();
+        const height = tipRect.height || 72;
+        const width = Math.max(minW, Math.min(maxW, tipRect.width || minW));
+        let left = anchor.left + anchor.width / 2 - width / 2;
+        if (left < sbRight + PAD) left = sbRight + PAD;
+        if (left + width > viewRight) left = Math.max(sbRight + PAD, viewRight - width);
+        let top = anchor.top - height - 12;
+        if (top < PAD) top = Math.min(appWin.innerHeight - height - PAD, anchor.bottom + 12);
+        tip.style.setProperty("left", `${Math.round(left)}px`, "important");
+        tip.style.setProperty("top", `${Math.round(top)}px`, "important");
+    };
+
+    const openNameTip = (wrap) => {
+        if (!isDesktop() || !isNameTip(wrap)) return;
+        appDoc.querySelectorAll(".tip-wrap." + OPEN_CLASS).forEach((other) => {
+            if (other !== wrap) clearNameTip(other);
+        });
+        wrap.classList.add(OPEN_CLASS);
+        positionNameTip(wrap);
+        appWin.requestAnimationFrame(() => positionNameTip(wrap));
+    };
+
+    const headlinesTh = () => {
+        return [...appDoc.querySelectorAll(".full-results-wrap .full-results-table thead th")].find((th) => {
+            const t = (th.textContent || "").replace(/\s+/g, " ").trim();
+            return t.startsWith("Headlines") && !t.startsWith("Headline ");
+        }) || null;
+    };
+
+    const slotFor = (wrap, tipHeight = 0) => {
+        const viewH = appWin.innerHeight || 800;
+        const viewRight = appWin.innerWidth - PAD;
+        const th = headlinesTh();
+        const td = wrap && wrap.closest('td[data-label="Headlines"]');
+        const thRect = th ? th.getBoundingClientRect() : null;
+        const cellRect = td ? td.getBoundingClientRect() : null;
+        const fallbackCell = appDoc.querySelector('.full-results-wrap td[data-label="Headlines"]');
+        const fallbackRect = fallbackCell ? fallbackCell.getBoundingClientRect() : null;
+        const colRight = (cellRect && cellRect.width > 0)
+            ? cellRect.right
+            : (thRect && thRect.width > 0)
+                ? thRect.right
+                : (fallbackRect ? fallbackRect.right : PAD);
+        const left = Math.round(colRight + RIGHT_GAP);
+        const room = Math.max(0, viewRight - left);
+        const width = Math.round(Math.max(180, Math.min(NARROW_W, room || NARROW_W)));
+        const headerOnScreen = !!(thRect && thRect.bottom > 40 && thRect.top < viewH - 8);
+        let top;
+        let maxHeight;
+        if (headerOnScreen) {
+            const capBottom = thRect.top - ABOVE_HEADING;
+            top = Math.round(capBottom - (tipHeight || 0));
+            if (top < PAD) top = PAD;
+            maxHeight = capBottom - top;
+        } else {
+            top = PAD;
+            maxHeight = viewH - 2 * PAD;
+        }
+        maxHeight = Math.max(280, Math.min(maxHeight, viewH - top - PAD));
+        return { top, left, width, maxHeight, colRight };
+    };
+
+    const applySlot = (tip, slot) => {
+        tip.style.setProperty("--hl-fixed-top", `${slot.top}px`);
+        tip.style.setProperty("--hl-fixed-left", `${slot.left}px`);
+        tip.style.setProperty("--hl-fixed-width", `${slot.width}px`);
+        tip.style.setProperty("--hl-fixed-max-height", `${slot.maxHeight}px`);
+        tip.style.setProperty("left", `${slot.left}px`, "important");
+        tip.style.setProperty("top", `${slot.top}px`, "important");
+        tip.style.setProperty("width", `${slot.width}px`, "important");
+        tip.style.setProperty("max-width", `${slot.width}px`, "important");
+        tip.style.setProperty("min-width", "0", "important");
+        tip.style.setProperty("right", "auto", "important");
+    };
+
+    const headingBase = (heading) => {
+        if (!heading) return "Headlines";
+        if (!heading.dataset.hlBaseLabel) {
+            const current = (heading.textContent || "Headlines").trim();
+            heading.dataset.hlBaseLabel = current.split(" - ")[0].trim() || "Headlines";
+        }
+        return heading.dataset.hlBaseLabel;
+    };
+
+    const companyName = (wrap) => {
+        const row = wrap && wrap.closest("tr");
+        if (!row) return "";
+        const inCommodity = !!wrap.closest(".commodity-results");
+        const valueCell =
+            row.querySelector('td[data-label="Company"] .fr-val') ||
+            row.querySelector('td[data-label="Name"] .fr-val') ||
+            (inCommodity ? row.querySelector('td[data-label="Commodity"] .fr-val') : null);
+        if (!valueCell) return "";
+        const tipWrap = valueCell.querySelector(".tip-wrap");
+        if (tipWrap) {
+            const clone = tipWrap.cloneNode(true);
+            clone.querySelectorAll(".tip-text").forEach((node) => node.remove());
+            return (clone.textContent || "").replace(/\s+/g, " ").trim();
+        }
+        return (valueCell.textContent || "").replace(/\s+/g, " ").trim();
+    };
+
+    const fitTip = (tip, slot) => {
+        const scroll = tip.querySelector(".headlines-tip-scroll");
+        const heading = tip.querySelector(".hl-tip-heading");
+        tip.style.removeProperty("height");
+        if (scroll) {
+            scroll.style.removeProperty("height");
+            scroll.style.removeProperty("max-height");
+        }
+        const headingHeight = heading ? heading.offsetHeight : 0;
+        const list = scroll && scroll.querySelector(".headlines-tip-list");
+        const listHeight = list ? list.scrollHeight : (scroll ? scroll.scrollHeight : 0);
+        const contentHeight = Math.max(tip.scrollHeight, headingHeight + listHeight + 24);
+        const usable = Math.max(280, slot.maxHeight);
+        const needsScroll = contentHeight > usable + 1;
+        const tipHeight = needsScroll ? usable : Math.max(contentHeight, headingHeight + 80);
+        tip.style.setProperty("--hl-fixed-height", `${tipHeight}px`);
+        tip.style.setProperty("height", `${tipHeight}px`, "important");
+        if (scroll) {
+            const scrollHeight = Math.max(120, tipHeight - headingHeight);
+            scroll.style.setProperty("overflow-y", "auto", "important");
+            scroll.style.setProperty("flex", "1 1 auto", "important");
+            scroll.style.setProperty("min-height", "5rem", "important");
+            scroll.style.setProperty("height", `${scrollHeight}px`, "important");
+            scroll.style.setProperty("max-height", `${scrollHeight}px`, "important");
+            scroll.style.setProperty("visibility", "visible", "important");
+            scroll.style.setProperty("opacity", "1", "important");
+        }
+        return tipHeight;
+    };
+
+    const applyHeadlines = (wrap) => {
+        if (!isDesktop() || !wrap) return;
+        const tip = wrap.querySelector(":scope > .tip-text");
+        if (!tip) return;
+        wrap.classList.add("hl-tip-desktop-open");
+        appWin.__scoopDesktopHlOpenedAt = Date.now();
+        const heading = tip.querySelector(".hl-tip-heading");
+        if (heading) {
+            const company = companyName(wrap);
+            heading.textContent = company ? `${headingBase(heading)} - ${company}` : headingBase(heading);
+        }
+        let slot = slotFor(wrap);
+        applySlot(tip, slot);
+        tip.style.setProperty("visibility", "visible", "important");
+        tip.style.setProperty("opacity", "1", "important");
+        tip.style.setProperty("pointer-events", "auto", "important");
+        tip.style.setProperty("display", "flex", "important");
+        tip.style.setProperty("flex-direction", "column", "important");
+        const tipHeight = fitTip(tip, slot);
+        slot = slotFor(wrap, tipHeight);
+        applySlot(tip, slot);
+        fitTip(tip, slot);
+    };
+
+    const onNameOver = (event) => {
+        if (!isDesktop() || !event || !event.target || !event.target.closest) return;
+        const wrap = event.target.closest(".tip-wrap:not(.headlines-tip)");
+        if (!wrap || !isNameTip(wrap)) return;
+        openNameTip(wrap);
+    };
+
+    const onNameOut = (event) => {
+        if (!event || !event.target || !event.target.closest) return;
+        const wrap = event.target.closest(".tip-wrap:not(.headlines-tip)");
+        if (!wrap || !wrap.classList.contains(OPEN_CLASS)) return;
+        const related = event.relatedTarget;
+        if (related && wrap.contains(related)) return;
+        clearNameTip(wrap);
+    };
+
+    const onHlClick = (event) => {
+        if (!isDesktop() || !event || !event.target || !event.target.closest) return;
+        const label = event.target.closest(".hl-tip-count");
+        if (!label) return;
+        const wrap = label.closest(".tip-wrap.headlines-tip");
+        if (!wrap) return;
+        appWin.__scoopDesktopHlOpenedAt = Date.now();
+        const run = () => applyHeadlines(wrap);
+        run();
+        appWin.requestAnimationFrame(run);
+        appWin.setTimeout(run, 50);
+        appWin.setTimeout(run, 200);
+    };
+
+    const onHlChange = (event) => {
+        if (!isDesktop() || !event || !event.target) return;
+        if (!event.target.classList || !event.target.classList.contains("hl-tip-cb")) return;
+        const wrap = event.target.closest(".tip-wrap.headlines-tip");
+        if (event.target.checked) applyHeadlines(wrap);
+    };
+
+    if (appWin.__scoopDesktopScreenerTipsOver) {
+        appDoc.removeEventListener("mouseover", appWin.__scoopDesktopScreenerTipsOver, true);
+        appDoc.removeEventListener("mouseout", appWin.__scoopDesktopScreenerTipsOut, true);
+        appDoc.removeEventListener("click", appWin.__scoopDesktopScreenerTipsClick, true);
+        appDoc.removeEventListener("change", appWin.__scoopDesktopScreenerTipsChange, true);
+    }
+    appWin.__scoopDesktopScreenerTipsOver = onNameOver;
+    appWin.__scoopDesktopScreenerTipsOut = onNameOut;
+    appWin.__scoopDesktopScreenerTipsClick = onHlClick;
+    appWin.__scoopDesktopScreenerTipsChange = onHlChange;
+    appDoc.addEventListener("mouseover", onNameOver, true);
+    appDoc.addEventListener("mouseout", onNameOut, true);
+    appDoc.addEventListener("click", onHlClick, true);
+    appDoc.addEventListener("change", onHlChange, true);
+})();
+"""
+
+
+def inject_desktop_screener_tips() -> None:
+    st.html(
+        f"<style id='scoop-desktop-screener-tips-css'>{_CSS}</style>"
+        f"<script id='scoop-desktop-screener-tips'>{_JS}</script>",
+        unsafe_allow_javascript=True,
+    )

@@ -275,6 +275,11 @@ _SCREENER_LANDING_INTRO_CSS = """
         .scoop-landing-compact:last-of-type .scoop-landing-sentiment {
             margin-bottom: 1rem;
         }
+        html:not([data-scoop-screener-gated="1"]) .scoop-landing-info,
+        html:not([data-scoop-screener-gated="1"]) .scoop-landing-sentiment,
+        html:not([data-scoop-screener-gated="1"]) .scoop-landing-divider {
+            display: none !important;
+        }
         .scoop-screener-last-updated {
             margin-top: 0.35rem !important;
             margin-bottom: 0.85rem !important;
@@ -306,6 +311,11 @@ _SCREENER_LANDING_INTRO_CSS = """
         html[data-scoop-screener-active="1"] [data-testid="stMainBlockContainer"] [data-testid="stAlert"] {
             margin-top: 0.4rem !important;
             margin-bottom: 0.9rem !important;
+        }
+        html:not([data-scoop-screener-gated="1"]) .scoop-landing-compact .scoop-landing-info,
+        html:not([data-scoop-screener-gated="1"]) .scoop-landing-compact .scoop-landing-sentiment,
+        html:not([data-scoop-screener-gated="1"]) .scoop-landing-divider {
+            display: block !important;
         }
     }
     .scoop-screener-last-updated {
