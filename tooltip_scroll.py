@@ -571,8 +571,8 @@ _DESKTOP_HEADLINES_CSS = """
            collapses the panel into the ~40px count cell. */
         top: var(--hl-fixed-top, 12px) !important;
         left: var(--hl-fixed-left, -10000px) !important;
-        width: var(--hl-fixed-width, 280px) !important;
-        min-width: 280px !important;
+        width: var(--hl-fixed-width, 410px) !important;
+        min-width: 410px !important;
         max-width: var(--hl-fixed-width, 44vw) !important;
         right: auto !important;
         bottom: auto !important;
@@ -3013,6 +3013,7 @@ _TOOLTIP_SCROLL_JS = """
     const getDesktopHeadlinesSlot = (tipHeight = 0) => {
         const PAD = VIEWPORT_PAD;
         const MIN_W = 280;
+        const EXTRA_W = 130;
         const MIN_H = 280;
         const viewH = window.innerHeight || 800;
         const viewW = window.innerWidth || 1600;
@@ -3041,12 +3042,12 @@ _TOOLTIP_SCROLL_JS = """
             left = r.left;
             width = r.width;
         }
-        width = Math.max(MIN_W, Math.round(width));
+        width = Math.max(MIN_W, Math.round(width)) + EXTRA_W;
         left = Math.round(left);
         top = Math.round(top);
         if (top < PAD) top = PAD;
         if (left < PAD) left = PAD;
-        if (left + width > viewW - PAD) width = Math.max(MIN_W, viewW - PAD - left);
+        if (left + width > viewW - PAD) width = Math.max(MIN_W + EXTRA_W, viewW - PAD - left);
         let maxHeight = Math.round(Math.min(tableBottom, viewH - PAD) - top);
         if (vis.length) {
             maxHeight = Math.max(maxHeight, Math.round(Math.max(...vis.map((r) => r.bottom)) - top));
@@ -5718,7 +5719,7 @@ _IPAD_MINI_HEADLINES_CENTER_STANDALONE_JS = r"""
 # Parent-document binder matching the pre-fix desktop Headlines slot and behaviors.
 _DESKTOP_HEADLINES_STANDALONE_JS = r"""
 (() => {
-    const VERSION = 19;
+    const VERSION = 21;
     const DESKTOP_MIN = 1367;
     const PAD = 12;
     let appDoc = document;
@@ -5756,6 +5757,7 @@ _DESKTOP_HEADLINES_STANDALONE_JS = r"""
 
     const slotFor = () => {
         const MIN_W = 280;
+        const EXTRA_W = 130;
         const MIN_H = 280;
         const viewH = appWin.innerHeight || 800;
         const viewW = appWin.innerWidth || 1600;
@@ -5782,12 +5784,12 @@ _DESKTOP_HEADLINES_STANDALONE_JS = r"""
             left = r.left;
             width = r.width;
         }
-        width = Math.max(MIN_W, Math.round(width));
+        width = Math.max(MIN_W, Math.round(width)) + EXTRA_W;
         left = Math.round(left);
         top = Math.round(top);
         if (top < PAD) top = PAD;
         if (left < PAD) left = PAD;
-        if (left + width > viewW - PAD) width = Math.max(MIN_W, viewW - PAD - left);
+        if (left + width > viewW - PAD) width = Math.max(MIN_W + EXTRA_W, viewW - PAD - left);
         let maxHeight = Math.round(Math.min(tableBottom, viewH - PAD) - top);
         if (vis.length) {
             maxHeight = Math.max(maxHeight, Math.round(Math.max(...vis.map((r) => r.bottom)) - top));
@@ -6007,10 +6009,11 @@ _DESKTOP_HEADLINES_STANDALONE_JS = r"""
 
 _DESKTOP_HL_LOCK_JS = r"""
 (() => {
-    const VERSION = 1;
+    const VERSION = 3;
     const DESKTOP_MIN = 1367;
     const PAD = 12;
     const MIN_W = 280;
+    const EXTRA_W = 130;
     const MIN_H = 280;
     let appDoc = document;
     let appWin = window;
@@ -6056,12 +6059,12 @@ _DESKTOP_HL_LOCK_JS = r"""
             left = r.left;
             width = r.width;
         }
-        width = Math.max(MIN_W, Math.round(width));
+        width = Math.max(MIN_W, Math.round(width)) + EXTRA_W;
         left = Math.round(left);
         top = Math.round(top);
         if (top < PAD) top = PAD;
         if (left < PAD) left = PAD;
-        if (left + width > viewW - PAD) width = Math.max(MIN_W, viewW - PAD - left);
+        if (left + width > viewW - PAD) width = Math.max(MIN_W + EXTRA_W, viewW - PAD - left);
         let maxHeight = Math.round(Math.min(tableBottom, viewH - PAD) - top);
         if (vis.length) {
             maxHeight = Math.max(maxHeight, Math.round(Math.max(...vis.map((r) => r.bottom)) - top));
@@ -6087,7 +6090,7 @@ _DESKTOP_HL_LOCK_JS = r"""
         tip.style.setProperty("left", slot.left + "px", "important");
         tip.style.setProperty("top", slot.top + "px", "important");
         tip.style.setProperty("width", slot.width + "px", "important");
-        tip.style.setProperty("min-width", MIN_W + "px", "important");
+        tip.style.setProperty("min-width", (MIN_W + EXTRA_W) + "px", "important");
         tip.style.setProperty("max-width", slot.width + "px", "important");
         tip.style.setProperty("height", tipHeight + "px", "important");
         tip.style.setProperty("min-height", MIN_H + "px", "important");
@@ -6183,5 +6186,5 @@ def install_tooltip_scroll_handler() -> None:
         unsafe_allow_javascript=True,
     )
     # Chunked inject: a full inline Headlines <script> is dropped by Streamlit.
-    _inject_js_source(_DESKTOP_HEADLINES_STANDALONE_JS, key="desktop-hl-v19")
-    _inject_js_source(_DESKTOP_HL_LOCK_JS, key="desktop-hl-lock-v1")
+    _inject_js_source(_DESKTOP_HEADLINES_STANDALONE_JS, key="desktop-hl-v21")
+    _inject_js_source(_DESKTOP_HL_LOCK_JS, key="desktop-hl-lock-v3")

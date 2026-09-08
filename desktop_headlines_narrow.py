@@ -26,9 +26,9 @@ _CSS = """
         right: auto !important;
         bottom: auto !important;
         box-sizing: border-box !important;
-        width: var(--hl-fixed-width, 280px) !important;
+        width: var(--hl-fixed-width, 410px) !important;
         max-width: var(--hl-fixed-width, 44vw) !important;
-        min-width: 280px !important;
+        min-width: 410px !important;
         min-height: 280px !important;
         border: 2px solid #22c55e !important;
         max-height: var(--hl-fixed-max-height, calc(100vh - 24px)) !important;
@@ -89,7 +89,7 @@ _CSS = """
 
 _JS = r"""
 (() => {
-    const VERSION = 4;
+    const VERSION = 6;
     const DESKTOP_MIN = 1367;
     const M = 12;
     let appDoc = document;
@@ -165,6 +165,7 @@ _JS = r"""
             ? tbody.getBoundingClientRect().bottom
             : (table ? table.getBoundingClientRect().bottom : vh - M);
         const MIN_W = 280;
+        const EXTRA_W = 130;
         const MIN_H = 280;
         let left = M;
         let width = MIN_W;
@@ -178,12 +179,12 @@ _JS = r"""
             left = r.left;
             width = r.width;
         }
-        width = Math.max(MIN_W, Math.round(width));
+        width = Math.max(MIN_W, Math.round(width)) + EXTRA_W;
         left = Math.round(left);
         top = Math.round(top);
         if (top < M) top = M;
         if (left < M) left = M;
-        if (left + width > vw - M) width = Math.max(MIN_W, vw - M - left);
+        if (left + width > vw - M) width = Math.max(MIN_W + EXTRA_W, vw - M - left);
         let height = Math.round(Math.min(tableBottom, vh - M) - top);
         if (vis.length) {
             height = Math.max(height, Math.round(Math.max(...vis.map((r) => r.bottom)) - top));
@@ -196,7 +197,7 @@ _JS = r"""
         tip.style.setProperty("top", top + "px", "important");
         tip.style.setProperty("width", width + "px", "important");
         tip.style.setProperty("max-width", width + "px", "important");
-        tip.style.setProperty("min-width", "280px", "important");
+        tip.style.setProperty("min-width", "410px", "important");
         tip.style.setProperty("height", height + "px", "important");
         tip.style.setProperty("max-height", height + "px", "important");
         tip.style.setProperty("visibility", "visible", "important");

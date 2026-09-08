@@ -23,8 +23,9 @@ def test_desktop_open_headlines_keep_fixed_slot() -> None:
     assert "top: var(--hl-fixed-top, -10000px)" in css
     assert "left: var(--hl-fixed-left, -10000px)" in css
     assert "left: var(--hl-fixed-left) !important;" not in css
-    assert "min-width: 280px !important" in css
+    assert "min-width: 410px !important" in css
     assert "min-height: 280px !important" in css
+    assert "width: var(--hl-fixed-width, 410px) !important" in css
     assert "border: 2px solid #22c55e !important" in css
     assert 'html[data-scoop-theme="dark"]' in css
     assert "border: 2px solid #ffffff !important" in css
