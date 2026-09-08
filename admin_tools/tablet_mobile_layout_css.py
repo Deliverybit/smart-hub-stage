@@ -3430,10 +3430,11 @@ POST_CONSENT_MOBILE_SCREENER_HIDE = """
     html:not([data-scoop-screener-gated="1"]) .scoop-landing-divider {
         display: none !important;
     }
-    html:not([data-scoop-screener-gated="1"]) [data-testid="stElementContainer"]:has(.scoop-top-picks-anchor) + [data-testid="stElementContainer"],
-    html:not([data-scoop-screener-gated="1"]) [data-testid="element-container"]:has(.scoop-top-picks-anchor) + [data-testid="element-container"],
-    html:not([data-scoop-screener-gated="1"]) [data-testid="stElementContainer"]:has(.scoop-top-picks-anchor) + [data-testid="stElementContainer"] + [data-testid="stElementContainer"],
-    html:not([data-scoop-screener-gated="1"]) [data-testid="element-container"]:has(.scoop-top-picks-anchor) + [data-testid="element-container"] + [data-testid="element-container"] {
+    [data-testid="stElementContainer"]:has(.scoop-top-picks-anchor) + [data-testid="stElementContainer"],
+    [data-testid="element-container"]:has(.scoop-top-picks-anchor) + [data-testid="element-container"],
+    [data-testid="stElementContainer"]:has(.scoop-top-picks-anchor) + [data-testid="stElementContainer"] + [data-testid="stElementContainer"],
+    [data-testid="element-container"]:has(.scoop-top-picks-anchor) + [data-testid="element-container"] + [data-testid="element-container"],
+    [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:has([data-testid="stMetric"]) {
         display: none !important;
     }
 }
@@ -3691,16 +3692,23 @@ _MOBILE_TABLET_DARK_MODE_UNBOX_ALWAYS = f"""
 }}
 """
 
-# Phone/tablet: never show compact + desktop index rows together. A prior full-width
-# rule used div:has(> .scoop-index-card), which also un-hid .scoop-banner-desktop.
+# Phone/tablet: hide the top index banner cards. Desktop 1367px+ is unchanged.
 _MOBILE_TABLET_BANNER_COMPACT_ONLY = """
 @media (max-width: 1366px) {
+    html body .stApp [data-testid="stElementContainer"]:has(.scoop-banner-compact),
+    html body .stApp [data-testid="element-container"]:has(.scoop-banner-compact),
+    html body .stApp [data-testid="stElementContainer"]:has(.scoop-banner-desktop),
+    html body .stApp [data-testid="element-container"]:has(.scoop-banner-desktop),
     html body .stApp .scoop-banner-desktop,
+    html body .stApp .scoop-banner-compact,
     html[data-scoop-screener-active="1"] .scoop-banner-desktop,
     html[data-scoop-screener-gated="1"] .scoop-banner-desktop,
     html[data-scoop-desktop-layout="1"] .scoop-banner-desktop,
     html[data-scoop-desktop-layout="1"][data-scoop-screener-gated="1"] .scoop-banner-desktop,
-    html[data-scoop-desktop-layout="1"][data-scoop-screener-active="1"] .scoop-banner-desktop {
+    html[data-scoop-desktop-layout="1"][data-scoop-screener-active="1"] .scoop-banner-desktop,
+    html[data-scoop-screener-active="1"] .scoop-banner-compact,
+    html[data-scoop-screener-gated="1"] .scoop-banner-compact,
+    html[data-scoop-desktop-layout="1"] .scoop-banner-compact {
         display: none !important;
         visibility: hidden !important;
         height: 0 !important;
@@ -3710,55 +3718,26 @@ _MOBILE_TABLET_BANNER_COMPACT_ONLY = """
         overflow: hidden !important;
         pointer-events: none !important;
     }
-    html body .stApp .scoop-banner-compact,
-    html[data-scoop-screener-active="1"] .scoop-banner-compact,
-    html[data-scoop-screener-gated="1"] .scoop-banner-compact,
-    html[data-scoop-desktop-layout="1"] .scoop-banner-compact {
-        display: flex !important;
-        visibility: visible !important;
-        height: auto !important;
-        max-height: none !important;
-        overflow: visible !important;
-        pointer-events: auto !important;
-        gap: 1rem !important;
-        flex-wrap: wrap !important;
-        margin-bottom: 1rem !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-    }
 }
 """
 
-# Phone only: index cards must span the content width (inline max-width:50% is for
-# desktop side-by-side rows). Do not require screener-active — gated consent
-# views on real phones were left at half-width when that attribute was missing.
-# Exclude .scoop-banner-desktop so full-width styles cannot un-hide the desktop row.
+# Phone: do not re-show index banner cards after the tablet/mobile hide rule.
 _MOBILE_INDEX_BANNER_FULL_WIDTH = """
 @media (max-width: 768px) {
     .scoop-banner-compact,
-    [data-testid="stMarkdownContainer"] div.scoop-banner-compact:has(> .scoop-index-card),
-    [data-testid="stMarkdownContainer"] div:has(> .scoop-index-card):not(.scoop-banner-desktop) {
-        display: flex !important;
-        flex-direction: column !important;
-        flex-wrap: nowrap !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        box-sizing: border-box !important;
-        gap: 1rem !important;
-    }
-    .scoop-banner-compact .scoop-index-card,
-    .scoop-banner-compact > div,
-    [data-testid="stMarkdownContainer"] div:has(> .scoop-index-card):not(.scoop-banner-desktop) > .scoop-index-card {
-        flex: 1 1 100% !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        min-width: 0 !important;
-        box-sizing: border-box !important;
-    }
     .scoop-banner-desktop,
-    .scoop-banner-desktop .scoop-index-card {
+    .scoop-banner-compact .scoop-index-card,
+    .scoop-banner-desktop .scoop-index-card,
+    [data-testid="stMarkdownContainer"] div.scoop-banner-compact:has(> .scoop-index-card),
+    [data-testid="stMarkdownContainer"] div:has(> .scoop-index-card) {
         display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        max-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
     }
 }
 """

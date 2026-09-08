@@ -130,6 +130,20 @@ def is_desktop_viewport(*, page: str | None = None) -> bool | None:
     return not responsive
 
 
+def render_desktop_index_banner(st_module, html: str, *, page: str | None = None) -> None:
+    """Render market index cards on desktop only. Phone/tablet omit the markup."""
+    if not html or not str(html).strip():
+        return
+    if is_desktop_viewport(page=page) is not True:
+        return
+    st_module.markdown(html, unsafe_allow_html=True)
+
+
+def should_render_desktop_top_picks(*, page: str | None = None) -> bool:
+    """True only on confirmed desktop. Phone/tablet omit Top Picks entirely."""
+    return is_desktop_viewport(page=page) is True
+
+
 def probe_terms_force_responsive() -> bool | None:
     """True when consent-page Terms navigation requested responsive chrome.
 

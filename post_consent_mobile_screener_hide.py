@@ -24,10 +24,11 @@ _CSS = """
     html:not([data-scoop-screener-gated="1"]) .scoop-landing-divider {
         display: none !important;
     }
-    html:not([data-scoop-screener-gated="1"]) [data-testid="stElementContainer"]:has(.scoop-top-picks-anchor) + [data-testid="stElementContainer"],
-    html:not([data-scoop-screener-gated="1"]) [data-testid="element-container"]:has(.scoop-top-picks-anchor) + [data-testid="element-container"],
-    html:not([data-scoop-screener-gated="1"]) [data-testid="stElementContainer"]:has(.scoop-top-picks-anchor) + [data-testid="stElementContainer"] + [data-testid="stElementContainer"],
-    html:not([data-scoop-screener-gated="1"]) [data-testid="element-container"]:has(.scoop-top-picks-anchor) + [data-testid="element-container"] + [data-testid="element-container"] {
+    [data-testid="stElementContainer"]:has(.scoop-top-picks-anchor) + [data-testid="stElementContainer"],
+    [data-testid="element-container"]:has(.scoop-top-picks-anchor) + [data-testid="element-container"],
+    [data-testid="stElementContainer"]:has(.scoop-top-picks-anchor) + [data-testid="stElementContainer"] + [data-testid="stElementContainer"],
+    [data-testid="element-container"]:has(.scoop-top-picks-anchor) + [data-testid="element-container"] + [data-testid="element-container"],
+    [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:has([data-testid="stMetric"]) {
         display: none !important;
     }
 }

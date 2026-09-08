@@ -26,7 +26,11 @@ from screener_selection import (
     sync_screener_gating_layout,
 )
 from screener_table import ANALYZE_COLUMN_TIP, analyze_link_html, build_source_ticker_map
-from landing_page import render_responsive_navigation
+from landing_page import (
+    render_desktop_index_banner,
+    render_responsive_navigation,
+    should_render_desktop_top_picks,
+)
 from tooltip_scroll import install_tooltip_scroll_handler
 from desktop_headlines_dismiss import inject_desktop_headlines_dismiss
 from desktop_screener_tips import inject_desktop_screener_tips
@@ -3098,11 +3102,11 @@ _desktop_cards = (
     + _banner_card("Invesco QQQ (QQQ) — Today", _qqq_price, _qqq_chg)
     + _banner_card(_third_label, _soxx_price, _soxx_chg)
 )
-if _compact_cards or _desktop_cards:
-    st.markdown(
-        f'<div class="scoop-banner-compact">{_compact_cards}</div>'
+if _desktop_cards:
+    render_desktop_index_banner(
+        st,
         f'<div class="scoop-banner-desktop">{_desktop_cards}</div>',
-        unsafe_allow_html=True,
+        page="pages/2_NASDAQ_Top_10.py",
     )
 
 # ── UI ────────────────────────────────────────────────────────────────
@@ -3179,41 +3183,42 @@ else:
         )
         getattr(st, level)(status_msg)
 
-        # ── Metrics row for top 3 ─────────────────────────────────────
-        st.markdown('<div class="scoop-top-picks-anchor" hidden></div>', unsafe_allow_html=True)
-        st.markdown("### 🏆 Top Picks")
-        top_cols = st.columns(min(3, len(df)))
-        for idx, col in enumerate(top_cols):
-            if idx >= len(df):
-                break
-            row = df.iloc[idx]
-            with col:
-                delta_txt = f"{row['% Above Low']:+.1f}% above 52W low"
-                st.metric(
-                    label=f"#{idx + 1}  {row['Ticker']}",
-                    value=f"${row['Price']:,.2f}",
-                    delta=delta_txt,
-                    delta_color="normal",
-                )
-                tip = COMPANY_SUMMARIES.get(row["Ticker"], "")
-                if row["Market Mood"] == "BELOW LOW":
-                    badge = "🚨 BELOW 52W LOW — New Floor"
-                elif row["Market Mood"] == "AT LOW":
-                    badge = "🔥 AT 52W LOW"
-                else:
-                    badge = "📉 NEAR 52W LOW"
-                st.markdown(
-                    f'<div style="font-size:1.5rem;line-height:1.8;">'
-                    f'<span class="tip-wrap scoop-name-tip" style="font-weight:700;">'
-                    f'{row["Company"]}'
-                    f'<span class="tip-text">{tip}</span></span><br>'
-                    f'52W Low: <b style="color:#22c55e;">${row["52W Low"]:,.2f}</b> · '
-                    f'52W High: <b>${row["52W High"]:,.2f}</b><br>'
-                    f'Sentiment: <b>{row["Headline Sentiment"]:+.3f}</b><br>'
-                    f'<b>{badge}</b>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
+        # ── Metrics row for top 3 (desktop only) ──────────────────────
+        if should_render_desktop_top_picks(page="pages/2_NASDAQ_Top_10.py"):
+            st.markdown('<div class="scoop-top-picks-anchor" hidden></div>', unsafe_allow_html=True)
+            st.markdown("### 🏆 Top Picks")
+            top_cols = st.columns(min(3, len(df)))
+            for idx, col in enumerate(top_cols):
+                if idx >= len(df):
+                    break
+                row = df.iloc[idx]
+                with col:
+                    delta_txt = f"{row['% Above Low']:+.1f}% above 52W low"
+                    st.metric(
+                        label=f"#{idx + 1}  {row['Ticker']}",
+                        value=f"${row['Price']:,.2f}",
+                        delta=delta_txt,
+                        delta_color="normal",
+                    )
+                    tip = COMPANY_SUMMARIES.get(row["Ticker"], "")
+                    if row["Market Mood"] == "BELOW LOW":
+                        badge = "🚨 BELOW 52W LOW — New Floor"
+                    elif row["Market Mood"] == "AT LOW":
+                        badge = "🔥 AT 52W LOW"
+                    else:
+                        badge = "📉 NEAR 52W LOW"
+                    st.markdown(
+                        f'<div style="font-size:1.5rem;line-height:1.8;">'
+                        f'<span class="tip-wrap scoop-name-tip" style="font-weight:700;">'
+                        f'{row["Company"]}'
+                        f'<span class="tip-text">{tip}</span></span><br>'
+                        f'52W Low: <b style="color:#22c55e;">${row["52W Low"]:,.2f}</b> · '
+                        f'52W High: <b>${row["52W High"]:,.2f}</b><br>'
+                        f'Sentiment: <b>{row["Headline Sentiment"]:+.3f}</b><br>'
+                        f'<b>{badge}</b>'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
 
         # ── Full table (HTML with hover tooltips) ─────────────────────
         st.markdown("### 📋 Full Results")

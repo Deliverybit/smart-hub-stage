@@ -42,11 +42,67 @@ def test_resolve_home_waits_for_js() -> None:
     assert landing_page.resolve_home_entry() is None
 
 
+def test_index_banner_omitted_on_mobile_tablet() -> None:
+    _patch_js("1")
+    calls: list[str] = []
+    fake_st = type("ST", (), {"markdown": staticmethod(lambda html, **kwargs: calls.append(html))})()
+    landing_page.render_desktop_index_banner(fake_st, '<div class="scoop-index-card">NYSE</div>')
+    assert calls == []
+
+
+def test_index_banner_omitted_while_viewport_unknown() -> None:
+    _patch_js(None)
+    calls: list[str] = []
+    fake_st = type("ST", (), {"markdown": staticmethod(lambda html, **kwargs: calls.append(html))})()
+    landing_page.render_desktop_index_banner(fake_st, '<div class="scoop-index-card">NYSE</div>')
+    assert calls == []
+
+
+def test_index_banner_rendered_on_desktop() -> None:
+    _patch_js("0")
+    calls: list[str] = []
+    fake_st = type("ST", (), {"markdown": staticmethod(lambda html, **kwargs: calls.append(html))})()
+    html = '<div class="scoop-banner-desktop"><div class="scoop-index-card">NYSE</div></div>'
+    landing_page.render_desktop_index_banner(fake_st, html)
+    assert calls == [html]
+
+
+def test_top_picks_omitted_on_mobile_tablet() -> None:
+    _patch_js("1")
+    assert landing_page.should_render_desktop_top_picks() is False
+
+
+def test_top_picks_kept_on_desktop() -> None:
+    _patch_js("0")
+    assert landing_page.should_render_desktop_top_picks() is True
+
+
+def test_screener_pages_use_desktop_only_index_banner() -> None:
+    pages = [
+        "pages/1_NYSE_Top_10.py",
+        "pages/2_NASDAQ_Top_10.py",
+        "pages/3_Crypto_Top_10.py",
+        "pages/5_CME_Top_10.py",
+        "pages/6_ICE_Top_10.py",
+    ]
+    root = Path(__file__).resolve().parents[1]
+    for rel in pages:
+        text = root.joinpath(rel).read_text(encoding="utf-8")
+        assert "render_desktop_index_banner" in text, rel
+        assert 'scoop-banner-compact">' not in text, rel
+
+
 def main() -> int:
     tests = [
         test_resolve_home_mobile_tablet,
         test_resolve_home_desktop,
         test_resolve_home_waits_for_js,
+        test_index_banner_omitted_on_mobile_tablet,
+        test_index_banner_omitted_while_viewport_unknown,
+        test_index_banner_rendered_on_desktop,
+        test_screener_pages_use_desktop_only_index_banner,
+        test_top_picks_omitted_on_mobile_tablet,
+        test_top_picks_kept_on_desktop,
     ]
     for fn in tests:
         fn()
