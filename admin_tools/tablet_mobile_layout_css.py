@@ -1124,7 +1124,7 @@ TABLET_SCREENER_MOBILE_LAYOUT = (
         }
 
         .stMarkdown .full-results-mobile-legend {
-            display: block !important;
+            display: none !important;
             margin: 0 0 1.1rem 0 !important;
             padding: 0.8rem 0.9rem !important;
             border: 1px solid #e2e8f0 !important;

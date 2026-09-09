@@ -674,7 +674,7 @@ st.markdown(
 
         /* Full Results — column tips panel (optional) */
         .stMarkdown .full-results-mobile-legend {
-            display: block !important;
+            display: none !important;
             margin: 0 0 1rem 0 !important;
             padding: 0.65rem 0.75rem !important;
             border: 1px solid #e2e8f0 !important;
@@ -1250,7 +1250,7 @@ st.markdown(
         }
 
         .stMarkdown .full-results-mobile-legend {
-            display: block !important;
+            display: none !important;
             margin: 0 0 1.1rem 0 !important;
             padding: 0.8rem 0.9rem !important;
             border: 1px solid #e2e8f0 !important;
@@ -1863,7 +1863,7 @@ st.markdown(
         }
 
         .stMarkdown .full-results-mobile-legend {
-            display: block !important;
+            display: none !important;
             margin: 0 0 1.1rem 0 !important;
             padding: 0.8rem 0.9rem !important;
             border: 1px solid #e2e8f0 !important;
@@ -2391,7 +2391,7 @@ st.markdown(
         }
 
         .stMarkdown .full-results-mobile-legend {
-            display: block !important;
+            display: none !important;
             margin: 0 0 1.1rem 0 !important;
             padding: 0.8rem 0.9rem !important;
             border: 1px solid #e2e8f0 !important;
@@ -2765,6 +2765,13 @@ st.markdown(
 
     }
 
+    /* Phone/tablet: no Full Results legend panel. Desktop unchanged. */
+    @media (max-width: 1366px) {
+        html .full-results-mobile-legend,
+        html .stMarkdown .full-results-mobile-legend {
+            display: none !important;
+        }
+    }
 
     </style>
     """,
@@ -3305,15 +3312,6 @@ else:
                 f"<tbody>{rows_html}</tbody></table></div>"
             )
 
-        _fr_legend_rows = "".join(
-            f"<div class='fr-mobile-tip-row'><strong>{html.escape(c)}</strong>"
-            f"<p>{html.escape(t)}</p></div>"
-            for c, t in COLUMN_TIPS.items()
-        )
-        st.markdown(
-            f'<div class="full-results-mobile-legend">{_fr_legend_rows}</div>',
-            unsafe_allow_html=True,
-        )
         st.markdown(_build_html_table(display_df), unsafe_allow_html=True)
 
         # ── Explanation card ──────────────────────────────────────────
