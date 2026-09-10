@@ -49,3 +49,89 @@ def analyze_link_html(source_ticker: str, *, from_path: str = "") -> str:
         f'<span class="tip-text">{tip_esc}</span></span>'
     )
     return f'<span class="fr-analyze-cell">{link}{mobile_tip}</span>'
+
+
+def render_full_results_heading(st_module, compact_title: str) -> None:
+    """Show the market Top 10 title in place of Full Results."""
+    title = html.escape(str(compact_title).strip() or "Top 10")
+    st_module.markdown(
+        f"""
+        <style>
+        .scoop-fr-heading-wrap {{
+            padding-top: 24px !important;
+            padding-bottom: 24px !important;
+            box-sizing: border-box !important;
+        }}
+        .scoop-full-results-heading {{
+            margin-top: 24px !important;
+            margin-bottom: 24px !important;
+        }}
+        .scoop-fr-heading-wrap .scoop-full-results-heading {{
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+        }}
+        .scoop-fr-heading-spacer {{
+            display: none !important;
+            height: 0 !important;
+        }}
+        [data-testid="stElementContainer"]:has(.scoop-full-results-heading),
+        [data-testid="element-container"]:has(.scoop-full-results-heading) {{
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }}
+        @media (min-width: 1367px) {{
+            .scoop-fr-heading-wrap {{
+                padding-top: 40px !important;
+                padding-bottom: 0 !important;
+            }}
+            .scoop-full-results-heading {{
+                margin-top: 40px !important;
+                margin-bottom: 0 !important;
+            }}
+            .scoop-fr-heading-wrap .scoop-full-results-heading {{
+                margin-top: 0 !important;
+                margin-bottom: 0 !important;
+            }}
+            .scoop-fr-heading-spacer {{
+                display: block !important;
+                height: 40px !important;
+                width: 100% !important;
+            }}
+        }}
+        .scoop-full-results-heading .scoop-fr-title-box {{
+            font-size: inherit !important;
+            font-weight: inherit !important;
+            line-height: inherit !important;
+        }}
+        html:not([data-scoop-theme="dark"]) .scoop-full-results-heading {{
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+        }}
+        html:not([data-scoop-theme="dark"]) body .stApp .scoop-full-results-heading .scoop-fr-title-box {{
+            display: inline-block !important;
+            border: 2px solid #22c55e !important;
+            border-radius: 10px !important;
+            padding: 0.2em 0.55em !important;
+            background: #f0fdf4 !important;
+            box-sizing: border-box !important;
+        }}
+        html[data-scoop-theme="dark"] .scoop-full-results-heading {{
+            display: inline-block !important;
+            border: 2px solid #ffffff !important;
+            border-radius: 10px !important;
+            padding: 0.2em 0.55em !important;
+            background: #ffffff !important;
+            color: #0f172a !important;
+            box-sizing: border-box !important;
+        }}
+        html[data-scoop-theme="dark"] .scoop-full-results-heading .scoop-fr-title-box {{
+            color: #0f172a !important;
+        }}
+        </style>
+        <div class="scoop-fr-heading-wrap"><h3 class="scoop-full-results-heading"><span class="scoop-fr-title-box">📋 {title}</span></h3><div class="scoop-fr-heading-spacer" aria-hidden="true"></div></div>
+        """,
+        unsafe_allow_html=True,
+    )

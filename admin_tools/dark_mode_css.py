@@ -49,6 +49,19 @@ html[data-scoop-theme="dark"] .stCaption p {
     color: #e2e8f0 !important;
 }
 
+html[data-scoop-theme="dark"] .scoop-full-results-heading,
+html[data-scoop-theme="dark"] [data-testid="stMarkdownContainer"] .scoop-full-results-heading {
+    background: #ffffff !important;
+    border: 2px solid #ffffff !important;
+    color: #0f172a !important;
+}
+html[data-scoop-theme="dark"] .scoop-full-results-heading span,
+html[data-scoop-theme="dark"] [data-testid="stMarkdownContainer"] .scoop-full-results-heading span {
+    color: #0f172a !important;
+    background: transparent !important;
+    border: none !important;
+}
+
 html[data-scoop-theme="dark"] .sidebar-brand,
 html[data-scoop-theme="dark"] [data-testid="stSidebar"] .sidebar-brand {
     background: #111827 !important;

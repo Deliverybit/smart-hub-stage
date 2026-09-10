@@ -25,7 +25,7 @@ from screener_selection import (
     selection_status_message,
     sync_screener_gating_layout,
 )
-from screener_table import ANALYZE_COLUMN_TIP, analyze_link_html, build_source_ticker_map
+from screener_table import ANALYZE_COLUMN_TIP, analyze_link_html, build_source_ticker_map, render_full_results_heading
 from landing_page import (
     render_desktop_index_banner,
     render_responsive_navigation,
@@ -2765,11 +2765,99 @@ st.markdown(
 
     }
 
+    .scoop-fr-heading-wrap {
+        padding-top: 24px !important;
+        padding-bottom: 24px !important;
+        box-sizing: border-box !important;
+    }
+    .scoop-full-results-heading {
+        margin-top: 24px !important;
+        margin-bottom: 24px !important;
+    }
+    .scoop-fr-heading-wrap .scoop-full-results-heading {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    .scoop-fr-heading-spacer {
+        display: none !important;
+        height: 0 !important;
+    }
+    [data-testid="stElementContainer"]:has(.scoop-full-results-heading),
+    [data-testid="element-container"]:has(.scoop-full-results-heading),
+    [data-testid="stElementContainer"]:has(.scoop-fr-heading-spacer),
+    [data-testid="element-container"]:has(.scoop-fr-heading-spacer) {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    @media (min-width: 1367px) {
+        .scoop-fr-heading-wrap {
+            padding-top: 40px !important;
+            padding-bottom: 0 !important;
+        }
+        .scoop-full-results-heading {
+            margin-top: 40px !important;
+            margin-bottom: 0 !important;
+        }
+        .scoop-fr-heading-wrap .scoop-full-results-heading {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+        }
+        .scoop-fr-heading-spacer {
+            display: block !important;
+            height: 40px !important;
+            width: 100% !important;
+        }
+    }
+    html:not([data-scoop-theme="dark"]) .scoop-full-results-heading {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+    html:not([data-scoop-theme="dark"]) body .stApp .scoop-full-results-heading .scoop-fr-title-box {
+        display: inline-block !important;
+        border: 2px solid #22c55e !important;
+        border-radius: 10px !important;
+        padding: 0.2em 0.55em !important;
+        background: #f0fdf4 !important;
+        box-sizing: border-box !important;
+        font-size: inherit !important;
+        font-weight: inherit !important;
+        line-height: inherit !important;
+    }
+    html[data-scoop-theme="dark"] .scoop-full-results-heading,
+    html[data-scoop-theme="dark"] [data-testid="stMarkdownContainer"] .scoop-full-results-heading,
+    html[data-scoop-theme="dark"] [data-testid="stMarkdownContainer"] .scoop-full-results-heading span {
+        display: inline-block !important;
+        border: 2px solid #ffffff !important;
+        border-radius: 10px !important;
+        padding: 0.2em 0.55em !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+        box-sizing: border-box !important;
+        font-size: inherit !important;
+        font-weight: inherit !important;
+        line-height: inherit !important;
+    }
+    html[data-scoop-theme="dark"] .scoop-full-results-heading .scoop-fr-title-box,
+    html[data-scoop-theme="dark"] [data-testid="stMarkdownContainer"] .scoop-full-results-heading .scoop-fr-title-box {
+        border: none !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border-radius: 0 !important;
+        color: #0f172a !important;
+    }
+
     /* Phone/tablet: no Full Results legend panel. Desktop unchanged. */
     @media (max-width: 1366px) {
         html .full-results-mobile-legend,
         html .stMarkdown .full-results-mobile-legend {
             display: none !important;
+        }
+        /* Top 3 cards: flame beside the rank hashtag. Desktop unchanged. */
+        .stMarkdown .full-results-wrap .full-results-table tbody tr:nth-child(-n+3) td[data-label="#"] .fr-label::after {
+            content: " 🔥";
         }
     }
 
@@ -3162,7 +3250,7 @@ else:
                 with col:
                     delta_txt = f"{row['% Above Low']:+.1f}% above 52W low"
                     st.metric(
-                        label=f"#{idx + 1}  {row['Ticker']}",
+                        label=f"#{idx + 1} 🔥  {row['Ticker']}",
                         value=f"${row['Price']:,.2f}",
                         delta=delta_txt,
                         delta_color="normal",
@@ -3171,7 +3259,7 @@ else:
                     if row["Market Mood"] == "BELOW LOW":
                         badge = "🚨 BELOW 52W LOW — New Floor"
                     elif row["Market Mood"] == "AT LOW":
-                        badge = "🔥 AT 52W LOW"
+                        badge = "AT 52W LOW"
                     else:
                         badge = "📉 NEAR 52W LOW"
                     st.markdown(
@@ -3188,7 +3276,8 @@ else:
                     )
 
         # ── Full table (HTML with hover tooltips on Company) ─────────
-        st.markdown("### 📋 Full Results")
+        render_full_results_heading(st, "NYSE Top 10")
+        st.markdown('<div class="scoop-fr-heading-spacer" aria-hidden="true"></div>', unsafe_allow_html=True)
 
         headline_map = {}
         for _, r in df.iterrows():
