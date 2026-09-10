@@ -81,6 +81,27 @@ def render_full_results_heading(st_module, compact_title: str) -> None:
             padding-top: 0 !important;
             padding-bottom: 0 !important;
         }}
+        @media (max-width: 1366px) {{
+            .scoop-full-results-heading,
+            .scoop-full-results-heading .scoop-fr-title-box {{
+                font-weight: 800 !important;
+            }}
+            html[data-scoop-theme="dark"] .scoop-full-results-heading {{
+                background: transparent !important;
+                border: none !important;
+                padding: 0 !important;
+            }}
+            html[data-scoop-theme="dark"] body .stApp .scoop-full-results-heading .scoop-fr-title-box {{
+                display: inline-block !important;
+                border: 2px solid #ffffff !important;
+                border-radius: 10px !important;
+                padding: 0.2em 0.55em !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                box-sizing: border-box !important;
+                font-weight: 800 !important;
+            }}
+        }}
         @media (min-width: 1367px) {{
             .scoop-fr-heading-wrap {{
                 padding-top: 40px !important;
@@ -102,7 +123,6 @@ def render_full_results_heading(st_module, compact_title: str) -> None:
         }}
         .scoop-full-results-heading .scoop-fr-title-box {{
             font-size: inherit !important;
-            font-weight: inherit !important;
             line-height: inherit !important;
         }}
         html:not([data-scoop-theme="dark"]) .scoop-full-results-heading {{
@@ -119,6 +139,11 @@ def render_full_results_heading(st_module, compact_title: str) -> None:
             box-sizing: border-box !important;
         }}
         html[data-scoop-theme="dark"] .scoop-full-results-heading {{
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+        }}
+        html[data-scoop-theme="dark"] body .stApp .scoop-full-results-heading .scoop-fr-title-box {{
             display: inline-block !important;
             border: 2px solid #ffffff !important;
             border-radius: 10px !important;
@@ -126,9 +151,6 @@ def render_full_results_heading(st_module, compact_title: str) -> None:
             background: #ffffff !important;
             color: #0f172a !important;
             box-sizing: border-box !important;
-        }}
-        html[data-scoop-theme="dark"] .scoop-full-results-heading .scoop-fr-title-box {{
-            color: #0f172a !important;
         }}
         </style>
         <div class="scoop-fr-heading-wrap"><h3 class="scoop-full-results-heading"><span class="scoop-fr-title-box">📋 {title}</span></h3><div class="scoop-fr-heading-spacer" aria-hidden="true"></div></div>

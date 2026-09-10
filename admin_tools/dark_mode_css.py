@@ -51,15 +51,40 @@ html[data-scoop-theme="dark"] .stCaption p {
 
 html[data-scoop-theme="dark"] .scoop-full-results-heading,
 html[data-scoop-theme="dark"] [data-testid="stMarkdownContainer"] .scoop-full-results-heading {
-    background: #ffffff !important;
-    border: 2px solid #ffffff !important;
-    color: #0f172a !important;
-}
-html[data-scoop-theme="dark"] .scoop-full-results-heading span,
-html[data-scoop-theme="dark"] [data-testid="stMarkdownContainer"] .scoop-full-results-heading span {
-    color: #0f172a !important;
     background: transparent !important;
     border: none !important;
+    padding: 0 !important;
+    color: #0f172a !important;
+}
+html[data-scoop-theme="dark"] .scoop-full-results-heading .scoop-fr-title-box,
+html[data-scoop-theme="dark"] [data-testid="stMarkdownContainer"] .scoop-full-results-heading .scoop-fr-title-box {
+    display: inline-block !important;
+    border: 2px solid #ffffff !important;
+    border-radius: 10px !important;
+    padding: 0.2em 0.55em !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-sizing: border-box !important;
+}
+@media (max-width: 1366px) {
+    html[data-scoop-theme="dark"] .scoop-full-results-heading,
+    html[data-scoop-theme="dark"] [data-testid="stMarkdownContainer"] .scoop-full-results-heading {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        font-weight: 800 !important;
+    }
+    html[data-scoop-theme="dark"] .scoop-full-results-heading .scoop-fr-title-box,
+    html[data-scoop-theme="dark"] [data-testid="stMarkdownContainer"] .scoop-full-results-heading .scoop-fr-title-box {
+        display: inline-block !important;
+        border: 2px solid #ffffff !important;
+        border-radius: 10px !important;
+        padding: 0.2em 0.55em !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+        box-sizing: border-box !important;
+        font-weight: 800 !important;
+    }
 }
 
 html[data-scoop-theme="dark"] .sidebar-brand,
