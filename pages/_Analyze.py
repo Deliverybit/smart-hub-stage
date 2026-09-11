@@ -37,7 +37,7 @@ from theme_mode import (
     install_theme_support,
     is_dark_mode,
 )
-from landing_page import render_responsive_navigation
+from landing_page import is_mobile_tablet_viewport, render_responsive_navigation
 from tooltip_scroll import install_tooltip_scroll_handler, inject_desktop_analyze_top_compact
 
 # Search price chart: axis tick/title sizes (px in Plotly). Mobile matches existing UI.
@@ -216,10 +216,10 @@ st.set_page_config(
 render_environment_banner(st)
 install_theme_support()
 render_responsive_navigation(current_page="pages/_Analyze.py")
-if is_analyze_mode():
-    inject_desktop_analyze_top_compact()
 inject_analyze_source_restore()
 capture_analyze_source_from_query()
+if is_analyze_mode():
+    inject_desktop_analyze_top_compact()
 inherit_screener_terms_for_analyze()
 
 # ── Global responsive styling ─────────────────────────────────────────
@@ -428,6 +428,79 @@ st.markdown(
         border: none;
         border-top: 1px solid rgba(148, 163, 184, 0.65);
         margin: 0.75rem 0;
+    }
+
+    /* Crypto Analyze phone/tablet: card replaces Streamlit metrics + mood banner. */
+    @media (max-width: 1366px) {
+        [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card)
+            [data-testid="stElementContainer"]:has([data-testid="stAlertContentSuccess"]),
+        [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card)
+            [data-testid="stAlert"]:has([data-testid="stAlertContentSuccess"]),
+        [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) .stSuccess,
+        [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) h3.search-52week-range-heading,
+        [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) hr.search-52w-range-divider,
+        [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) [data-testid="stMetric"],
+        [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card)
+            [data-testid="stHorizontalBlock"]:has([data-testid="stMetric"]):not(:has([data-testid="stSlider"])):not(:has(.js-plotly-plot)):not(:has(.mood-column)):not(:has(.mood-feed)),
+        [data-testid="stElementContainer"]:has(.scoop-crypto-price-card)
+            ~ [data-testid="stElementContainer"]:has([data-testid="stCaptionContainer"]),
+        [data-testid="stElementContainer"]:has(.scoop-crypto-price-card)
+            ~ [data-testid="stElementContainer"]:has([data-testid="stCaption"]),
+        [data-testid="stElementContainer"]:has(.scoop-crypto-price-card)
+            ~ [data-testid="stElementContainer"] [data-testid="stCaptionContainer"],
+        [data-testid="stElementContainer"]:has(.scoop-crypto-price-card)
+            ~ [data-testid="stHorizontalBlock"] [data-testid="stCaptionContainer"],
+        [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card)
+            [data-testid="metric-container"] + [data-testid="stMarkdownContainer"],
+        [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card)
+            [data-testid="stElementContainer"]:has([data-testid="stMetric"])
+            + [data-testid="stElementContainer"]:has([data-testid="stCaptionContainer"]),
+        [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card)
+            [data-testid="stElementContainer"]:has([data-testid="stMetric"])
+            + [data-testid="stElementContainer"]:has([data-testid="stCaption"]) {
+            display: none !important;
+            height: 0 !important;
+            max-height: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            visibility: hidden !important;
+            border: none !important;
+        }
+        [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) .scoop-crypto-price-card .cpc-item {
+            border: 2px solid #0f172a !important;
+            border-left: 2px solid #0f172a !important;
+            box-shadow: none !important;
+        }
+        html[data-scoop-theme="dark"] [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) .scoop-crypto-price-card {
+            border: 2px solid #22c55e !important;
+            border-left: 6px solid #22c55e !important;
+        }
+        html[data-scoop-theme="dark"] [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) .scoop-crypto-price-card .cpc-item {
+            border: 2px solid #ffffff !important;
+            border-left: 2px solid #ffffff !important;
+        }
+        .scoop-crypto-classic-hit,
+        [data-testid="stElementContainer"]:has(.scoop-crypto-classic-hit),
+        [data-testid="element-container"]:has(.scoop-crypto-classic-hit) {
+            display: none !important;
+            height: 0 !important;
+            max-height: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            visibility: hidden !important;
+        }
+    }
+    @media (min-width: 1367px) {
+        .scoop-crypto-price-card { display: none !important; }
+        .scoop-crypto-classic-hit {
+            color: rgba(49, 51, 63, 0.6);
+            font-size: 14px;
+            margin: 0 0 0.25rem 0;
+        }
     }
     
     
@@ -1148,6 +1221,249 @@ PERIOD_OPTIONS = {
     "All Time": "max",
 }
 
+
+def _crypto_price_card_item(label: str, value: str, meta: str = "", meta_tone: str = "") -> str:
+    tone = f" {meta_tone}" if meta_tone in {"up", "down"} else ""
+    meta_html = f'<div class="cpc-meta{tone}">{html.escape(meta)}</div>' if meta else ""
+    return (
+        '<div class="cpc-item">'
+        f'<div class="cpc-label">{html.escape(label)}</div>'
+        f'<div class="cpc-value">{html.escape(value)}</div>'
+        f"{meta_html}"
+        "</div>"
+    )
+
+
+def _render_crypto_responsive_price_card(
+    *,
+    last_price,
+    change_24h_pct: float,
+    week52_low,
+    week52_high,
+    low_date,
+    high_date,
+) -> None:
+    """Single card for live price + 52-week stats. Analyze phone/tablet only."""
+    delta_tone = "up" if change_24h_pct >= 0 else "down"
+    items: list[str] = []
+    has_low = week52_low and week52_low > 0
+    has_high = week52_high and week52_high > 0
+
+    if has_low:
+        low_dollar_diff = last_price - week52_low
+        pct_above_low = (low_dollar_diff / week52_low) * 100
+        items.append(
+            _crypto_price_card_item(
+                "52-week low",
+                _format_search_price(week52_low),
+                f"Hit on {low_date}" if low_date else "",
+            )
+        )
+        items.append(
+            _crypto_price_card_item(
+                "Above low",
+                _format_search_price(low_dollar_diff),
+                f"{pct_above_low:+.1f}%",
+                "up" if pct_above_low >= 0 else "down",
+            )
+        )
+    if has_high:
+        high_dollar_diff = last_price - week52_high
+        pct_vs_high = (high_dollar_diff / week52_high) * 100
+        items.append(
+            _crypto_price_card_item(
+                "52-week high",
+                _format_search_price(week52_high),
+                f"Hit on {high_date}" if high_date else "",
+            )
+        )
+        items.append(
+            _crypto_price_card_item(
+                "Below high",
+                _format_search_price(abs(high_dollar_diff)),
+                f"{pct_vs_high:+.1f}%",
+                "up" if pct_vs_high >= 0 else "down",
+            )
+        )
+
+    range_html = ""
+    if items:
+        range_html = (
+            '<div class="cpc-section">52-week range</div>'
+            f'<div class="cpc-grid">{"".join(items)}</div>'
+        )
+    else:
+        range_html = '<div class="cpc-section">No 52-week range data for this asset.</div>'
+
+    st.markdown(
+        f"""
+        <style>
+        @media (max-width: 1366px) {{
+            [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) .stSuccess,
+            [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) [data-testid="stAlert"]:has([data-testid="stNotificationContentSuccess"]),
+            [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) h3.search-52week-range-heading,
+            [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) hr.search-52w-range-divider,
+            [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) [data-testid="stMetric"],
+            [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) [data-testid="stHorizontalBlock"]:has([data-testid="stMetric"]):not(:has([data-testid="stSlider"])):not(:has(.js-plotly-plot)):not(:has(.mood-column)):not(:has(.mood-feed)) {{
+                display: none !important;
+                height: 0 !important;
+                min-height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+                border: none !important;
+            }}
+            .scoop-crypto-price-card {{
+                display: block !important;
+                border: 2px solid #cbd5e1;
+                border-left: 6px solid #22c55e;
+                border-radius: 14px;
+                background: #ffffff;
+                padding: 1rem 1.05rem 1.1rem;
+                margin: 0 0 1.15rem 0;
+                box-shadow: 0 6px 18px rgba(15, 23, 42, 0.10);
+            }}
+            .scoop-crypto-price-card .cpc-kicker {{
+                font-size: 0.82rem; font-weight: 800; letter-spacing: 0.06em;
+                text-transform: uppercase; color: #64748b; margin: 0 0 0.2rem 0;
+            }}
+            .scoop-crypto-price-card .cpc-live {{
+                display: flex; align-items: baseline; justify-content: space-between;
+                gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.85rem;
+            }}
+            .scoop-crypto-price-card .cpc-live-value {{
+                font-size: clamp(1.85rem, 7vw, 2.45rem); font-weight: 800;
+                line-height: 1.1; color: #0f172a;
+            }}
+            .scoop-crypto-price-card .cpc-delta {{
+                font-size: 1.05rem; font-weight: 800; padding: 0.28rem 0.65rem; border-radius: 999px;
+            }}
+            .scoop-crypto-price-card .cpc-delta.up {{ color: #166534; background: #dcfce7; }}
+            .scoop-crypto-price-card .cpc-delta.down {{ color: #991b1b; background: #fee2e2; }}
+            .scoop-crypto-price-card .cpc-section {{
+                font-size: 0.95rem; font-weight: 800; color: #334155;
+                margin: 0 0 0.55rem 0; padding-top: 0.7rem; border-top: 1px solid #e2e8f0;
+            }}
+            .scoop-crypto-price-card .cpc-grid {{ display: grid; grid-template-columns: 1fr; gap: 0.65rem; }}
+            .scoop-crypto-price-card .cpc-item {{
+                background: #ffffff; border: 2px solid #0f172a; border-left: 2px solid #0f172a;
+                border-radius: 14px; padding: 0.85rem 0.95rem 0.9rem;
+                box-shadow: none;
+            }}
+            .scoop-crypto-price-card .cpc-label {{ font-size: 0.88rem; font-weight: 700; color: #64748b; }}
+            .scoop-crypto-price-card .cpc-value {{ font-size: 1.28rem; font-weight: 800; color: #0f172a; line-height: 1.2; }}
+            .scoop-crypto-price-card .cpc-meta {{ font-size: 0.92rem; font-weight: 600; color: #475569; margin-top: 0.25rem; }}
+            .scoop-crypto-price-card .cpc-meta.up {{ color: #166534; }}
+            .scoop-crypto-price-card .cpc-meta.down {{ color: #991b1b; }}
+        }}
+        @media (min-width: 744px) and (max-width: 1366px) {{
+            .scoop-crypto-price-card .cpc-grid {{ grid-template-columns: 1fr 1fr; }}
+        }}
+        @media (min-width: 1367px) {{
+            .scoop-crypto-price-card {{ display: none !important; }}
+        }}
+        </style>
+        <div class="scoop-crypto-price-card">
+            <div class="cpc-kicker">Live price (USD)</div>
+            <div class="cpc-live">
+                <div class="cpc-live-value">{html.escape(_format_search_price(last_price))}</div>
+                <div class="cpc-delta {delta_tone}">{change_24h_pct:+.2f}% (24h)</div>
+            </div>
+            {range_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _week52_hit_line(date_text: str, *, hide_on_crypto_card: bool) -> None:
+    if not date_text:
+        return
+    label = f"Hit on {date_text}"
+    if hide_on_crypto_card:
+        st.markdown(
+            f'<p class="scoop-crypto-classic-hit">{html.escape(label)}</p>',
+            unsafe_allow_html=True,
+        )
+        return
+    st.caption(label)
+
+
+def _render_week52_metrics(
+    *,
+    stacked: bool,
+    week52_low,
+    week52_high,
+    last_price,
+    low_date,
+    high_date,
+    hide_hit_captions: bool = False,
+) -> None:
+    has_low = week52_low and week52_low > 0
+    has_high = week52_high and week52_high > 0
+
+    if not has_low and not has_high:
+        st.info("No 52-week range data available for this asset.")
+        return
+
+    if has_low:
+        low_dollar_diff = last_price - week52_low
+        pct_above_low = (low_dollar_diff / week52_low) * 100
+
+        if stacked:
+            st.metric(label="52-Week Low", value=_format_search_price(week52_low))
+            _week52_hit_line(low_date, hide_on_crypto_card=hide_hit_captions)
+            st.metric(
+                label="Above 52-Week Low",
+                value=_format_search_price(low_dollar_diff),
+                delta=f"{pct_above_low:+.1f}%",
+            )
+        else:
+            low_c1, low_c2, _ = st.columns([1, 1, 1])
+            with low_c1:
+                st.metric(label="52-Week Low", value=_format_search_price(week52_low))
+                _week52_hit_line(low_date, hide_on_crypto_card=hide_hit_captions)
+            with low_c2:
+                st.metric(
+                    label="Above 52-Week Low",
+                    value=_format_search_price(low_dollar_diff),
+                    delta=f"{pct_above_low:+.1f}%",
+                )
+
+    if has_low and has_high:
+        st.markdown(
+            '<hr class="search-52w-range-divider" />',
+            unsafe_allow_html=True,
+        )
+
+    if has_high:
+        high_dollar_diff = last_price - week52_high
+        pct_below_high = ((week52_high - last_price) / week52_high) * 100
+
+        if pct_below_high <= 0:
+            st.warning("🚀 **AT / ABOVE 52-WEEK HIGH** — Asset is at peak, watch for reversal")
+
+        if stacked:
+            st.metric(label="52-Week High", value=_format_search_price(week52_high))
+            _week52_hit_line(high_date, hide_on_crypto_card=hide_hit_captions)
+            st.metric(
+                label="Below 52-Week High",
+                value=_format_search_price(abs(high_dollar_diff)),
+                delta=f"{high_dollar_diff / week52_high * 100:+.1f}%",
+            )
+        else:
+            high_c1, high_c2, _ = st.columns([1, 1, 1])
+            with high_c1:
+                st.metric(label="52-Week High", value=_format_search_price(week52_high))
+                _week52_hit_line(high_date, hide_on_crypto_card=hide_hit_captions)
+            with high_c2:
+                st.metric(
+                    label="Below 52-Week High",
+                    value=_format_search_price(abs(high_dollar_diff)),
+                    delta=f"{high_dollar_diff / week52_high * 100:+.1f}%",
+                )
+
+
 @st.fragment(run_every=timedelta(minutes=15))
 def _render_search_dashboard(ticker: str) -> None:
     """Renders analyze deep-dive; reruns on a timer so cached sentiment/news refresh without widget clicks."""
@@ -1228,6 +1544,15 @@ def _render_search_dashboard(ticker: str) -> None:
         unsafe_allow_html=True,
     )
 
+    _render_crypto_responsive_price_card(
+        last_price=last_price,
+        change_24h_pct=change_24h_pct,
+        week52_low=week52_low,
+        week52_high=week52_high,
+        low_date=low_date,
+        high_date=high_date,
+    )
+
     st.metric(
         label="Live Price (USD)",
         value=_format_search_price(last_price),
@@ -1237,60 +1562,26 @@ def _render_search_dashboard(ticker: str) -> None:
     if last_price < 0.01:
         st.warning("⚠️ Low-Cap/Penny Asset Detected")
 
-    col_chart, col_mood = st.columns([2, 1])
+    if is_mobile_tablet_viewport(page="pages/_Analyze.py"):
+        col_chart = st.container()
+        col_mood = st.container()
+    else:
+        col_chart, col_mood = st.columns([2, 1])
 
     with col_chart:
         st.markdown(
             '<h3 class="search-52week-range-heading">📊 52-Week Range</h3>',
             unsafe_allow_html=True,
         )
-        has_low = week52_low and week52_low > 0
-        has_high = week52_high and week52_high > 0
-
-        if not has_low and not has_high:
-            st.info("No 52-week range data available for this asset.")
-        else:
-            if has_low:
-                low_dollar_diff = last_price - week52_low
-                pct_above_low = (low_dollar_diff / week52_low) * 100
-
-                if pct_above_low <= 10:
-                    st.success("🔥 **BULLISH MARKET MOOD** — Price is near the 52-week low")
-
-                low_c1, low_c2, _ = st.columns([1, 1, 1])
-                with low_c1:
-                    st.metric(label="52-Week Low", value=_format_search_price(week52_low))
-                    st.caption(f"Hit on {low_date}" if low_date else "")
-                with low_c2:
-                    st.metric(
-                        label="Above 52-Week Low",
-                        value=_format_search_price(low_dollar_diff),
-                        delta=f"{pct_above_low:+.1f}%",
-                    )
-
-            if has_low and has_high:
-                st.markdown(
-                    '<hr class="search-52w-range-divider" />',
-                    unsafe_allow_html=True,
-                )
-
-            if has_high:
-                high_dollar_diff = last_price - week52_high
-                pct_below_high = ((week52_high - last_price) / week52_high) * 100
-
-                if pct_below_high <= 0:
-                    st.warning("🚀 **AT / ABOVE 52-WEEK HIGH** — Asset is at peak, watch for reversal")
-
-                high_c1, high_c2, _ = st.columns([1, 1, 1])
-                with high_c1:
-                    st.metric(label="52-Week High", value=_format_search_price(week52_high))
-                    st.caption(f"Hit on {high_date}" if high_date else "")
-                with high_c2:
-                    st.metric(
-                        label="Below 52-Week High",
-                        value=_format_search_price(abs(high_dollar_diff)),
-                        delta=f"{high_dollar_diff / week52_high * 100:+.1f}%",
-                    )
+        _render_week52_metrics(
+            stacked=False,
+            week52_low=week52_low,
+            week52_high=week52_high,
+            last_price=last_price,
+            low_date=low_date,
+            high_date=high_date,
+            hide_hit_captions=True,
+        )
 
         st.select_slider(
             "📅 Price History Range",

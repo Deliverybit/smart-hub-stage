@@ -225,6 +225,21 @@ html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table
     border-bottom-color: #334155 !important;
 }
 
+@media (max-width: 1366px) {
+    html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table tbody tr,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody tr,
+    html[data-scoop-theme="dark"] .stMarkdown .top-picks-wrap .top-picks-table tbody tr {
+        border: 2px solid #22c55e !important;
+        border-left: 6px solid #22c55e !important;
+    }
+    html[data-scoop-theme="dark"] .stMarkdown .full-results-wrap .full-results-table tbody td,
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stAppViewContainer"] .stMarkdown .full-results-wrap .full-results-table tbody td,
+    html[data-scoop-theme="dark"] .stMarkdown .top-picks-wrap .top-picks-table tbody td {
+        border-color: transparent !important;
+        box-shadow: none !important;
+    }
+}
+
 html[data-scoop-theme="dark"] .stMarkdown .full-results-mobile-legend {
     background: #1e293b !important;
     border-color: #475569 !important;
@@ -339,6 +354,55 @@ html[data-scoop-theme="dark"] .scoop-selected-asset-card .scoop-title-text {
 
 html[data-scoop-theme="dark"] .scoop-selected-asset-card .scoop-subtitle-text {
     color: #cbd5e1 !important;
+}
+
+html[data-scoop-theme="dark"] .scoop-crypto-price-card {
+    background: #1e293b !important;
+    box-shadow: 0 8px 22px rgba(2, 6, 23, 0.35) !important;
+}
+@media (max-width: 1366px) {
+    html[data-scoop-theme="dark"] .scoop-crypto-price-card,
+    html[data-scoop-theme="dark"] body .stApp .scoop-crypto-price-card {
+        border: 2px solid #22c55e !important;
+        border-left: 6px solid #22c55e !important;
+    }
+    html[data-scoop-theme="dark"] .scoop-crypto-price-card .cpc-item,
+    html[data-scoop-theme="dark"] body .stApp .scoop-crypto-price-card .cpc-item {
+        border: 2px solid #ffffff !important;
+    }
+}
+html[data-scoop-theme="dark"] .scoop-crypto-price-card .cpc-kicker,
+html[data-scoop-theme="dark"] .scoop-crypto-price-card .cpc-label {
+    color: #94a3b8 !important;
+}
+html[data-scoop-theme="dark"] .scoop-crypto-price-card .cpc-live-value,
+html[data-scoop-theme="dark"] .scoop-crypto-price-card .cpc-value,
+html[data-scoop-theme="dark"] .scoop-crypto-price-card .cpc-section {
+    color: #f8fafc !important;
+}
+html[data-scoop-theme="dark"] .scoop-crypto-price-card .cpc-section {
+    border-top-color: #334155 !important;
+}
+html[data-scoop-theme="dark"] .scoop-crypto-price-card .cpc-item {
+    background: #0f172a !important;
+    border: 2px solid #e2e8f0 !important;
+}
+html[data-scoop-theme="dark"] .scoop-crypto-price-card .cpc-meta {
+    color: #cbd5e1 !important;
+}
+html[data-scoop-theme="dark"] .scoop-crypto-price-card .cpc-delta.up,
+html[data-scoop-theme="dark"] .scoop-crypto-price-card .cpc-meta.up {
+    color: #86efac !important;
+}
+html[data-scoop-theme="dark"] .scoop-crypto-price-card .cpc-delta.up {
+    background: #14532d !important;
+}
+html[data-scoop-theme="dark"] .scoop-crypto-price-card .cpc-delta.down,
+html[data-scoop-theme="dark"] .scoop-crypto-price-card .cpc-meta.down {
+    color: #fca5a5 !important;
+}
+html[data-scoop-theme="dark"] .scoop-crypto-price-card .cpc-delta.down {
+    background: #7f1d1d !important;
 }
 
 html[data-scoop-theme="dark"] .scoop-mood-summary {

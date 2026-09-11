@@ -73,6 +73,18 @@ def analyze_screener_snapshot_key() -> str | None:
     return SCREENER_SNAPSHOT_KEY_BY_PATH.get(path)
 
 
+def is_crypto_analyze_context(screener_key: str | None, ticker: str = "") -> bool:
+    """True for Crypto Analyze, or a crypto pair opened on Analyze."""
+    if screener_key == "CRYPTO":
+        return True
+    return str(ticker).upper().endswith("-USD")
+
+
+def should_stack_crypto_analyze_layout(screener_key: str | None, *, responsive: bool) -> bool:
+    """Crypto Analyze phone/tablet: stack 52-week metrics and mood under the price block."""
+    return screener_key == "CRYPTO" and bool(responsive)
+
+
 def screener_terms_accepted() -> bool:
     return any(st.session_state.get(key) for key in SCREENER_TERMS_KEYS)
 

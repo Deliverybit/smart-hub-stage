@@ -3214,6 +3214,160 @@ RESPONSIVE_ANALYZE_TOP_COMPACT = f"""
 }}
 """
 
+# Crypto Analyze only (phone + tablet): keep 52-week / live-price metric rows visible.
+# Post-consent screener CSS hides any horizontal block that contains a metric; that
+# rule can linger after navigating from Crypto Top 10 into Analyze.
+CRYPTO_ANALYZE_RESPONSIVE_METRICS_CSS = """
+@media (max-width: 1366px) {
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"]
+        [data-testid="stMainBlockContainer"]
+        [data-testid="stHorizontalBlock"]:has([data-testid="stMetric"]) {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        flex-direction: column !important;
+        visibility: visible !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"]
+        [data-testid="stMainBlockContainer"]
+        [data-testid="stHorizontalBlock"]:has([data-testid="stMetric"]) > div:has([data-testid="stMetric"]) {
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+        display: block !important;
+    }
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"]
+        [data-testid="stMainBlockContainer"]
+        [data-testid="stHorizontalBlock"]:has([data-testid="stMetric"]) > div:not(:has([data-testid="stMetric"])) {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) .stSuccess,
+    [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) [data-testid="stAlert"]:has([data-testid="stAlertContentSuccess"]),
+    [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) [data-testid="stElementContainer"]:has([data-testid="stAlertContentSuccess"]),
+    [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) h3.search-52week-range-heading,
+    [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) hr.search-52w-range-divider,
+    [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) [data-testid="stMetric"],
+    [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card)
+        [data-testid="stHorizontalBlock"]:has([data-testid="stMetric"]):not(:has([data-testid="stSlider"])):not(:has(.js-plotly-plot)):not(:has(.mood-column)):not(:has(.mood-feed)) {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        border: none !important;
+    }
+    [data-testid="stMainBlockContainer"]:has(.scoop-crypto-price-card) .scoop-crypto-price-card,
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"] .scoop-crypto-price-card {
+        display: block !important;
+        border: 2px solid #cbd5e1;
+        border-left: 6px solid #22c55e;
+        border-radius: 14px;
+        background: #ffffff;
+        padding: 1rem 1.05rem 1.1rem;
+        margin: 0 0 1.15rem 0;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.10);
+    }
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"] .scoop-crypto-price-card .cpc-kicker {
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #64748b;
+        margin: 0 0 0.2rem 0;
+    }
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"] .scoop-crypto-price-card .cpc-live {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.85rem;
+    }
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"] .scoop-crypto-price-card .cpc-live-value {
+        font-size: clamp(1.85rem, 7vw, 2.45rem);
+        font-weight: 800;
+        line-height: 1.1;
+        color: #0f172a;
+    }
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"] .scoop-crypto-price-card .cpc-delta {
+        font-size: 1.05rem;
+        font-weight: 800;
+        padding: 0.28rem 0.65rem;
+        border-radius: 999px;
+    }
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"] .scoop-crypto-price-card .cpc-delta.up {
+        color: #166534;
+        background: #dcfce7;
+    }
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"] .scoop-crypto-price-card .cpc-delta.down {
+        color: #991b1b;
+        background: #fee2e2;
+    }
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"] .scoop-crypto-price-card .cpc-section {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #334155;
+        margin: 0 0 0.55rem 0;
+        padding-top: 0.7rem;
+        border-top: 1px solid #e2e8f0;
+    }
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"] .scoop-crypto-price-card .cpc-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.65rem;
+    }
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"] .scoop-crypto-price-card .cpc-item {
+        background: #ffffff;
+        border: 2px solid #0f172a;
+        border-left: 2px solid #0f172a;
+        border-radius: 14px;
+        padding: 0.85rem 0.95rem 0.9rem;
+        box-shadow: none;
+    }
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"] .scoop-crypto-price-card .cpc-label {
+        font-size: 0.88rem;
+        font-weight: 700;
+        color: #64748b;
+        margin: 0 0 0.15rem 0;
+    }
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"] .scoop-crypto-price-card .cpc-value {
+        font-size: 1.28rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.2;
+    }
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"] .scoop-crypto-price-card .cpc-meta {
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: #475569;
+        margin-top: 0.25rem;
+    }
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"] .scoop-crypto-price-card .cpc-meta.up { color: #166534; }
+    html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"] .scoop-crypto-price-card .cpc-meta.down { color: #991b1b; }
+    @media (min-width: 744px) and (max-width: 1366px) {
+        html[data-scoop-analyze-active="1"][data-scoop-analyze-source="CRYPTO"] .scoop-crypto-price-card .cpc-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+}
+
+@media (min-width: 1367px) {
+    html[data-scoop-analyze-active="1"] .scoop-crypto-price-card {
+        display: none !important;
+    }
+}
+html[data-scoop-desktop-layout="1"][data-scoop-analyze-active="1"] .scoop-crypto-price-card {
+    display: none !important;
+}
+"""
+
 # Market screener landing pages (_Top_10): drop header padding, js_eval gaps, and block spacing.
 # Match active OR gated — consent gate never sets screener-active alone, which left
 # desktop with ~30px flex gaps per injector and a large white band above index cards.

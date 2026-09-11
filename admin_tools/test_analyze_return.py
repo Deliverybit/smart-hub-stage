@@ -77,6 +77,27 @@ def test_analyze_click_js_handles_mobile_targets() -> None:
     assert "NASDAQ_Top_10" in js
 
 
+def test_crypto_analyze_stacks_only_on_responsive() -> None:
+    assert analyze_page.should_stack_crypto_analyze_layout("CRYPTO", responsive=True) is True
+    assert analyze_page.should_stack_crypto_analyze_layout("CRYPTO", responsive=False) is False
+    assert analyze_page.should_stack_crypto_analyze_layout("NASDAQ", responsive=True) is False
+    assert analyze_page.should_stack_crypto_analyze_layout("NYSE", responsive=True) is False
+    assert analyze_page.is_crypto_analyze_context("CRYPTO", "AAPL") is True
+    assert analyze_page.is_crypto_analyze_context(None, "SAND-USD") is True
+    assert analyze_page.is_crypto_analyze_context("NASDAQ", "AAPL") is False
+    css = (ROOT / "admin_tools" / "tablet_mobile_layout_css.py").read_text(encoding="utf-8")
+    assert 'data-scoop-analyze-source="CRYPTO"' in css
+    inject = (ROOT / "tooltip_scroll.py").read_text(encoding="utf-8")
+    assert "CRYPTO_ANALYZE_RESPONSIVE_METRICS_CSS" in inject
+    assert "data-scoop-analyze-source" in inject
+    assert "scoop-crypto-price-card" in css
+    assert ".stSuccess" in css
+    analyze_src = (ROOT / "pages" / "_Analyze.py").read_text(encoding="utf-8")
+    assert "scoop-crypto-price-card" in analyze_src
+    assert "_render_crypto_responsive_price_card" in analyze_src
+    assert "if is_crypto:\n        _render_crypto_responsive_price_card" not in analyze_src
+
+
 def test_mobile_page_nav_skips_analyze_back_link() -> None:
     source = (ROOT / "tooltip_scroll.py").read_text(encoding="utf-8")
     assert 'el.closest("a.scoop-analyze-back")' in source
@@ -92,6 +113,7 @@ def main() -> int:
         test_analyze_back_labels_name_markets_explicitly,
         test_analyze_link_includes_ticker_query,
         test_analyze_click_js_handles_mobile_targets,
+        test_crypto_analyze_stacks_only_on_responsive,
         test_mobile_page_nav_skips_analyze_back_link,
     ]
     for fn in tests:

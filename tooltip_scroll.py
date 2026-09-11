@@ -5,6 +5,7 @@ import streamlit as st
 from admin_tools.tablet_mobile_layout_css import (
     DESKTOP_ANALYZE_TOP_COMPACT,
     RESPONSIVE_ANALYZE_TOP_COMPACT,
+    CRYPTO_ANALYZE_RESPONSIVE_METRICS_CSS,
     DESKTOP_SCREENER_TOP_COMPACT,
     DESKTOP_SCREENER_GATING_LAYOUT,
     RESPONSIVE_SCREENER_TOP_COMPACT,
@@ -1572,8 +1573,34 @@ _PAGE_NAV_LAYOUT_RESYNC_JS = (
             /(?:\\?|&)ticker=/i.test(appWin.location.search || "");
         if (active) {
             root.setAttribute("data-scoop-analyze-active", "1");
+            let fromPath = "";
+            try {
+                fromPath = new URLSearchParams(appWin.location.search || "").get("from") || "";
+            } catch (e) {}
+            if (!fromPath) {
+                try {
+                    fromPath = (appWin.sessionStorage && appWin.sessionStorage.getItem("scoop-analyze-from")) || "";
+                } catch (e2) {}
+            }
+            const upper = String(fromPath).toUpperCase();
+            let source = "";
+            if (upper.indexOf("CRYPTO") >= 0) source = "CRYPTO";
+            else if (upper.indexOf("NASDAQ") >= 0) source = "NASDAQ";
+            else if (upper.indexOf("NYSE") >= 0) source = "NYSE";
+            else if (upper.indexOf("CME") >= 0) source = "CME";
+            else if (upper.indexOf("ICE") >= 0) source = "ICE";
+            if (!source) {
+                try {
+                    const ticker = new URLSearchParams(appWin.location.search || "").get("ticker") || "";
+                    if (/-USD$/i.test(ticker)) source = "CRYPTO";
+                } catch (e3) {}
+            }
+            if (source) {
+                root.setAttribute("data-scoop-analyze-source", source);
+            }
         } else {
             root.removeAttribute("data-scoop-analyze-active");
+            root.removeAttribute("data-scoop-analyze-source");
         }
     };
 
@@ -4819,10 +4846,26 @@ def inject_desktop_tablet_disclaimer_flow() -> None:
 
 def inject_desktop_analyze_top_compact() -> None:
     """Tighten Analyze deep-dive top spacing on desktop (padding, js_eval gaps, hr lines)."""
+    from analyze_page import analyze_screener_snapshot_key, is_crypto_analyze_context, query_param_ticker
+
+    source = "".join(ch for ch in str(analyze_screener_snapshot_key() or "") if ch.isalnum())
+    if not source and is_crypto_analyze_context(None, query_param_ticker()):
+        source = "CRYPTO"
+    source_js = (
+        f'root.setAttribute("data-scoop-analyze-source","{source}");'
+        if source
+        else 'root.removeAttribute("data-scoop-analyze-source");'
+    )
     st.html(
         f"<style id='scoop-desktop-analyze-top-compact-css'>{DESKTOP_ANALYZE_TOP_COMPACT}</style>"
         f"<style id='scoop-responsive-analyze-top-compact-css'>{RESPONSIVE_ANALYZE_TOP_COMPACT}</style>"
-        + '<script>document.documentElement.setAttribute("data-scoop-analyze-active","1");</script>',
+        f"<style id='scoop-crypto-analyze-responsive-metrics-css'>{CRYPTO_ANALYZE_RESPONSIVE_METRICS_CSS}</style>"
+        + "<script>(function(){try{"
+        + "var doc=(window.parent&&window.parent!==window&&window.parent.document)?window.parent.document:document;"
+        + "var root=doc.documentElement;"
+        + 'root.setAttribute("data-scoop-analyze-active","1");'
+        + source_js
+        + "}catch(e){}})();</script>",
         unsafe_allow_javascript=True,
     )
 
