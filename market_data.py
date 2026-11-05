@@ -941,7 +941,13 @@ class MarketData:
             key = (title, url)
             if title and key not in seen:
                 seen.add(key)
-                headlines.append({"title": title, "url": url, "source": source, "relevance": 0.0})
+                headlines.append({
+                    "title": title,
+                    "url": url,
+                    "source": source,
+                    "relevance": 0.0,
+                    "eodhd": True,
+                })
         if headlines:
             return headlines
         return [{"title": f"No current news found for {symbol}", "url": "", "source": "", "relevance": 0.0}]

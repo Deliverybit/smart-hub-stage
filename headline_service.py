@@ -141,7 +141,9 @@ def headlines_from_news_items(
         url = item.get("url", "")
         if not title or (not url and str(title).startswith("No current news found")):
             continue
-        if require_mention and not title_mentions_asset(title, ticker, company_name):
+        # EODHD already queried this crypto symbol, so a title does not have to repeat the ticker.
+        symbol_scoped = bool(item.get("eodhd")) and (ticker or "").strip().upper().endswith("-USD")
+        if require_mention and not symbol_scoped and not title_mentions_asset(title, ticker, company_name):
             continue
         try:
             relevance = float(item.get("relevance") or 0)
