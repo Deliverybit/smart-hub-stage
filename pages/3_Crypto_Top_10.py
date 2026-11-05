@@ -15,7 +15,7 @@ from branding import logo_path_str, render_environment_banner
 from theme_mode import install_theme_support
 from market_data import MarketData
 from app_config import get_screener_symbol_limit, SCREENER_CACHE_VERSION
-from screener_headlines import enrich_headline_sentiment
+from screener_headlines import enrich_headline_sentiment, rescreen_by_headline_sentiment
 from screener_page_data import load_screener_page_data
 from screener_selection import (
     MAX_PAD_CAP_PCT,
@@ -3313,10 +3313,10 @@ else:
         run_live=_run_screen,
     )
     all_results = loaded.all_results
-    results = loaded.display_results
     last_updated = loaded.last_updated
     scanned_count = loaded.scanned_count
-    selection = loaded.selection
+    selection = rescreen_by_headline_sentiment(all_results, screener_key="CRYPTO")
+    results = selection.results
 
     render_screener_last_updated(st, last_updated)
 

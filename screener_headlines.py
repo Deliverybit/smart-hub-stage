@@ -202,6 +202,46 @@ def enrich_headline_sentiment(
     return enriched
 
 
+SENTIMENT_REMOVE_BELOW = -0.35
+
+
+def rescreen_by_headline_sentiment(all_results: list[dict], *, screener_key: str):
+    """Drop names below -0.35, then refill the Top 10 from the next closest names."""
+    from screener_selection import MAX_PAD_CAP_PCT, select_proximity_results
+    from sentiment_engine import headline_is_severe
+
+    eligible = [
+        row
+        for row in all_results
+        if float(row.get("% Above Low") or 0) <= MAX_PAD_CAP_PCT
+    ]
+    eligible.sort(key=lambda row: float(row.get("% Above Low") or 0))
+    kept: list[dict] = []
+    for row in eligible:
+        ticker = row.get("_source_ticker") or row.get("Ticker")
+        if not ticker:
+            continue
+        cached_rows = _cached_news_items(
+            str(ticker),
+            screener_key,
+            row_company_name(row),
+        )
+        headlines = [title for title, _url, _source in cached_rows]
+        urls = [url for _title, url, _source in cached_rows]
+        if any(headline_is_severe(title) for title in headlines):
+            continue
+        polarity = polarity_from_headlines(headlines)
+        if polarity < SENTIMENT_REMOVE_BELOW:
+            continue
+        updated = dict(row)
+        updated["Headline Sentiment"] = round(polarity, 3)
+        updated["Headlines"] = len(headlines)
+        updated["_headline_texts"] = headlines[:10]
+        updated["_headline_urls"] = urls[:10]
+        kept.append(updated)
+    return select_proximity_results(kept)
+
+
 def display_results_need_headlines(results: list[dict]) -> bool:
     """True when any displayed row is missing precomputed headline payloads."""
     for row in results:
