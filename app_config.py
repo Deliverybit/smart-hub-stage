@@ -92,6 +92,16 @@ def get_alpha_vantage_api_key(required: bool = False) -> str | None:
     return key
 
 
+def get_eodhd_api_token(required: bool = False) -> str | None:
+    """Token for EODHD news. Used for Crypto, LSE, and TSX headlines only."""
+    key = _load_secret("EODHD_API_TOKEN")
+    if key in {"", "replace-with-your-eodhd-api-token"}:
+        key = None
+    if required and not key:
+        raise RuntimeError("EODHD_API_TOKEN is not configured")
+    return key
+
+
 def get_screener_symbol_limit(default: int = 1000) -> int:
     """Limit Alpha Vantage screener calls; high default scans each full page universe."""
     raw_limit = _load_secret("SCREENER_SYMBOL_LIMIT")
@@ -108,7 +118,7 @@ def get_screener_symbol_limit(default: int = 1000) -> int:
 SCREENER_CACHE_VERSION = 9
 
 # Visible in the staging banner so Streamlit Cloud deploys are easy to verify.
-APP_BUILD_ID = "2026-09-20-licenses-notice"
+APP_BUILD_ID = "2026-11-05-eodhd-headlines"
 
 # Back-compat aliases used by some page variants.
 ALPHAVANTAGE_CACHE_TIMEOUT = 900
