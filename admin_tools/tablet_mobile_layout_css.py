@@ -2066,17 +2066,14 @@ _DESKTOP_MARKET_NAV_LIGHT_RULES = """
         box-sizing: border-box !important;
     }
     html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]),
-    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]):hover,
-    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):active {
+    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]):hover {
         background: #7dd3fc !important;
         border-color: #0284c7 !important;
         box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.45) !important;
     }
     html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) a,
     html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) a p,
-    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) span,
-    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):active a,
-    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):active a p {
+    html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) span {
         background: transparent !important;
         color: #0f172a !important;
     }
@@ -2127,17 +2124,14 @@ _DESKTOP_MARKET_NAV_DARK_RULES = """
         background-color: transparent !important;
     }
     html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]),
-    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]):hover,
-    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):active {
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]):hover {
         background: #7dd3fc !important;
         border-color: #0284c7 !important;
         box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.45) !important;
     }
     html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) a,
     html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) a p,
-    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) span,
-    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):active a,
-    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):active a p {
+    html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) span {
         background: transparent !important;
         color: #0f172a !important;
     }
@@ -3295,31 +3289,25 @@ html[data-scoop-desktop-layout="1"] {{
 {_RESPONSIVE_MARKET_NAV_DARK_RULES}
 }}
 @media (min-width: 1367px) {{
-    html[data-scoop-theme="dark"] body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]),
-    html[data-scoop-theme="dark"] body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):active {{
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) {{
         background: #7dd3fc !important;
         border-color: #e0f2fe !important;
         box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.45) !important;
     }}
     html[data-scoop-theme="dark"] body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) a,
     html[data-scoop-theme="dark"] body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) a p,
-    html[data-scoop-theme="dark"] body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) span,
-    html[data-scoop-theme="dark"] body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):active a,
-    html[data-scoop-theme="dark"] body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):active a p {{
+    html[data-scoop-theme="dark"] body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) span {{
         background: transparent !important;
         color: #0f172a !important;
     }}
-    html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]),
-    html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):active {{
+    html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) {{
         background: #7dd3fc !important;
         border-color: #0284c7 !important;
         box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.45) !important;
     }}
     html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) a,
     html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) a p,
-    html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) span,
-    html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):active a,
-    html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):active a p {{
+    html:not([data-scoop-theme="dark"]) body .stApp [data-testid="stSidebar"] [data-testid="stPageLink"][data-scoop-nav-active]:has(a[href$="_Top_10"]) span {{
         background: transparent !important;
         color: #0f172a !important;
     }}

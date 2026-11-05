@@ -1698,13 +1698,10 @@ _PAGE_NAV_LAYOUT_RESYNC_JS = (
                 const href = normalize(a.getAttribute("href") || "");
                 const marketSlug = (value) => {
                     const upper = String(value || "").toUpperCase();
-                    if (upper.indexOf("CRYPTO") >= 0) return "crypto";
-                    if (upper.indexOf("NASDAQ") >= 0) return "nasdaq";
-                    if (upper.indexOf("NYSE") >= 0) return "nyse";
-                    if (upper.indexOf("LSE") >= 0) return "lse";
-                    if (upper.indexOf("TSX") >= 0) return "tsx";
-                    if (upper.indexOf("CME") >= 0) return "cme";
-                    if (upper.indexOf("ICE") >= 0) return "ice";
+                    const keys = ["CRYPTO_TOP_10", "NASDAQ_TOP_10", "NYSE_TOP_10", "LSE_TOP_10", "TSX_TOP_10", "CME_TOP_10", "ICE_TOP_10"];
+                    for (const key of keys) {
+                        if (upper.indexOf(key) >= 0) return key;
+                    }
                     return "";
                 };
                 let analyzeFrom = "";
@@ -1723,11 +1720,12 @@ _PAGE_NAV_LAYOUT_RESYNC_JS = (
                     }
                 }
                 const sourceSlug = marketSlug(analyzeFrom);
+                const pageSlug = marketSlug(current);
+                const wanted = current.indexOf("analyze") >= 0 ? (sourceSlug || pageSlug) : pageSlug;
                 const active = Boolean(href) && (
-                    current === href ||
-                    current.endsWith("/" + href) ||
-                    (isHomePath && (href === "app" || href.endsWith("/app"))) ||
-                    (sourceSlug && marketSlug(href) === sourceSlug)
+                    (wanted && marketSlug(href) === wanted) ||
+                    (!wanted && (current === href || current.endsWith("/" + href))) ||
+                    (isHomePath && (href === "app" || href.endsWith("/app")))
                 );
                 if (active) {
                     box.setAttribute("data-scoop-nav-active", "");
@@ -5099,13 +5097,10 @@ def inject_desktop_sidebar_nav_market() -> None:
       const href = (a.getAttribute("href") || "").replace(/^\\/+|\\/+$/g, "").toLowerCase();
       const marketSlug = (value) => {
         const upper = String(value || "").toUpperCase();
-        if (upper.indexOf("CRYPTO") >= 0) return "crypto";
-        if (upper.indexOf("NASDAQ") >= 0) return "nasdaq";
-        if (upper.indexOf("NYSE") >= 0) return "nyse";
-        if (upper.indexOf("LSE") >= 0) return "lse";
-        if (upper.indexOf("TSX") >= 0) return "tsx";
-        if (upper.indexOf("CME") >= 0) return "cme";
-        if (upper.indexOf("ICE") >= 0) return "ice";
+        const keys = ["CRYPTO_TOP_10", "NASDAQ_TOP_10", "NYSE_TOP_10", "LSE_TOP_10", "TSX_TOP_10", "CME_TOP_10", "ICE_TOP_10"];
+        for (const key of keys) {
+          if (upper.indexOf(key) >= 0) return key;
+        }
         return "";
       };
       let analyzeFrom = "";
@@ -5117,7 +5112,9 @@ def inject_desktop_sidebar_nav_market() -> None:
         if (!analyzeFrom) analyzeFrom = document.documentElement.getAttribute("data-scoop-analyze-source") || "";
       }
       const sourceSlug = marketSlug(analyzeFrom);
-      const on = Boolean(href) && (path === href || path.endsWith("/" + href) || (sourceSlug && marketSlug(href) === sourceSlug));
+      const pageSlug = marketSlug(path);
+      const wanted = path.indexOf("analyze") >= 0 ? (sourceSlug || pageSlug) : pageSlug;
+      const on = Boolean(href) && (wanted ? marketSlug(href) === wanted : (path === href || path.endsWith("/" + href)));
       if (on) box.setAttribute("data-scoop-nav-active", "");
       else box.removeAttribute("data-scoop-nav-active");
     });
