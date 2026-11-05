@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 import pandas as pd
 import requests
 
-from app_config import get_alpha_vantage_api_key
+from app_config import get_alpha_vantage_api_key, get_eodhd_api_token
 
 QUOTE_MAX_AGE_DAYS = 14
 # Calendar year of split-adjusted daily highs and lows, ending on the scan date.
@@ -885,8 +885,78 @@ class MarketData:
             return "".join(ch for ch in root if ch.isalnum())
         return symbol
 
+    def _uses_eodhd_news(self, ticker: str) -> bool:
+        """Crypto, London, and Toronto headlines come from EODHD."""
+        symbol = (ticker or "").strip().upper()
+        if self._is_crypto(symbol):
+            return True
+        return symbol.endswith((".LON", ".LSE", ".TRT", ".TO"))
+
+    def _eodhd_symbol(self, ticker: str) -> str:
+        symbol = (ticker or "").strip().upper()
+        if symbol.endswith(".LON"):
+            return symbol[:-4] + ".LSE"
+        if symbol.endswith(".TRT"):
+            return symbol[:-4] + ".TO"
+        if self._is_crypto(symbol):
+            base = symbol[:-4] if symbol.endswith("-USD") else symbol
+            base = self._CRYPTO_ID_ALIASES.get(base, base)
+            return f"{base}-USD.CC"
+        return symbol
+
+    def _eodhd_news_items(self, ticker: str, *, fail_fast: bool = False) -> list[dict]:
+        symbol = self._eodhd_symbol(ticker)
+        is_crypto = self._is_crypto(ticker)
+        token = get_eodhd_api_token(required=False)
+        if not token:
+            return [{"title": f"No current news found for {symbol}", "url": "", "source": "", "relevance": 0.0}]
+
+        max_attempts = 1 if fail_fast else 3
+        payload = None
+        for attempt in range(max_attempts):
+            try:
+                response = self._get(
+                    "https://eodhd.com/api/news",
+                    timeout=12 if fail_fast else 20,
+                    params={"s": symbol, "limit": 50, "fmt": "json", "api_token": token},
+                )
+                response.raise_for_status()
+                payload = response.json()
+                break
+            except (requests.RequestException, ValueError, TimeoutError):
+                if attempt + 1 < max_attempts:
+                    time.sleep(2 * (attempt + 1))
+                    continue
+                payload = []
+
+        feed = payload if isinstance(payload, list) else []
+        headlines = []
+        seen = set()
+        for item in feed:
+            title = str(item.get("title") or "").strip()
+            url = str(item.get("link") or item.get("url") or "").strip()
+            source = str(item.get("source") or "").strip()
+            if is_crypto and source:
+                title = f"{source}: {title}"
+            key = (title, url)
+            if title and key not in seen:
+                seen.add(key)
+                headlines.append({"title": title, "url": url, "source": source, "relevance": 0.0})
+        if headlines:
+            return headlines
+        return [{"title": f"No current news found for {symbol}", "url": "", "source": "", "relevance": 0.0}]
+
     def get_news_items(self, ticker, *, fail_fast: bool = False):
         """Pulls headline + source URL pairs for the specific asset."""
+        if self._uses_eodhd_news(ticker):
+            is_crypto = self._is_crypto(ticker)
+            cache_key = (f"eodhd:{self._eodhd_symbol(ticker)}", is_crypto)
+            if cache_key in self._news_cache:
+                return [dict(item) for item in self._news_cache[cache_key]]
+            result = self._eodhd_news_items(ticker, fail_fast=fail_fast)
+            self._news_cache[cache_key] = [dict(item) for item in result]
+            return [dict(item) for item in result]
+
         symbol = self._format_ticker(ticker)
         is_crypto = self._is_crypto(ticker)
         news_symbol = self._listing_news_symbol(symbol)

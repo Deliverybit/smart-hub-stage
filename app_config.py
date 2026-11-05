@@ -92,6 +92,16 @@ def get_alpha_vantage_api_key(required: bool = False) -> str | None:
     return key
 
 
+def get_eodhd_api_token(required: bool = False) -> str | None:
+    """Token for EODHD news. Crypto, LSE, and TSX headlines only."""
+    key = _load_secret("EODHD_API_TOKEN") or _load_secret("EODHD_API_KEY")
+    if key in {"", "replace-with-your-eodhd-api-token"}:
+        key = None
+    if required and not key:
+        raise RuntimeError("EODHD_API_TOKEN is not configured")
+    return key
+
+
 def get_screener_symbol_limit(default: int = 1000) -> int:
     """Limit Alpha Vantage screener calls; high default scans each full page universe."""
     raw_limit = _load_secret("SCREENER_SYMBOL_LIMIT")
