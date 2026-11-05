@@ -55,8 +55,24 @@ CURRENCY_SWITCH_CSS = """
   width: fit-content !important;
   gap: 0.35rem !important;
 }
+.st-key-lse_currency [data-testid="stColumn"],
+.st-key-tsx_currency [data-testid="stColumn"],
+.st-key-lse_currency [data-testid="stMarkdown"],
+.st-key-tsx_currency [data-testid="stMarkdown"],
+.st-key-lse_currency [data-testid="stMarkdownContainer"],
+.st-key-tsx_currency [data-testid="stMarkdownContainer"],
+.st-key-lse_currency [data-testid="stMarkdownContainer"] p,
+.st-key-tsx_currency [data-testid="stMarkdownContainer"] p,
 .st-key-lse_currency .currency-abbrev,
 .st-key-tsx_currency .currency-abbrev {
+  white-space: nowrap !important;
+  min-width: max-content !important;
+  width: auto !important;
+  flex: 0 0 auto !important;
+}
+.st-key-lse_currency .currency-abbrev,
+.st-key-tsx_currency .currency-abbrev {
+  display: inline-block !important;
   font-size: 1.45rem !important;
   font-weight: 700 !important;
   letter-spacing: 0.04em !important;
