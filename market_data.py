@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import time
 
 import pandas as pd
@@ -562,6 +563,11 @@ class MarketData:
             return True
         return symbol.endswith((".LON", ".LSE", ".TRT", ".TO"))
 
+    # EODHD lists these by CoinMarketCap id, the same way CMC titles them.
+    _CRYPTO_NEWS_LISTINGS = {
+        "PRIME": "PRIME23711-USD.CC",  # Echelon Prime (PRIME), UCID 23711
+    }
+
     def _eodhd_symbol(self, ticker: str) -> str:
         symbol = (ticker or "").strip().upper()
         if symbol.endswith(".LON"):
@@ -569,37 +575,62 @@ class MarketData:
         if symbol.endswith(".TRT"):
             return symbol[:-4] + ".TO"
         if self._is_crypto(symbol):
-            base = symbol[:-4] if symbol.endswith("-USD") else symbol
-            base = self._CRYPTO_ID_ALIASES.get(base, base)
-            return f"{base}-USD.CC"
+            return self._crypto_news_symbols(symbol)[0]
         return symbol
 
+    def _crypto_news_symbols(self, ticker: str) -> list[str]:
+        """Symbol forms EODHD actually tags. CMC-id listings are tried before the plain ticker."""
+        raw = (ticker or "").strip().upper()
+        base = raw[:-4] if raw.endswith("-USD") else raw
+        alias = self._CRYPTO_ID_ALIASES.get(base, base)
+        stripped = re.sub(r"\d+$", "", alias) or alias
+        symbols = []
+        listing = self._CRYPTO_NEWS_LISTINGS.get(stripped)
+        if listing:
+            symbols.append(listing)
+        symbols.append(f"{stripped}-USD.CC")
+        symbols.append(f"{stripped}-USD.US")
+        symbols.append(f"{stripped}.CC")
+        if base != stripped:
+            symbols.append(f"{base}.CC")
+        seen: set[str] = set()
+        ordered: list[str] = []
+        for item in symbols:
+            if item not in seen:
+                seen.add(item)
+                ordered.append(item)
+        return ordered
+
     def _eodhd_news_items(self, ticker: str, *, fail_fast: bool = False) -> list[dict]:
-        symbol = self._eodhd_symbol(ticker)
         is_crypto = self._is_crypto(ticker)
+        symbols = self._crypto_news_symbols(ticker) if is_crypto else [self._eodhd_symbol(ticker)]
+        symbol = symbols[0]
         token = get_eodhd_api_token(required=False)
         if not token:
             return [{"title": f"No current news found for {symbol}", "url": "", "source": ""}]
 
         max_attempts = 1 if fail_fast else 3
-        payload = None
-        for attempt in range(max_attempts):
-            try:
-                response = self.session.get(
-                    "https://eodhd.com/api/news",
-                    params={"s": symbol, "limit": 10, "fmt": "json", "api_token": token},
-                    timeout=12 if fail_fast else 20,
-                )
-                response.raise_for_status()
-                payload = response.json()
+        feed: list = []
+        for symbol in symbols:
+            payload = None
+            for attempt in range(max_attempts):
+                try:
+                    response = self.session.get(
+                        "https://eodhd.com/api/news",
+                        params={"s": symbol, "limit": 10, "fmt": "json", "api_token": token},
+                        timeout=12 if fail_fast else 20,
+                    )
+                    response.raise_for_status()
+                    payload = response.json()
+                    break
+                except (requests.RequestException, ValueError):
+                    if attempt + 1 < max_attempts:
+                        time.sleep(2 * (attempt + 1))
+                        continue
+                    payload = []
+            feed = payload if isinstance(payload, list) else []
+            if feed:
                 break
-            except (requests.RequestException, ValueError):
-                if attempt + 1 < max_attempts:
-                    time.sleep(2 * (attempt + 1))
-                    continue
-                payload = []
-
-        feed = payload if isinstance(payload, list) else []
         headlines = []
         seen = set()
         for item in feed:
