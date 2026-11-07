@@ -40,7 +40,7 @@ import html
 
 # ── Page config ───────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="NASDAQ",
+    page_title="NASDAQ — Nasdaq Stock Market",
     page_icon=logo_path_str(),
     layout="wide",
     initial_sidebar_state="expanded",
@@ -95,7 +95,7 @@ st.markdown(
 
     /* ===== DESKTOP / HIGH-RES ===== */
     html, body, [class*="css"] {
-        font-size: 30px !important;
+        font-size: 18px !important;
         line-height: 1.7 !important;
     }
     h1 { font-size: 5rem !important; font-weight: 800 !important; }
@@ -546,6 +546,9 @@ st.markdown(
     }
     /* Mobile card layout adds a left-hand label; hide it on desktop tables */
     .full-results-wrap .full-results-table .fr-label {
+        display: none !important;
+    }
+    table:not(.full-results-table) tr:has([data-label]) {
         display: none !important;
     }
     .full-results-mobile-legend {
@@ -2777,7 +2780,7 @@ st.markdown(
             width: 100% !important;
         }
         [data-testid="stSidebar"] #scoop-title {
-            font-size: 60px !important;
+            font-size: 36px !important;
             line-height: 1.05 !important;
         }
     }
@@ -3152,6 +3155,9 @@ def screen_stock(ticker: str) -> dict | None:
         snapshot = market_data.get_market_snapshot(ticker)
         if not snapshot:
             return None
+        company = COMPANY_NAMES.get(ticker, "")
+        if not market_data.symbol_matches_company(ticker, company):
+            return None
         current_price = snapshot["current_price"]
         year_low = snapshot["year_low"]
         year_high = snapshot["year_high"]
@@ -3242,18 +3248,18 @@ def _banner_card(label, price, chg, prefix="$"):
     )
 
 
-_ixic_price, _ixic_chg = _fetch_index("^IXIC")
 _qqq_price, _qqq_chg = _fetch_index("QQQ")
 _soxx_price, _soxx_chg = _fetch_index("SOXX")
-_third_label = "SOXX Semiconductor (SOXX) — Today"
+_semi_label = "iShares Semiconductor ETF (SOXX) — Today"
 if _soxx_price is None:
     _soxx_price, _soxx_chg = _fetch_index("SMH")
-    _third_label = "VanEck Semiconductor (SMH) — Today"
-_compact_cards = _banner_card("NASDAQ Composite (^IXIC) — Today", _ixic_price, _ixic_chg)
+    _semi_label = "VanEck Semiconductor ETF (SMH) — Today"
+_oneq_price, _oneq_chg = _fetch_index("ONEQ")
+_compact_cards = _banner_card("Invesco QQQ (QQQ) — Today", _qqq_price, _qqq_chg)
 _desktop_cards = (
-    _banner_card("NASDAQ Composite (^IXIC) — Today", _ixic_price, _ixic_chg)
-    + _banner_card("Invesco QQQ (QQQ) — Today", _qqq_price, _qqq_chg)
-    + _banner_card(_third_label, _soxx_price, _soxx_chg)
+    _banner_card("Invesco QQQ (QQQ) — Today", _qqq_price, _qqq_chg)
+    + _banner_card(_semi_label, _soxx_price, _soxx_chg)
+    + _banner_card("Fidelity Nasdaq Composite ETF (ONEQ) — Today", _oneq_price, _oneq_chg)
 )
 if _desktop_cards:
     render_desktop_index_banner(
@@ -3263,7 +3269,7 @@ if _desktop_cards:
     )
 
 # ── UI ────────────────────────────────────────────────────────────────
-st.title("💹 NASDAQ")
+st.title("💹 NASDAQ — Nasdaq Stock Market")
 render_screener_landing_intro(
     st,
     market="NASDAQ",
@@ -3321,8 +3327,7 @@ else:
     else:
         df = pd.DataFrame(results)
         df = df.sort_values("% Above Low", ascending=True).reset_index(drop=True)
-        if not loaded.headlines_enriched:
-            df = enrich_headline_sentiment(df, get_market_data(), screener_key="NASDAQ")
+        df = enrich_headline_sentiment(df, get_market_data(), screener_key="NASDAQ")
         df["Headlines"] = df["Headlines"].clip(upper=10)
         df["_headline_texts"] = df["_headline_texts"].apply(lambda items: items[:10])
         df["_headline_urls"] = df["_headline_urls"].apply(lambda items: items[:10])
@@ -3470,7 +3475,7 @@ else:
                 else:
                     header_cells += f"<th>{c}</th>"
             for idx_row, (i, r) in enumerate(dataframe.iterrows()):
-                cells = _td("#", str(i))
+                cells = _td("#", str(idx_row + 1))
                 for c in cols:
                     val = r[c]
                     if c == "Company":
@@ -3508,11 +3513,9 @@ else:
             """
             #### 🧠 Why these assets were selected
 
-            | Criterion | Check |
-            |-----------|-------|
-            | **Near 52-week low** | Price is within 30% of the lowest price in the past year (15% preferred) |
-            | **No scandal headlines** | Sentiment screening filters negative keywords—including scandal, bankruptcy, fraud, lawsuits, and delisting |
-            | **Headline context** | Click **Analyze** for detailed headline sentiment and charts |
+            - **Near 52-week low.** Price is within 30% of the lowest price in the past year (15% preferred).
+            - **No scandal headlines.** Sentiment screening filters negative keywords—including scandal, bankruptcy, fraud, lawsuits, and delisting.
+            - **Headline context.** Click **Analyze** for detailed headline sentiment and charts.
 
             > **Disclaimer:** This is an automated screen — not financial advice.
             > Always do your own due diligence before investing.
@@ -3536,6 +3539,72 @@ st.markdown(
     .stMainBlockContainer { padding-bottom: 9rem !important; }
     :root { --footer-sidebar-width: clamp(12rem, 20vw, 36rem); }
     
+    @media (max-width: 1366px) {
+        html body .stApp .stMarkdown .full-results-wrap .full-results-table tbody tr {
+            margin: 0 0 0.9rem 0 !important;
+            padding: 0.85rem 1rem 0.35rem !important;
+            border: 1px solid #e2e8f0 !important;
+            border-left: 4px solid #16a34a !important;
+            border-radius: 16px !important;
+            background: #ffffff !important;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+        }
+        html body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label,
+        html body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap {
+            font-size: 1.08rem !important;
+            font-weight: 650 !important;
+            line-height: 1.4 !important;
+            letter-spacing: 0.04em !important;
+            text-transform: uppercase !important;
+            color: #334155 !important;
+        }
+        html body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-text {
+            text-transform: none !important;
+            letter-spacing: 0 !important;
+        }
+        html body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val {
+            font-size: 1.24rem !important;
+            font-weight: 650 !important;
+            line-height: 1.45 !important;
+            color: #0f172a !important;
+            text-align: right !important;
+        }
+        html body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"],
+        html body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"],
+        html body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] {
+            display: block !important;
+            border-bottom: none !important;
+        }
+        html body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-label,
+        html body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-label,
+        html body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-label {
+            display: none !important;
+        }
+        html body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val,
+        html body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val,
+        html body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val {
+            display: block !important;
+            text-align: left !important;
+            font-size: 1.35rem !important;
+            font-weight: 750 !important;
+            color: #0f172a !important;
+            text-transform: none !important;
+        }
+        html[data-scoop-theme="dark"] body .stApp .stMarkdown .full-results-wrap .full-results-table tbody tr {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+        }
+        html[data-scoop-theme="dark"] body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label,
+        html[data-scoop-theme="dark"] body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td .fr-label .tip-wrap {
+            color: #f1f5f9 !important;
+        }
+        html[data-scoop-theme="dark"] body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td .fr-val,
+        html[data-scoop-theme="dark"] body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Company"] .fr-val,
+        html[data-scoop-theme="dark"] body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Name"] .fr-val,
+        html[data-scoop-theme="dark"] body .stApp .stMarkdown .full-results-wrap .full-results-table tbody td[data-label="Commodity"] .fr-val {
+            color: #f8fafc !important;
+        }
+    }
     @media (min-width: 769px) and (max-width: 1366px) {
         .disclaimer-footer {
             position: static !important;

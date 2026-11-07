@@ -32,6 +32,47 @@ def _news_from_row(row: dict[str, Any]) -> list[dict[str, str]]:
     return items
 
 
+def _news_missing(items: list | None) -> bool:
+    if not items:
+        return True
+    title = str((items[0] or {}).get("title") or "")
+    return not title or title.startswith("No current news")
+
+
+_SNAPSHOT_KEYS = ("NYSE", "NASDAQ", "LSE", "TSX", "CRYPTO", "CME", "ICE")
+
+
+def _headlines_for_analyze(ticker: str, payload: dict[str, Any] | None, screener_key: str | None) -> list[dict[str, str]]:
+    """Use the screener row headlines, then a live fetch if that row has none."""
+    row = _row_for_ticker(payload, ticker) if payload else None
+    news = _news_from_row(row or {})
+    if not _news_missing(news):
+        return news
+    if not screener_key:
+        from screener_snapshots import fetch_snapshot
+
+        for key in _SNAPSHOT_KEYS:
+            found = _row_for_ticker(fetch_snapshot(key), ticker)
+            news = _news_from_row(found or {})
+            if not _news_missing(news):
+                return news
+    from screener_headlines import get_cached_news_items
+
+    return get_cached_news_items(ticker, screener_key=screener_key)
+
+
+def _with_headlines(bundle: dict[str, Any], ticker: str, payload: dict[str, Any] | None, screener_key: str | None) -> dict[str, Any]:
+    if not _news_missing(bundle.get("news_items")):
+        return bundle
+    news_items = _headlines_for_analyze(ticker, payload, screener_key)
+    if _news_missing(news_items):
+        return bundle
+    sym = normalize_screener_ticker(ticker)
+    headlines = [item["title"] for item in news_items]
+    sent_result = SentimentEngine().analyze_headlines(sym, headlines)
+    return {**bundle, "news_items": news_items, "sent_result": sent_result}
+
+
 def _slice_history(history: list, days) -> list:
     try:
         chart_days = 730 if days == "max" else min(int(days), 730)
@@ -165,7 +206,7 @@ def build_one_analyze_bundle(
         price = md.get_analyze_price_bundle(sym, 730)
     if not price:
         return None
-    news_items = _news_from_row(row)
+    news_items = _headlines_for_analyze(ticker, {"display_results": [row]} if row else None, None)
     headlines = [item["title"] for item in news_items]
     sent_result = sentiment_eng.analyze_headlines(sym, headlines)
     history = list(price.get("history") or [])
@@ -216,7 +257,8 @@ def ensure_analyze_bundle(
             payload = None
         raw = _raw_bundle_from_payload(payload, ticker)
         if raw:
-            return {**raw, "history": _slice_history(raw.get("history"), days)}
+            filled = _with_headlines(raw, ticker, payload, screener_key)
+            return {**filled, "history": _slice_history(filled.get("history"), days)}
 
     row = _row_for_ticker(payload, ticker)
     computed = build_one_analyze_bundle(ticker, row, market_data)

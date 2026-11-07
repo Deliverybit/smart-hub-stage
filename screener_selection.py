@@ -204,6 +204,22 @@ _SCREENER_LANDING_SUMMARY_FULL: dict[str, str] = {
         "and not a large-cap or official exchange universe. "
         "Headline sentiment is fetched for the final displayed rows."
     ),
+    "LSE": (
+        "Screens a curated watchlist of **{n}** well-known London-listed stocks "
+        "for those trading **at or near their 52-week low** using Alpha Vantage daily market data. "
+        "Prices are in pounds. "
+        "This is a selected sample, not the FTSE 100, not every London listing, "
+        "and not an official exchange universe. "
+        "Headline sentiment is fetched for the final displayed rows."
+    ),
+    "TSX": (
+        "Screens a curated watchlist of **{n}** well-known Toronto-listed stocks "
+        "for those trading **at or near their 52-week low** using Alpha Vantage daily market data. "
+        "Prices are in Canadian dollars. "
+        "This is a selected sample, not the S&P/TSX Composite, not every Toronto listing, "
+        "and not an official exchange universe. "
+        "Headline sentiment is fetched for the final displayed rows."
+    ),
     "CRYPTO": (
         "Screens a curated watchlist of **{n}** well-known cryptocurrencies "
         "for those trading **closest to their 52-week low**. "
@@ -238,6 +254,8 @@ _SCREENER_LANDING_SUMMARY_FULL: dict[str, str] = {
 _SCREENER_LANDING_SUMMARY_COMPACT: dict[str, str] = {
     "NYSE": "**{n}** curated well-known stocks near **52-week lows** (selected sample, not an official NYSE universe). Headline sentiment on shown rows.",
     "NASDAQ": "**{n}** curated well-known stocks near **52-week lows** (selected sample, not an official Nasdaq universe). Headline sentiment on shown rows.",
+    "LSE": "**{n}** curated well-known London stocks near **52-week lows** (selected sample, not an official LSE universe). Prices in pounds (or USD when that switch is on). Headline sentiment on shown rows.",
+    "TSX": "**{n}** curated well-known Toronto stocks near **52-week lows** (selected sample, not an official TSX universe). Prices in Canadian dollars (or USD when that switch is on). Headline sentiment on shown rows.",
     "CRYPTO": "**{n}** well-known cryptocurrencies near **52-week lows** (selected sample, not an official market universe). Headline sentiment on shown rows.",
     "CME": "**{n}** well-known CME Group futures near **52-week lows** (selected sample, not an official CME universe). Tap **Analyze** for deeper sentiment.",
     "ICE": "**{n}** well-known ICE-linked futures and commodity ETFs near **52-week lows** (selected sample, not an official ICE universe). Tap **Analyze** for deeper sentiment.",
@@ -255,7 +273,7 @@ _SCREENER_LANDING_INTRO_CSS = """
     }
     .scoop-landing-info {
         background: #eff6ff;
-        border: 1px solid #bfdbfe;
+        border: none;
         border-radius: 0.5rem;
         padding: 0.85rem 1rem;
         margin: 0 0 0.65rem 0;
@@ -263,7 +281,7 @@ _SCREENER_LANDING_INTRO_CSS = """
     }
     html[data-scoop-theme="dark"] .scoop-landing-info {
         background: rgba(30, 58, 138, 0.22);
-        border-color: #1e40af;
+        border: none;
         color: #e2e8f0;
     }
     .scoop-landing-divider {

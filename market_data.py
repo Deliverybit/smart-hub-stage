@@ -499,6 +499,10 @@ class MarketData:
         """52-week crypto quotes from Alpha Vantage only."""
         return self.get_screener_snapshots(tickers, av_fallback=av_fallback)
 
+    def symbol_matches_company(self, ticker: str, company_name: str) -> bool:
+        """Keep a named ticker. Live listing checks stay on the production scanner."""
+        return bool((ticker or "").strip() and (company_name or "").strip())
+
     def get_market_snapshot(self, ticker):
         """Return current price plus 52-week low/high values for screeners."""
         cached = self._screener_quote_cache.get(ticker)

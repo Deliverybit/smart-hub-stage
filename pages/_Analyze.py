@@ -4,7 +4,9 @@ Analyze deep-dive page (hidden from navigation).
 Opened from Top 10 **Analyze** links with ?ticker=.
 """
 
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
+
+import json
 
 import streamlit as st
 import plotly.graph_objects as go
@@ -20,10 +22,17 @@ from analyze_page import (
     query_param_ticker,
     render_analyze_back_button,
 )
-from asset_names import resolve_asset_display_name
+from asset_names import resolve_asset_display_name, resolve_asset_summary
+from price_display import (
+    CURRENCY_SWITCH_CSS,
+    currency_abbrev_tip,
+    local_prefix,
+    quote_scale,
+)
 from predictor import Predictor
 from market_data import MarketData
 import importlib
+import sys
 
 import analyze_snapshot as _analyze_snapshot_mod
 
@@ -101,15 +110,14 @@ _ANALYZE_COMBINED_SCORE_TIP = (
     "Not the Score in the Market Mood box.\n"
     "Above 0 leans BULLISH. Below 0 leans BEARISH. Near 0 is a weak lean."
 )
-_ANALYZE_BANNER_MOOD_TIP = (
-    "Headline tone only: Bullish, Neutral, or Bearish.\n"
-    "Price is not included.\n"
-    "Banner can say BULLISH while this says Neutral if news is mixed but price is up."
+_ANALYZE_MOOD_TIP = (
+    "😊 above +0.05 = Bullish\n"
+    "😐 −0.05 through +0.05 = Neutral\n"
+    "☹️ below −0.05 = Bearish\n"
+    "Not the same as the overall banner score."
 )
-_ANALYZE_PANEL_MOOD_TIP = (
-    "Headline tone for this ticker (dot = Bullish, Neutral, or Bearish).\n"
-    "Not the large BULLISH/BEARISH banner, which also uses price."
-)
+_ANALYZE_BANNER_MOOD_TIP = _ANALYZE_MOOD_TIP
+_ANALYZE_PANEL_MOOD_TIP = _ANALYZE_MOOD_TIP
 _ANALYZE_HEADLINE_SCORE_TIP = (
     "News-only score for this box, not the banner Score.\n"
     "Near 0 = Neutral. Positive leans Bullish. Negative leans Bearish (−1 to +1)."
@@ -136,6 +144,17 @@ def _analyze_desktop_tip(
     )
 
 
+def _analyze_listing_market(ticker: str, screener_key: str | None) -> str | None:
+    """London and Toronto listings use the currency switch. Other markets stay in USD."""
+    upper = (ticker or "").strip().upper()
+    key = (screener_key or "").strip().upper()
+    if upper.endswith(".LON") or key == "LSE":
+        return "LSE"
+    if upper.endswith(".TRT") or key == "TSX":
+        return "TSX"
+    return None
+
+
 def _format_search_price(value) -> str:
     """Currency display: cents above $1, up to 8 decimals below $1."""
     try:
@@ -143,15 +162,16 @@ def _format_search_price(value) -> str:
     except (TypeError, ValueError):
         return "N/A"
 
+    prefix = st.session_state.get("analyze_price_prefix", "$")
     if abs(price) > 1:
-        return f"${price:,.2f}"
+        return f"{prefix}{price:,.2f}"
 
     formatted = f"{price:,.8f}"
     whole, _, decimal = formatted.partition(".")
     decimal = decimal.rstrip("0")
     if len(decimal) < 2:
         decimal = decimal.ljust(2, "0")
-    return f"${whole}.{decimal}"
+    return f"{prefix}{whole}.{decimal}"
 
 
 def _build_search_price_figure(
@@ -164,6 +184,7 @@ def _build_search_price_figure(
     axis_tick: int,
     axis_title: int,
     margin_top: int,
+    price_axis_title: str = "Price (USD)",
 ) -> go.Figure:
     tick_kw, title_kw = chart_axis_colors()
     hover = chart_hoverlabel()
@@ -236,7 +257,7 @@ def _build_search_price_figure(
             )
         )
         fig.update_layout(
-            yaxis_title="Price (USD)",
+            yaxis_title=price_axis_title,
             template=chart_template(),
             height=500,
             margin=dict(l=60, r=20, t=margin_top, b=60),
@@ -317,7 +338,7 @@ st.markdown(
 
     /* ===== DESKTOP / HIGH-RES ===== */
     html, body, [class*="css"] {
-        font-size: 30px !important;
+        font-size: 18px !important;
         line-height: 1.7 !important;
     }
     h1 { font-size: 5rem !important; font-weight: 800 !important; }
@@ -357,6 +378,42 @@ st.markdown(
     }
     /* Captions */
     .stCaption p, [data-testid="stCaptionContainer"] p { font-size: 1.4rem !important; }
+    .scoop-analyze-last-updated {
+        text-align: right;
+        color: #64748b;
+        font-size: 1.6rem;
+        font-weight: 400;
+        line-height: 1.75;
+        margin: 0.4rem 0 0.9rem 0;
+    }
+    html[data-scoop-theme="dark"] .scoop-analyze-last-updated {
+        color: #e2e8f0;
+    }
+    .scoop-analyze-last-updated b { font-weight: 600; }
+    [data-testid="stMetric"] { padding: 0.4rem 1rem !important; }
+    [data-testid="stMetricValue"] > div,
+    [data-testid="stMetricValue"] p {
+        font-size: 2.35rem !important;
+        line-height: 1.05 !important;
+    }
+    [data-testid="stMetricLabel"] p,
+    [data-testid="stMetricLabel"] label {
+        font-size: 1.45rem !important;
+        line-height: 1.15 !important;
+    }
+    [data-testid="stMetricDelta"],
+    [data-testid="stMetricDelta"] p {
+        font-size: 1.35rem !important;
+        line-height: 1.1 !important;
+    }
+    [data-testid="stMetricDelta"]:has([data-testid="stMetricDeltaIcon-Up"]) {
+        color: #4ade80 !important;
+        font-weight: 800 !important;
+    }
+    [data-testid="stMetricDelta"]:has([data-testid="stMetricDeltaIcon-Down"]) {
+        color: #ff6b6b !important;
+        font-weight: 800 !important;
+    }
     /* Subheaders inside columns */
     [data-testid="stHorizontalBlock"] h2,
     [data-testid="stHorizontalBlock"] h3 { font-size: 2.2rem !important; }
@@ -503,7 +560,7 @@ st.markdown(
         top: auto;
         transform: translateX(-50%);
         line-height: 1.45;
-        font-size: 1.08rem !important;
+        font-size: 1.35rem !important;
         font-weight: 500;
         text-transform: none;
         letter-spacing: normal;
@@ -518,6 +575,16 @@ st.markdown(
         margin: 0 0 0.4rem 0;
         padding-bottom: 0.3rem;
         border-bottom: 1px solid rgba(229, 231, 235, 0.28);
+    }
+    .scoop-selected-name-tip {
+        position: relative;
+    }
+    .scoop-selected-name-tip .tip-text {
+        left: 0;
+        transform: none;
+        width: max-content;
+        max-width: min(24rem, 70vw);
+        bottom: calc(100% + 0.2rem);
     }
     .scoop-analyze-direction-banner .scoop-analyze-desktop-tip {
         color: inherit;
@@ -540,7 +607,7 @@ st.markdown(
             outline-offset: 2px;
         }
         .scoop-mood-summary .scoop-analyze-desktop-tip .tip-text {
-            font-size: 1.02rem !important;
+            font-size: 1.35rem !important;
             width: min(22rem, calc(100% - 1rem));
             max-width: calc(100% - 1rem);
             bottom: calc(100% + 0.4rem);
@@ -716,10 +783,7 @@ st.markdown(
         /* Sentiment column: remove fixed-height whitespace on mobile */
         .mood-column { margin-top: 0 !important; }
         .mood-feed {
-            height: auto !important;
-            max-height: none !important;
-            overflow: visible !important;
-            margin-bottom: 0 !important;
+            margin-bottom: 0.75rem !important;
             padding-bottom: 0.25rem !important;
         }
         /* Extra top padding so index banners clear Streamlit header / notch (0.75rem alone clipped the row on phones) */
@@ -930,10 +994,7 @@ st.markdown(
 
         .mood-column { margin-top: 0 !important; }
         .mood-feed {
-            height: auto !important;
-            max-height: none !important;
-            overflow: visible !important;
-            margin-bottom: 0 !important;
+            margin-bottom: 0.75rem !important;
             padding-bottom: 0.25rem !important;
             font-size: clamp(1.15rem, 2.5vw, 1.38rem) !important;
             line-height: 1.62 !important;
@@ -1032,7 +1093,7 @@ st.markdown(
             max-width: none !important;
         }
         [data-testid="stSidebar"] #scoop-title {
-            font-size: 60px !important;
+            font-size: 36px !important;
             line-height: 1.05 !important;
         }
     }
@@ -1140,10 +1201,7 @@ st.markdown(
 
         .mood-column { margin-top: 0 !important; }
         .mood-feed {
-            height: auto !important;
-            max-height: none !important;
-            overflow: visible !important;
-            margin-bottom: 0 !important;
+            margin-bottom: 0.75rem !important;
             padding-bottom: 0.25rem !important;
             font-size: clamp(1.15rem, 2.5vw, 1.38rem) !important;
             line-height: 1.62 !important;
@@ -1250,10 +1308,7 @@ st.markdown(
 
         .mood-column { margin-top: 0 !important; }
         .mood-feed {
-            height: auto !important;
-            max-height: none !important;
-            overflow: visible !important;
-            margin-bottom: 0 !important;
+            margin-bottom: 0.75rem !important;
             padding-bottom: 0.25rem !important;
             font-size: clamp(1.15rem, 2.5vw, 1.38rem) !important;
             line-height: 1.62 !important;
@@ -1442,6 +1497,17 @@ def _cached_analyze_core(
     }
 
 
+def _live_analyze_snapshot():
+    """Return analyze_snapshot even after a fragment rerun evicts it."""
+    name = getattr(_analyze_snapshot_mod, "__name__", "analyze_snapshot")
+    if sys.modules.get(name) is None:
+        sys.modules[name] = _analyze_snapshot_mod
+    try:
+        return importlib.reload(sys.modules[name])
+    except ImportError:
+        return sys.modules.get(name) or _analyze_snapshot_mod
+
+
 @st.cache_data(
     ttl=_SEARCH_ANALYSIS_TTL_SEC,
     show_spinner="Loading analysis…",
@@ -1450,10 +1516,10 @@ def _ensured_analyze_bundle(
     ticker: str,
     screener_key: str | None,
     days,
-    _hist_span_v: int = 6,
+    _hist_span_v: int = 9,
 ) -> dict | None:
     """Snapshot hit, or first-user compute persisted for 15 minutes."""
-    snap = importlib.reload(_analyze_snapshot_mod)
+    snap = _live_analyze_snapshot()
     fn = getattr(snap, "ensure_analyze_bundle", None)
     if fn is None:
         return None
@@ -1471,7 +1537,7 @@ def _cached_analyze_bundle(ticker: str, days, screener_key: str | None, _hist_sp
         chart_days = 730 if days == "max" else min(int(days), 730)
     except (TypeError, ValueError):
         chart_days = 365
-    history = list(price.get("history") or [])[-chart_days:]
+    history = _analyze_snapshot_mod._slice_history(list(price.get("history") or []), chart_days)
     latest_price = price["latest_price"]
     if len(history) >= 2:
         prev_price = history[-2]["price"]
@@ -1489,6 +1555,7 @@ def _cached_analyze_bundle(ticker: str, days, screener_key: str | None, _hist_sp
         "week52_high": price["week52_high"],
         "low_date": price["low_date"],
         "high_date": price["high_date"],
+        "cached_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -1766,6 +1833,554 @@ def _render_week52_metrics(
                 )
 
 
+def snapshot_last_updated(cached_at) -> str:
+    """Clock time the Analyze snapshot was taken, in Central time."""
+    from screener_engine import format_scan_display
+
+    raw = str(cached_at or "").strip()
+    if not raw:
+        return "Last updated"
+    try:
+        moment = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
+        return "Last updated"
+    return f"Last updated {format_scan_display(moment)}"
+
+
+def _install_snapshot_price_chart(history, range_label: str) -> None:
+    """Draw the saved-page price line on top of the Plotly chart and keep the range control."""
+    series = []
+    for row in history or []:
+        price = row.get("price")
+        date = str(row.get("date") or "")[:10]
+        if price is None or not date:
+            continue
+        series.append({"d": date, "p": float(price)})
+    payload = json.dumps(
+        {
+            "series": series,
+            "label": range_label,
+            "labels": list(PERIOD_OPTIONS.keys()),
+        }
+    )
+    st.html(
+        """
+<style id="scoop-analyze-chart-face">
+canvas.scoop-price-canvas {
+  display: block !important;
+  position: relative !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  height: 500px !important;
+}
+[data-testid="stSlider"] {
+  max-width: 100% !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+  padding-left: 14px !important;
+  padding-right: 18px !important;
+}
+[data-testid="stSlider"] [role="slider"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+[data-testid="stSliderThumbValue"],
+[data-testid="stSliderTickBar"],
+[data-testid="stSlider"] [data-orientation="horizontal"] > div[style*="position: absolute"],
+[data-testid="stSlider"] [data-orientation="horizontal"] > div[style*="position:absolute"] {
+  display: none !important;
+}
+[data-testid="stSlider"] [data-orientation="horizontal"],
+[data-testid="stSlider"] [data-baseweb="slider"],
+[data-testid="stSlider"] [data-baseweb="slider"] > div,
+[data-testid="stSlider"] .scoop-range-track {
+  position: relative !important;
+  overflow: visible !important;
+}
+[data-testid="stSlider"] [data-orientation="horizontal"] > [data-orientation="horizontal"] > div:first-child {
+  background: rgba(151, 166, 195, 0.45) !important;
+  background-image: none !important;
+  height: 4px !important;
+  border-radius: 999px !important;
+}
+button.scoop-range-dot {
+  position: absolute !important;
+  top: 50% !important;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  max-width: 16px !important;
+  max-height: 16px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  background: #94a3b8 !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: 0 0 0 1px #64748b !important;
+  z-index: 4 !important;
+  cursor: pointer !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+}
+button.scoop-range-dot.scoop-range-dot-on {
+  background: #16a34a !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 0 0 1px #16a34a !important;
+}
+#scoop-range-end-label {
+  display: inline-block !important;
+  font-size: 1.8rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  margin: 0 0 0.75rem 0 !important;
+  padding: 0.45rem 0.9rem !important;
+  text-align: left !important;
+  color: #16a34a !important;
+  background: #ffffff !important;
+  border: 2px solid #16a34a !important;
+  border-radius: 10px !important;
+}
+.scoop-mood-summary {
+  margin-bottom: 0 !important;
+}
+[data-testid="stMarkdownContainer"]:has(.scoop-mood-summary) {
+  margin-bottom: 0.85rem !important;
+}
+@media (min-width: 1367px) {
+  [data-testid="stMarkdownContainer"]:has(.scoop-mood-summary) {
+    margin-bottom: 20px !important;
+  }
+}
+[data-testid="stMarkdownContainer"]:has(.mood-feed) {
+  margin-bottom: 0.75rem !important;
+}
+.mood-feed {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  max-height: none !important;
+}
+.mood-feed table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  width: 100% !important;
+}
+.mood-feed thead th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 4 !important;
+  background: #0f172a !important;
+  color: #f8fafc !important;
+}
+html[data-scoop-analyze-active="1"] [data-testid="stMain"] [data-testid="stCaptionContainer"],
+html[data-scoop-analyze-active="1"] [data-testid="stMain"] [data-testid="stCaptionContainer"] p,
+html[data-scoop-desktop-layout="1"][data-scoop-analyze-active="1"] [data-testid="stMain"] [data-testid="stCaptionContainer"] p,
+html[data-scoop-analyze-active="1"] .scoop-analyze-last-updated {
+  color: #64748b !important;
+  font-size: 1.6rem !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+  line-height: 1.75 !important;
+  text-align: right !important;
+  margin: 0.4rem 0 0.9rem !important;
+}
+html[data-scoop-analyze-active="1"] [data-testid="stCaptionContainer"] p b,
+html[data-scoop-analyze-active="1"] .scoop-analyze-last-updated b {
+  font-weight: 600 !important;
+  font-size: inherit !important;
+  color: inherit !important;
+}
+html[data-scoop-theme="dark"][data-scoop-analyze-active="1"] [data-testid="stMain"] [data-testid="stCaptionContainer"] p,
+html[data-scoop-theme="dark"][data-scoop-desktop-layout="1"][data-scoop-analyze-active="1"] [data-testid="stMain"] [data-testid="stCaptionContainer"] p,
+html[data-scoop-theme="dark"][data-scoop-analyze-active="1"] .scoop-analyze-last-updated {
+  color: #e2e8f0 !important;
+}
+@media (max-width: 1366px) {
+  html[data-scoop-analyze-active="1"] .scoop-analyze-direction-banner > div > span {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 0.45rem !important;
+    font-size: 0 !important;
+    line-height: 1.15 !important;
+  }
+  html[data-scoop-analyze-active="1"] .scoop-analyze-direction-banner > div > span .scoop-analyze-desktop-tip:not(.scoop-analyze-desktop-tip--dir) {
+    display: inline-block !important;
+    width: auto !important;
+    max-width: 100% !important;
+    align-self: center !important;
+    box-sizing: border-box !important;
+    font-size: clamp(1.15rem, 5.5vw, 1.65rem) !important;
+    white-space: nowrap !important;
+    line-height: 1.15 !important;
+    font-weight: 700 !important;
+  }
+  html[data-scoop-analyze-active="1"] .scoop-analyze-direction-banner > div {
+    flex-wrap: wrap !important;
+  }
+  html[data-scoop-analyze-active="1"] .scoop-analyze-direction-banner .scoop-analyze-desktop-tip--dir {
+    flex: 1 0 100% !important;
+    width: 100% !important;
+    justify-content: center !important;
+    flex-wrap: nowrap !important;
+    gap: 0.35rem !important;
+  }
+  html[data-scoop-analyze-active="1"] .scoop-analyze-direction-banner .scoop-analyze-desktop-tip--dir > span:first-child {
+    font-size: 2.6rem !important;
+    line-height: 1 !important;
+  }
+  html[data-scoop-analyze-active="1"] .scoop-analyze-direction-banner .scoop-analyze-desktop-tip--dir > span:nth-child(2) {
+    font-size: 16vw !important;
+    line-height: 0.9 !important;
+    letter-spacing: -0.03em !important;
+    white-space: nowrap !important;
+  }
+  html[data-scoop-desktop-layout="1"][data-scoop-analyze-active="1"] [data-testid="stMain"] [data-testid="stCaptionContainer"] p,
+  html[data-scoop-analyze-active="1"] [data-testid="stMain"] [data-testid="stCaptionContainer"] p,
+  html[data-scoop-analyze-active="1"] .scoop-analyze-last-updated,
+  html[data-scoop-analyze-active="1"] .scoop-analyze-last-updated b {
+    font-size: 1.05rem !important;
+    line-height: 1.25 !important;
+  }
+  html[data-scoop-analyze-active="1"] .scoop-selected-asset-card,
+  html[data-scoop-desktop-layout="1"][data-scoop-analyze-active="1"] .scoop-selected-asset-card {
+    padding: 0.28rem 0.85rem !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    overflow-wrap: anywhere !important;
+  }
+  html[data-scoop-analyze-active="1"] [data-testid="stMarkdownContainer"]:has(.scoop-selected-asset-card),
+  html[data-scoop-analyze-active="1"] [data-testid="stElementContainer"]:has(.scoop-selected-asset-card) {
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  html[data-scoop-analyze-active="1"] .scoop-selected-asset-card .scoop-muted,
+  html[data-scoop-desktop-layout="1"][data-scoop-analyze-active="1"] .scoop-selected-asset-card .scoop-muted {
+    font-size: 1.25rem !important;
+    line-height: 1.05 !important;
+    margin: 0 !important;
+  }
+  html[data-scoop-analyze-active="1"] .scoop-selected-asset-card .scoop-title-text,
+  html[data-scoop-analyze-active="1"] .scoop-selected-asset-card .scoop-title-text span:not(.tip-text):not(.scoop-analyze-tip-label),
+  html[data-scoop-desktop-layout="1"][data-scoop-analyze-active="1"] .scoop-selected-asset-card .scoop-title-text,
+  html[data-scoop-desktop-layout="1"][data-scoop-analyze-active="1"] .scoop-selected-asset-card .scoop-title-text span:not(.tip-text):not(.scoop-analyze-tip-label) {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    font-size: clamp(2.1rem, 6.2vw, 3rem) !important;
+    line-height: 1.15 !important;
+    margin: 0.02rem 0 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+  }
+  html[data-scoop-analyze-active="1"] .scoop-selected-asset-card .scoop-title-text span.scoop-selected-name-tip:not(.tip-text):not(.scoop-analyze-tip-label) {
+    display: inline !important;
+    width: auto !important;
+    line-height: 1.55 !important;
+    box-decoration-break: clone !important;
+    -webkit-box-decoration-break: clone !important;
+  }
+  html[data-scoop-analyze-active="1"] .scoop-selected-asset-card .scoop-subtitle-text,
+  html[data-scoop-desktop-layout="1"][data-scoop-analyze-active="1"] .scoop-selected-asset-card .scoop-subtitle-text {
+    font-size: 1.45rem !important;
+    line-height: 1.05 !important;
+    margin-top: 0.35rem !important;
+  }
+  html[data-scoop-analyze-active="1"] [data-testid="stMainBlockContainer"] h1,
+  html[data-scoop-desktop-layout="1"][data-scoop-analyze-active="1"] [data-testid="stMainBlockContainer"] h1 {
+    font-size: clamp(2.15rem, 6.8vw, 3.35rem) !important;
+  }
+}
+html[data-scoop-analyze-active="1"] [data-testid="stMetric"] {
+  padding: 0.4rem 1rem !important;
+}
+html[data-scoop-analyze-active="1"] [data-testid="stMetricValue"] > div,
+html[data-scoop-analyze-active="1"] [data-testid="stMetricValue"] p {
+  font-size: 2.35rem !important;
+  line-height: 1.05 !important;
+}
+html[data-scoop-analyze-active="1"] [data-testid="stMetricLabel"] p,
+html[data-scoop-analyze-active="1"] [data-testid="stMetricLabel"] label {
+  font-size: 1.45rem !important;
+  line-height: 1.15 !important;
+}
+html[data-scoop-analyze-active="1"] [data-testid="stMetricDelta"],
+html[data-scoop-analyze-active="1"] [data-testid="stMetricDelta"] p {
+  font-size: 1.35rem !important;
+  line-height: 1.1 !important;
+}
+html[data-scoop-analyze-active="1"] [data-testid="stMetricDelta"]:has([data-testid="stMetricDeltaIcon-Up"]) {
+  color: #4ade80 !important;
+  font-weight: 800 !important;
+}
+html[data-scoop-analyze-active="1"] [data-testid="stMetricDelta"]:has([data-testid="stMetricDeltaIcon-Down"]) {
+  color: #ff6b6b !important;
+  font-weight: 800 !important;
+}
+@media (max-width: 1366px) {
+  html[data-scoop-analyze-active="1"] [data-testid="stMetricLabel"] p,
+  html[data-scoop-analyze-active="1"] [data-testid="stMetricLabel"] label {
+    font-size: clamp(1.85rem, 5.2vw, 2.45rem) !important;
+  }
+  html[data-scoop-analyze-active="1"] [data-testid="stMetricValue"] > div,
+  html[data-scoop-analyze-active="1"] [data-testid="stMetricValue"] p {
+    font-size: clamp(2.45rem, 8.6vw, 3.5rem) !important;
+  }
+  html[data-scoop-analyze-active="1"] [data-testid="stMetricDelta"],
+  html[data-scoop-analyze-active="1"] [data-testid="stMetricDelta"] p,
+  html[data-scoop-analyze-active="1"] [data-testid="stMetricDelta"] span {
+    font-size: clamp(1.75rem, 5vw, 2.3rem) !important;
+  }
+}
+  color: #f8fafc !important;
+}
+</style>
+<script>
+(function () {
+  var payload = __PAYLOAD__;
+  var doc = document;
+  try {
+    if (window.parent && window.parent.document) doc = window.parent.document;
+  } catch (err) {}
+  var win = doc.defaultView || window;
+  var series = payload.series || [];
+
+  function host() {
+    return doc.querySelector(".js-plotly-plot .svg-container");
+  }
+  function draw() {
+    var box = host();
+    if (!box || !series.length) return;
+    var svg = box.querySelector("svg.main-svg");
+    if (svg) svg.style.display = "none";
+    var canvas = box.querySelector("canvas.scoop-price-canvas");
+    if (!canvas) {
+      canvas = doc.createElement("canvas");
+      canvas.className = "scoop-price-canvas";
+      box.appendChild(canvas);
+    }
+    canvas.style.display = "block";
+    canvas.style.width = "100%";
+    canvas.style.height = "500px";
+    box.style.width = "100%";
+    box.style.height = "500px";
+    var dpr = win.devicePixelRatio || 1;
+    var w = box.clientWidth || 640;
+    var h = 500;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    var ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var dark = doc.documentElement.getAttribute("data-scoop-theme") === "dark";
+    ctx.fillStyle = dark ? "#0f172a" : "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+    var narrow = (win.innerWidth || 0) < 1367;
+    var tickPx = narrow ? 26 : 40;
+    var datePx = narrow ? 24 : 28;
+    var padL = tickPx >= 40 ? 210 : 108, padR = narrow ? 8 : 28, padT = 36, padB = narrow ? 48 : 72;
+    var plotW = Math.max(10, w - padL - padR);
+    var plotH = h - padT - padB;
+    var prices = series.map(function (row) { return row.p; });
+    var min = Math.min.apply(null, prices);
+    var max = Math.max.apply(null, prices);
+    if (min === max) { min -= 1; max += 1; }
+    var span = max - min;
+    min -= span * 0.06;
+    max += span * 0.06;
+    function xAt(i) { return padL + (series.length === 1 ? plotW / 2 : (i / (series.length - 1)) * plotW); }
+    function yAt(p) { return padT + (1 - (p - min) / (max - min)) * plotH; }
+    ctx.strokeStyle = dark ? "rgba(148,163,184,0.25)" : "rgba(51,65,85,0.18)";
+    ctx.lineWidth = 1;
+    ctx.font = tickPx + 'px "Source Sans 3", "Source Sans Pro", sans-serif';
+    ctx.fillStyle = dark ? "#e2e8f0" : "#334155";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    for (var g = 0; g <= 4; g++) {
+      var val = min + ((max - min) * g) / 4;
+      var y = yAt(val);
+      ctx.beginPath();
+      ctx.moveTo(padL, y);
+      ctx.lineTo(padL + plotW, y);
+      ctx.stroke();
+      ctx.fillText("$" + val.toFixed(2), padL - 8, y);
+    }
+    ctx.font = datePx + 'px "Source Sans 3", "Source Sans Pro", sans-serif';
+    ctx.textBaseline = "top";
+    var tickCount = Math.min(narrow ? 2 : 3, series.length);
+    var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    for (var t = 0; t < tickCount; t++) {
+      var idx = tickCount === 1 ? 0 : Math.round((t / (tickCount - 1)) * (series.length - 1));
+      var x = xAt(idx);
+      var raw = String(series[idx].d).slice(0, 10);
+      var label = raw;
+      if (narrow) {
+        var parts = raw.split("-");
+        label = months[Number(parts[1]) - 1] + " " + parts[0];
+      }
+      ctx.textAlign = "center";
+      if (t === 0) { ctx.textAlign = "left"; x = padL; }
+      if (t === tickCount - 1) { ctx.textAlign = "right"; x = padL + plotW; }
+      ctx.fillText(label, x, padT + plotH + 10);
+    }
+    ctx.beginPath();
+    series.forEach(function (row, i) {
+      var x = xAt(i), y = yAt(row.p);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = "#4ade80";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    var last = series[series.length - 1];
+    ctx.fillStyle = "#4ade80";
+    ctx.beginPath();
+    ctx.arc(xAt(series.length - 1), yAt(last.p), series.length < 2 ? 7 : 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  function placeLabel() {
+    var heading = doc.querySelector("h3.search-price-chart-heading");
+    if (!heading || !heading.parentElement) return;
+    var label = doc.getElementById("scoop-range-end-label");
+    if (!label) {
+      label = doc.createElement("div");
+      label.id = "scoop-range-end-label";
+      heading.parentElement.insertBefore(label, heading);
+    }
+    var text = payload.label || "";
+    if (label.textContent !== text) label.textContent = text;
+  }
+  function rangeTrack(root) {
+    var rails = root.querySelectorAll('[data-orientation="horizontal"]');
+    if (rails.length) return rails.length > 1 ? rails[1] : rails[0];
+    var slider = root.querySelector('[data-baseweb="slider"]');
+    if (!slider) return null;
+    var bars = slider.querySelectorAll("div");
+    for (var i = 0; i < bars.length; i++) {
+      var height = bars[i].style && bars[i].style.height;
+      if (height && height.indexOf("rem") >= 0 && bars[i].getAttribute("role") !== "slider") return bars[i];
+    }
+    return null;
+  }
+  function placeDots() {
+    var root = doc.querySelector('[data-testid="stSlider"]');
+    if (!root) return;
+    var rail = rangeTrack(root);
+    var labels = payload.labels || [];
+    if (!rail || labels.length < 2) return;
+    rail.classList.add("scoop-range-track");
+    var current = labels.indexOf(payload.label);
+    var existing = rail.querySelectorAll("button.scoop-range-dot");
+    if (
+      existing.length === labels.length &&
+      current >= 0 &&
+      existing[current].classList.contains("scoop-range-dot-on")
+    ) {
+      return;
+    }
+    existing.forEach(function (dot) { dot.remove(); });
+    labels.forEach(function (name, i) {
+      var dot = doc.createElement("button");
+      dot.type = "button";
+      dot.className = "scoop-range-dot" + (i === current ? " scoop-range-dot-on" : "");
+      dot.style.left = (i / (labels.length - 1)) * 100 + "%";
+      dot.setAttribute("aria-label", name);
+      rail.appendChild(dot);
+    });
+  }
+  function fitFeed() {
+    var feed = doc.querySelector(".mood-feed");
+    if (feed && (win.innerWidth || 0) >= 1367) {
+      var mood = doc.querySelector(".scoop-mood-summary");
+      var chart = doc.querySelector("canvas.scoop-price-canvas") || doc.querySelector('[data-testid="stPlotlyChart"]');
+      if (!mood || !chart) return;
+      feed.style.setProperty("margin-top", "0px", "important");
+      feed.style.setProperty("margin-bottom", "0px", "important");
+      var gapNow = feed.getBoundingClientRect().top - mood.getBoundingClientRect().bottom;
+      feed.style.setProperty("margin-top", (20 - gapNow) + "px", "important");
+      var top = mood.getBoundingClientRect().bottom + 20;
+      var h = Math.round(chart.getBoundingClientRect().bottom - top);
+      if (h < 220) h = 220;
+      var px = h + "px";
+      feed.style.setProperty("height", px, "important");
+      feed.style.setProperty("max-height", px, "important");
+      feed.style.setProperty("overflow-y", "auto", "important");
+      return;
+    }
+    var foot = doc.querySelector(".disclaimer-footer");
+    if (!feed || !foot) return;
+    var gap = 16;
+    var rect = feed.getBoundingClientRect();
+    var footRect = foot.getBoundingClientRect();
+    var padNow = footRect.top - rect.bottom;
+    if (padNow > gap - 4 && padNow < gap + 28 && rect.height > 200) return;
+    var footH = footRect.height || 72;
+    var anchor = rect.top < 8 ? 8 : rect.top;
+    var h = win.innerHeight - footH - gap - anchor;
+    if (h < 220) h = 220;
+    var slack = footRect.top - rect.bottom - gap;
+    if (feed.dataset.scoopSlack !== "skip" && slack > 12) {
+      var trial = rect.height + slack;
+      var before = footRect.top;
+      feed.style.setProperty("height", Math.round(trial) + "px", "important");
+      feed.style.setProperty("max-height", Math.round(trial) + "px", "important");
+      if (foot.getBoundingClientRect().top - before > 4) {
+        feed.dataset.scoopSlack = "skip";
+      } else {
+        h = trial;
+      }
+    }
+    var px = Math.round(h) + "px";
+    if (feed.style.height === px) return;
+    feed.style.setProperty("height", px, "important");
+    feed.style.setProperty("max-height", px, "important");
+    feed.style.setProperty("overflow-y", "auto", "important");
+  }
+  function boot() {
+    if (!host()) return;
+    placeLabel();
+    placeDots();
+    draw();
+    fitFeed();
+  }
+  var tries = 0;
+  function ready() {
+    boot();
+    if (!host() && tries++ < 80) win.setTimeout(ready, 150);
+  }
+  ready();
+  if (win.__scoopPriceWatch) win.__scoopPriceWatch.disconnect();
+  win.__scoopPriceWatch = new MutationObserver(function () { boot(); });
+  win.__scoopPriceWatch.observe(doc.body, { childList: true, subtree: true });
+  if (win.__scoopPriceDraw) win.removeEventListener("resize", win.__scoopPriceDraw);
+  win.__scoopPriceDraw = function () { draw(); fitFeed(); };
+  win.addEventListener("resize", win.__scoopPriceDraw);
+  if (!win.__scoopFeedScroll) {
+    win.__scoopFeedScroll = function () { if (win.__scoopFitFeed) win.__scoopFitFeed(); };
+    win.addEventListener("scroll", win.__scoopFeedScroll, true);
+  }
+  win.__scoopFitFeed = fitFeed;
+  if (win.__scoopPriceTheme) win.__scoopPriceTheme.disconnect();
+  win.__scoopPriceTheme = new MutationObserver(function () {
+    if (win.__scoopPriceDraw) win.__scoopPriceDraw();
+  });
+  win.__scoopPriceTheme.observe(doc.documentElement, { attributes: true, attributeFilter: ["data-scoop-theme"] });
+})();
+</script>
+""".replace("__PAYLOAD__", payload),
+        unsafe_allow_javascript=True,
+    )
+
+
 @st.fragment(run_every=timedelta(minutes=15))
 def _render_search_dashboard(ticker: str) -> None:
     """Renders analyze deep-dive; reruns on a timer so cached sentiment/news refresh without widget clicks."""
@@ -1799,6 +2414,49 @@ def _render_search_dashboard(ticker: str) -> None:
         last_price = 0
     prev_price = df.iloc[-2]["price"] if len(df) >= 2 else last_price
     change_24h_pct = ((last_price - prev_price) / prev_price * 100) if prev_price else 0
+    listing = _analyze_listing_market(ticker, screener_key)
+    st.session_state["analyze_price_prefix"] = "$"
+    live_currency = "USD"
+    factor = 1.0
+    if listing:
+        local_code = "GBP" if listing == "LSE" else "CAD"
+        toggle_key = "lse_show_usd" if listing == "LSE" else "tsx_show_usd"
+        box_key = "lse_currency" if listing == "LSE" else "tsx_currency"
+        st.markdown(CURRENCY_SWITCH_CSS, unsafe_allow_html=True)
+        with st.container(key=box_key):
+            local_col, switch_col, usd_col = st.columns([1, 1, 1], gap="small", vertical_alignment="center")
+            with local_col:
+                st.markdown(currency_abbrev_tip(local_code), unsafe_allow_html=True)
+            with switch_col:
+                show_usd = st.toggle("USD", key=toggle_key, label_visibility="collapsed")
+            with usd_col:
+                st.markdown(currency_abbrev_tip("USD"), unsafe_allow_html=True)
+        usd_rate = None
+        if show_usd:
+            usd_rate = bundle.get("fx")
+            if usd_rate is None and screener_key:
+                from screener_snapshots import fetch_snapshot
+                usd_rate = (fetch_snapshot(screener_key) or {}).get("usd_per_local")
+            try:
+                usd_rate = float(usd_rate) if usd_rate else None
+            except (TypeError, ValueError):
+                usd_rate = None
+            if not usd_rate:
+                st.caption("USD prices are not in this scan yet. Prices stay in the local currency.")
+        factor = quote_scale(listing) * (float(usd_rate) if usd_rate else 1.0)
+        if usd_rate:
+            live_currency = "USD"
+            st.session_state["analyze_price_prefix"] = "$"
+        else:
+            live_currency = local_code
+            st.session_state["analyze_price_prefix"] = local_prefix(listing)
+        last_price *= factor
+        if week52_low:
+            week52_low *= factor
+        if week52_high:
+            week52_high *= factor
+        if not df.empty and "price" in df.columns:
+            df["price"] = df["price"] * factor
     combined = result["combined_score"]
     direction = "BULLISH" if combined > 0 else "BEARISH"
     arrow = "⬆️" if combined > 0 else "⬇️"
@@ -1806,6 +2464,12 @@ def _render_search_dashboard(ticker: str) -> None:
     bg = "#14532d" if combined > 0 else "#7f1d1d"
 
     asset_name = resolve_asset_display_name(ticker)
+    asset_summary = resolve_asset_summary(ticker)
+    name_html = html.escape(asset_name)
+    if asset_summary:
+        name_html = _analyze_desktop_tip(
+            name_html, asset_summary, "scoop-selected-name-tip", label=asset_name
+        )
     st.markdown(
         f"""
         <div class="scoop-selected-asset-card" style="
@@ -1820,7 +2484,7 @@ def _render_search_dashboard(ticker: str) -> None:
                 Selected Asset
             </div>
             <div class="scoop-title-text" style="font-size:2rem;line-height:1.25;font-weight:800;color:#0f172a;">
-                {html.escape(asset_name)}
+                {name_html}
             </div>
             <div class="scoop-subtitle-text" style="font-size:1.15rem;color:#475569;font-weight:700;margin-top:0.2rem;">
                 Ticker: {html.escape(ticker)}
@@ -1830,7 +2494,13 @@ def _render_search_dashboard(ticker: str) -> None:
         unsafe_allow_html=True,
     )
 
-    st.caption(f"Data updated every {_SEARCH_ANALYSIS_TTL_SEC // 60} minutes")
+    scan_stamp = str(bundle.get("scan_updated_display") or "").strip()
+    if not scan_stamp:
+        scan_stamp = snapshot_last_updated(bundle.get("scan_updated_at") or bundle.get("cached_at"))
+    st.markdown(
+        f'<div class="scoop-analyze-last-updated">Last updated: <b>{html.escape(scan_stamp.replace("Last updated ", ""))}</b></div>',
+        unsafe_allow_html=True,
+    )
 
     dir_inner = (
         f'<span style="font-size:4rem;">{arrow}</span>'
@@ -1838,6 +2508,9 @@ def _render_search_dashboard(ticker: str) -> None:
         f"{html.escape(direction)}</span>"
     )
     mood_label = html.escape(sentiment_label.capitalize())
+    banner_face = {"bullish": "😊", "bearish": "☹️", "neutral": "😐"}.get(
+        sentiment_label, "😐"
+    )
     dir_tip = _analyze_desktop_tip(
         dir_inner,
         _ANALYZE_DIR_TIP,
@@ -1850,7 +2523,7 @@ def _render_search_dashboard(ticker: str) -> None:
         label=f"Score: {combined:+.4f}",
     )
     banner_mood_tip = _analyze_desktop_tip(
-        f"Market Mood: {mood_label}",
+        f"Market Mood: {banner_face} {mood_label}",
         _ANALYZE_BANNER_MOOD_TIP,
         label=f"Market Mood: {sentiment_label.capitalize()}",
     )
@@ -1882,7 +2555,7 @@ def _render_search_dashboard(ticker: str) -> None:
             high_date=high_date,
         )
         st.metric(
-            label="Live Price (USD)",
+            label=f"Live Price ({live_currency})",
             value=_format_search_price(last_price),
             delta=f"{change_24h_pct:+.2f}% (24h)",
         )
@@ -1904,7 +2577,7 @@ def _render_search_dashboard(ticker: str) -> None:
                 high_date=high_date,
             )
             st.metric(
-                label="Live Price (USD)",
+                label=f"Live Price ({live_currency})",
                 value=_format_search_price(last_price),
                 delta=f"{change_24h_pct:+.2f}% (24h)",
             )
@@ -1929,39 +2602,58 @@ def _render_search_dashboard(ticker: str) -> None:
             options=list(PERIOD_OPTIONS.keys()),
             key="search_price_history_range",
         )
+        if st.query_params.get("history") in PERIOD_OPTIONS:
+            del st.query_params["history"]
         st.markdown(
             '<h3 class="search-price-chart-heading">📈 Price Chart</h3>',
             unsafe_allow_html=True,
         )
         has_compare = False
         plot_df = df.copy()
-        plot_df["date_dt"] = pd.to_datetime(plot_df["date"])
-        comp_df = None
+        if plot_df.empty or "date" not in plot_df.columns:
+            st.info("Price history is not available for this listing yet.")
+            plot_df = None
+        else:
+            plot_df["date_dt"] = pd.to_datetime(plot_df["date"])
+        if plot_df is not None:
+            comp_df = None
 
-        ax_tick, ax_title = _search_price_chart_axis_px()
-        margin_top = _search_price_chart_margin_top(has_compare)
-        fig = _build_search_price_figure(
-            has_compare=has_compare,
-            plot_df=plot_df,
-            comp_df=comp_df,
-            ticker=ticker,
-            compare_ticker="",
-            axis_tick=ax_tick,
-            axis_title=ax_title,
-            margin_top=margin_top,
-        )
+            ax_tick, ax_title = _search_price_chart_axis_px()
+            margin_top = _search_price_chart_margin_top(has_compare)
+            fig = _build_search_price_figure(
+                has_compare=has_compare,
+                plot_df=plot_df,
+                comp_df=comp_df,
+                ticker=ticker,
+                compare_ticker="",
+                axis_tick=ax_tick,
+                axis_title=ax_title,
+                margin_top=margin_top,
+                price_axis_title=f"Price ({live_currency})",
+            )
 
-        _plotly_cfg = (
-            {"displayModeBar": False}
-            if is_desktop_viewport(page="pages/_Analyze.py") is False
-            else {}
-        )
-        st.plotly_chart(fig, width="stretch", config=_plotly_cfg)
+            _plotly_cfg = (
+                {"displayModeBar": False}
+                if is_desktop_viewport(page="pages/_Analyze.py") is False
+                else {}
+            )
+            st.plotly_chart(fig, width="stretch", config=_plotly_cfg)
+            chart_history = history
+            if factor != 1:
+                chart_history = [
+                    {**row, "price": float(row["price"]) * factor}
+                    for row in history or []
+                    if row.get("price") is not None
+                ]
+            _install_snapshot_price_chart(
+                chart_history,
+                st.session_state.get("search_price_history_range", ""),
+            )
 
     with col_mood:
         st.markdown("<div class='mood-column'>", unsafe_allow_html=True)
-        mood_color = {"bullish": "#22c55e", "bearish": "#ef4444", "neutral": "#f59e0b"}.get(
-            sentiment_label, "#94a3b8"
+        mood_face = {"bullish": "😊", "bearish": "☹️", "neutral": "😐"}.get(
+            sentiment_label, "😐"
         )
         st.markdown(
             f"""
@@ -1974,14 +2666,7 @@ def _render_search_dashboard(ticker: str) -> None:
             ">
                 <div class="scoop-mood-label" style="display:flex;align-items:center;gap:0.6rem;font-weight:700;color:#0f172a;">
                     {_analyze_desktop_tip("Market Mood", _ANALYZE_PANEL_MOOD_TIP, label="Market Mood")}
-                    <span style="
-                        display:inline-block;
-                        width:0.9rem;
-                        height:0.9rem;
-                        border-radius:999px;
-                        background:{mood_color};
-                        box-shadow:0 0 0 2px {mood_color}33;
-                    "></span>
+                    <span class="scoop-mood-face" aria-hidden="true" style="font-size:1.15rem;line-height:1;">{mood_face}</span>
                 </div>
                 <div class="scoop-mood-detail" style="margin-top:0.45rem;color:#334155;">
                     Current Mood: <b>{mood_label}</b> &nbsp;|&nbsp; {_analyze_desktop_tip(f"Score: <b>{sentiment_score:+.4f}</b>", _ANALYZE_HEADLINE_SCORE_TIP, "scoop-analyze-desktop-tip--end", label=f"Score: {sentiment_score:+.4f}")}
@@ -2026,7 +2711,7 @@ def _render_search_dashboard(ticker: str) -> None:
             "</table>"
         )
         st.markdown(
-            "<div class='mood-feed' style='height:1600px;overflow-y:auto;border:1px solid #334155;border-radius:10px;padding:0.25rem;margin-bottom:0;'>"
+            "<div class='mood-feed' style='overflow-y:auto;border:1px solid #334155;border-radius:10px;padding:0.25rem;margin-bottom:0.75rem;'>"
             f"{table_html}</div>",
             unsafe_allow_html=True,
         )
@@ -2039,7 +2724,12 @@ if _analyze_mode:
     st.session_state["search_terms_accepted"] = True
 agreed = terms_accepted(st, "search_terms_accepted")
 ensure_timezone_cookie(st)
-if "search_price_history_range" not in st.session_state:
+_history_choice = st.query_params.get("history", "")
+if isinstance(_history_choice, list):
+    _history_choice = _history_choice[0] if _history_choice else ""
+if _history_choice in PERIOD_OPTIONS:
+    st.session_state["search_price_history_range"] = _history_choice
+elif "search_price_history_range" not in st.session_state:
     st.session_state["search_price_history_range"] = "30 days"
 elif st.session_state["search_price_history_range"] not in PERIOD_OPTIONS:
     st.session_state["search_price_history_range"] = "2 years"
@@ -2071,19 +2761,19 @@ def _banner_card(label, price, chg, prefix="$"):
     )
 
 if not _analyze_mode:
-    _nya_p, _nya_c = _fetch_index("^NYA")
-    _ixic_p, _ixic_c = _fetch_index("^IXIC")
+    _nya_p, _nya_c = _fetch_index("DIA")
+    _ixic_p, _ixic_c = _fetch_index("QQQ")
     _btc_p, _btc_c = _fetch_index("BTC-USD")
     _eth_p, _eth_c = _fetch_index("ETH-USD")
-    _cl_p, _cl_c = _fetch_index("CL=F")
-    _gc_p, _gc_c = _fetch_index("GC=F")
+    _cl_p, _cl_c = _fetch_index("USO")
+    _gc_p, _gc_c = _fetch_index("GLD")
     _all_cards = (
-        _banner_card("NYSE (^NYA)", _nya_p, _nya_c)
-        + _banner_card("NASDAQ (^IXIC)", _ixic_p, _ixic_c)
-        + _banner_card("BTC", _btc_p, _btc_c)
-        + _banner_card("ETH", _eth_p, _eth_c)
-        + _banner_card("WTI Crude", _cl_p, _cl_c)
-        + _banner_card("Gold", _gc_p, _gc_c)
+        _banner_card("SPDR Dow Jones ETF (DIA)", _nya_p, _nya_c)
+        + _banner_card("Invesco QQQ (QQQ)", _ixic_p, _ixic_c)
+        + _banner_card("Bitcoin (BTC)", _btc_p, _btc_c)
+        + _banner_card("Ethereum (ETH)", _eth_p, _eth_c)
+        + _banner_card("United States Oil Fund (USO)", _cl_p, _cl_c)
+        + _banner_card("SPDR Gold Shares (GLD)", _gc_p, _gc_c)
     )
     if _all_cards:
         st.markdown(
@@ -2095,6 +2785,10 @@ if not _analyze_mode:
 if _analyze_mode:
     render_analyze_back_button()
 st.title(f"{ticker} — Analyze" if _analyze_mode else f"{ticker} Dashboard")
+if _analyze_mode and analyze_screener_snapshot_key() in {"CME", "ICE"}:
+    st.caption(
+        "Futures market quote for context. This is not a product offered for purchase."
+    )
 
 if not _analyze_mode and not render_terms_gate(
     st,

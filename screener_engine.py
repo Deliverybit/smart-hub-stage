@@ -6,6 +6,7 @@ import ast
 import math
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from typing import Any, Callable
 
@@ -15,6 +16,8 @@ from headline_service import enrich_result_rows
 from market_data import MarketData
 from screener_selection import ProximitySelection, select_proximity_results
 from screener_snapshots import save_snapshot
+
+DISPLAY_TZ = ZoneInfo("America/Chicago")
 
 ROOT = Path(__file__).resolve().parent
 PAGES = ROOT / "pages"
@@ -62,6 +65,26 @@ SCREENER_DEFINITIONS: tuple[ScreenerDefinition, ...] = (
         "Name",
         "CRYPTO_NAMES",
         "cryptos",
+    ),
+    ScreenerDefinition(
+        "LSE",
+        "3b_LSE_Top_10.py",
+        "list(COMPANY_NAMES.keys())",
+        ("COMPANY_NAMES",),
+        "stock",
+        "Company",
+        "COMPANY_NAMES",
+        "stocks",
+    ),
+    ScreenerDefinition(
+        "TSX",
+        "3c_TSX_Top_10.py",
+        "list(COMPANY_NAMES.keys())",
+        ("COMPANY_NAMES",),
+        "stock",
+        "Company",
+        "COMPANY_NAMES",
+        "stocks",
     ),
     ScreenerDefinition(
         "CME",
@@ -267,6 +290,16 @@ def run_screener_scan(
     return results, len(scan_universe), len(universe)
 
 
+def format_scan_display(moment: datetime | None = None) -> str:
+    """Format a scan time in Central time, matching the clock visitors use."""
+    if moment is None:
+        moment = datetime.now(timezone.utc)
+    elif moment.tzinfo is None:
+        moment = moment.replace(tzinfo=timezone.utc)
+    local = moment.astimezone(DISPLAY_TZ)
+    return local.strftime("%b %d, %Y  %I:%M %p CT")
+
+
 def build_snapshot_payload(
     defn: ScreenerDefinition,
     market_data: MarketData | None = None,
@@ -276,7 +309,7 @@ def build_snapshot_payload(
     display_results = enrich_result_rows(selection.results)
     analyze_bundles = build_analyze_bundles(display_results, market_data)
     updated = datetime.now()
-    return {
+    payload = {
         "screener_key": defn.key,
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "last_updated_display": updated.strftime("%b %d, %Y  %I:%M %p"),
@@ -292,6 +325,12 @@ def build_snapshot_payload(
         "asset_noun": defn.asset_noun,
         "headlines_enriched": True,
     }
+    if defn.key in {"LSE", "TSX"}:
+        from price_display import stamp_usd_prices, usd_per_unit
+
+        code = "GBP" if defn.key == "LSE" else "CAD"
+        stamp_usd_prices(payload, usd_per_unit(code))
+    return payload
 
 
 def refresh_screener(defn: ScreenerDefinition, *, persist: bool = True) -> dict[str, Any]:

@@ -2028,13 +2028,13 @@ _DESKTOP_MARKET_NAV_LIGHT_RULES = """
     html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href*="Terms_of_Service"]) {
         width: 100% !important;
         max-width: 100% !important;
-        border: 3px solid #22c55e !important;
+        border: none !important;
         border-radius: 0.75rem !important;
         background: #ffffff !important;
         padding: 0.15rem 0.35rem !important;
         box-sizing: border-box !important;
-        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+        box-shadow: none !important;
+        transition: background-color 0.15s ease !important;
     }
     html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):hover,
     html:not([data-scoop-theme="dark"]) [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href*="Terms_of_Service"]):hover {
@@ -2058,12 +2058,12 @@ _DESKTOP_MARKET_NAV_DARK_RULES = """
     html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href*="Terms_of_Service"]) {
         width: 100% !important;
         max-width: 100% !important;
-        border: 3px solid #38bdf8 !important;
+        border: none !important;
         border-radius: 0.75rem !important;
         background: #000000 !important;
         padding: 0.15rem 0.35rem !important;
         box-sizing: border-box !important;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35) !important;
+        box-shadow: none !important;
     }
     html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href$="_Top_10"]):hover,
     html[data-scoop-theme="dark"] [data-testid="stSidebar"] [data-testid="stPageLink"]:has(a[href*="Terms_of_Service"]):hover {
@@ -4040,6 +4040,11 @@ DESKTOP_SCREENER_TOP_COMPACT = f"""
 
 # Desktop screener only: brand depth on cards, table, and intro. Phone/tablet unchanged.
 _DESKTOP_SCREENER_POP_CSS = """
+html:not([data-scoop-home-page="1"]) .scoop-index-card {
+    border: none !important;
+    border-left: none !important;
+    box-shadow: none !important;
+}
 @media (min-width: 1367px) {
     html:not([data-scoop-home-page="1"]) body,
     html:not([data-scoop-home-page="1"]) .stApp,
@@ -4060,7 +4065,9 @@ _DESKTOP_SCREENER_POP_CSS = """
             linear-gradient(180deg, #07111d 0%, #0f172a 48%, #0b1220 100%) !important;
     }
     html:not([data-scoop-home-page="1"]) .scoop-index-card {
-        box-shadow: 0 16px 34px rgba(15, 23, 42, 0.22), 0 0 0 1px rgba(56, 189, 248, 0.18) !important;
+        border: none !important;
+        border-left: none !important;
+        box-shadow: none !important;
         border-radius: 16px !important;
     }
     html:not([data-scoop-home-page="1"]) [data-testid="stMainBlockContainer"] h1 {
@@ -4075,15 +4082,15 @@ _DESKTOP_SCREENER_POP_CSS = """
     }
     html:not([data-scoop-home-page="1"]) .scoop-landing-info {
         background: rgba(255, 255, 255, 0.92) !important;
-        border: 1px solid rgba(14, 165, 233, 0.28) !important;
-        border-left: 4px solid #0ea5e9 !important;
+        border: none !important;
+        border-left: none !important;
         border-radius: 14px !important;
-        box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08) !important;
+        box-shadow: none !important;
     }
     html[data-scoop-theme="dark"]:not([data-scoop-home-page="1"]) .scoop-landing-info {
         background: linear-gradient(180deg, rgba(30, 41, 59, 0.92), rgba(15, 23, 42, 0.88)) !important;
-        border-color: rgba(56, 189, 248, 0.32) !important;
-        border-left-color: #38bdf8 !important;
+        border: none !important;
+        border-left: none !important;
     }
     html:not([data-scoop-home-page="1"]) [data-testid="stAlert"] {
         border-radius: 14px !important;
@@ -6371,22 +6378,16 @@ _HOME_LANDING_ATTRACT_CSS = f"""
         max-width: min(100%, 18.5rem) !important;
         margin: 0.85rem auto 0 auto !important;
         padding: 0.95rem 1.05rem !important;
-        border-radius: 1.45rem !important;
-        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%) !important;
-        border: 1px solid rgba(14, 165, 233, 0.28) !important;
-        box-shadow:
-            0 18px 40px rgba(15, 23, 42, 0.16),
-            0 0 0 4px rgba(14, 165, 233, 0.10),
-            0 0 0 8px rgba(249, 115, 22, 0.07) !important;
+        border-radius: 0.5rem !important;
+        background: #ffffff !important;
+        border: none !important;
+        box-shadow: none !important;
         box-sizing: border-box !important;
     }}
     html[data-scoop-theme="dark"][data-scoop-home-page="1"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stImage"] {{
-        background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%) !important;
-        border-color: rgba(56, 189, 248, 0.55) !important;
-        box-shadow:
-            0 22px 48px rgba(0, 0, 0, 0.45),
-            0 0 0 4px rgba(56, 189, 248, 0.22),
-            0 0 0 9px rgba(249, 115, 22, 0.14) !important;
+        background: #ffffff !important;
+        border: none !important;
+        box-shadow: none !important;
     }}
     html[data-scoop-home-page="1"] body .stApp [data-testid="stMainBlockContainer"] [data-testid="stImage"] img {{
         width: auto !important;
